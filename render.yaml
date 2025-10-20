@@ -1,0 +1,44 @@
+services:
+  # Frontend Web Service
+  - type: web
+    name: ignite-frontend
+    env: node
+    plan: free
+    buildCommand: |
+      cd apps/web
+      npm ci
+      npm run build
+    startCommand: |
+      cd apps/web
+      npm run preview
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_BASE_URL
+        value: https://ignite-qjis.onrender.com/api/v1
+    healthCheckPath: /health
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    branch: main
+    region: oregon
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://ignite-qjis.onrender.com;"

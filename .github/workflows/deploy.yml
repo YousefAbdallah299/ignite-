@@ -1,0 +1,86 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: apps/web/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd apps/web
+        npm ci
+    
+    - name: Run type checking
+      run: |
+        cd apps/web
+        npm run typecheck
+    
+    - name: Run linting
+      run: |
+        cd apps/web
+        npm run lint
+    
+    - name: Run tests
+      run: |
+        cd apps/web
+        npm run test -- --run
+    
+    - name: Build application
+      run: |
+        cd apps/web
+        npm run build
+      env:
+        VITE_API_BASE_URL: https://ignite-qjis.onrender.com/api/v1
+        VITE_PAYMENT_API_URL: https://ignite-qjis.onrender.com/api/payments
+        VITE_APP_ENVIRONMENT: production
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: apps/web/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd apps/web
+        npm ci
+    
+    - name: Build for production
+      run: |
+        cd apps/web
+        npm run build
+      env:
+        VITE_API_BASE_URL: https://ignite-qjis.onrender.com/api/v1
+        VITE_PAYMENT_API_URL: https://ignite-qjis.onrender.com/api/payments
+        VITE_APP_ENVIRONMENT: production
+    
+    - name: Deploy to Render
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        wait-for-success: true
