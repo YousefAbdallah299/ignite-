@@ -12,7 +12,9 @@
 		"lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",
-		"clean": "powershell -Command \"if (Test-Path 'dist') { Remove-Item -Recurse -Force 'dist' }; if (Test-Path 'node_modules/.cache') { Remove-Item -Recurse -Force 'node_modules/.cache' }\"",
+		"clean": "bun run clean:dist && bun run clean:cache",
+		"clean:dist": "rm -rf dist",
+		"clean:cache": "rm -rf node_modules/.cache",
 		"prebuild": "npm run clean && npm run typecheck",
 		"postbuild": "echo 'Build completed successfully'"
 	},
