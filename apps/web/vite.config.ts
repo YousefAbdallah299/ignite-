@@ -18,6 +18,8 @@ export default defineConfig({
   envPrefix: 'NEXT_PUBLIC_',
   build: {
     target: 'es2022',
+    outDir: 'build/client',
+    copyPublicDir: true,
   },
   optimizeDeps: {
     // Explicitly include fast-glob, since it gets dynamically imported and we
@@ -91,5 +93,9 @@ export default defineConfig({
     warmup: {
       clientFiles: ['./src/app/**/*', './src/app/root.tsx', './src/app/routes.ts'],
     },
+  },
+  preview: {
+    port: 4173,
+    strictPort: true,
   },
 });
