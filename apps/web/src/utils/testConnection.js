@@ -4,7 +4,8 @@ export const testBackendConnection = async () => {
   
   try {
     // Test basic connectivity
-    const response = await fetch('http://localhost:8080/api/v1/auth/refresh', {
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+    const response = await fetch(`${backendUrl}/auth/refresh`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +63,8 @@ export const testAuthEndpoint = async () => {
       role: 'CANDIDATE'
     };
     
-    const response = await fetch('http://localhost:8080/api/v1/auth/register', {
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+    const response = await fetch(`${backendUrl}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

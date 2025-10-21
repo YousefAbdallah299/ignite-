@@ -6,6 +6,7 @@ import TalentedProfessionals from "@/components/TalentedProfessionals";
 import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import BackendDebugger from "@/components/BackendDebugger";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 
 export default function HomePage() {
@@ -42,6 +43,13 @@ export default function HomePage() {
       {/* Newsletter Signup - fades in when scrolling */}
       <RevealOnScroll>
         <NewsletterSection />
+      </RevealOnScroll>
+
+      {/* Backend Debugger - Temporary for testing connection */}
+      <RevealOnScroll>
+        <div className="container mx-auto px-4 py-8">
+          <BackendDebugger />
+        </div>
       </RevealOnScroll>
 
       {/* Footer - fades in when scrolling */}

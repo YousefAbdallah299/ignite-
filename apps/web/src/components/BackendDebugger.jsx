@@ -1,108 +1,107 @@
-import { useState } from 'react';
-import { testBackendConnection, testAuthEndpoint } from '../utils/testConnection';
+import React, { useState, useEffect } from 'react';
+import { testBackendConnection } from '../utils/testConnection';
 
-export default function BackendDebugger() {
-  const [isConnected, setIsConnected] = useState(null);
-  const [isTesting, setIsTesting] = useState(false);
-  const [logs, setLogs] = useState([]);
+const BackendDebugger = () => {
+  const [connectionStatus, setConnectionStatus] = useState('unknown');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [envVars, setEnvVars] = useState({});
 
-  const addLog = (message, type = 'info') => {
-    const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [...prev, { message, type, timestamp }]);
-  };
+  useEffect(() => {
+    // Get environment variables for debugging
+    setEnvVars({
+      VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+      VITE_PAYMENT_API_URL: import.meta.env.VITE_PAYMENT_API_URL,
+      VITE_APP_ENVIRONMENT: import.meta.env.VITE_APP_ENVIRONMENT,
+    });
+  }, []);
 
   const testConnection = async () => {
-    setIsTesting(true);
-    addLog('Starting backend connection test...', 'info');
+    setIsLoading(true);
+    setError(null);
     
     try {
-      const connected = await testBackendConnection();
-      setIsConnected(connected);
-      
-      if (connected) {
-        addLog('Backend connection successful!', 'success');
-        
-        // Test auth endpoint
-        addLog('Testing auth endpoint...', 'info');
-        const authWorking = await testAuthEndpoint();
-        
-        if (authWorking) {
-          addLog('Auth endpoint working!', 'success');
-        } else {
-          addLog('Auth endpoint has issues', 'warning');
-        }
-      } else {
-        addLog('Backend connection failed', 'error');
-      }
-    } catch (error) {
-      addLog(`Test failed: ${error.message}`, 'error');
-      setIsConnected(false);
+      const result = await testBackendConnection();
+      setConnectionStatus(result ? 'connected' : 'failed');
+    } catch (err) {
+      setError(err.message);
+      setConnectionStatus('error');
     } finally {
-      setIsTesting(false);
+      setIsLoading(false);
     }
   };
 
-  const clearLogs = () => {
-    setLogs([]);
+  const getStatusColor = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'text-green-600';
+      case 'failed': return 'text-red-600';
+      case 'error': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (connectionStatus) {
+      case 'connected': return '✅ Connected';
+      case 'failed': return '❌ Connection Failed';
+      case 'error': return '❌ Error';
+      default: return '❓ Unknown';
+    }
   };
 
   return (
-    <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-md max-h-96 overflow-auto z-50">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-900">Backend Debugger</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={testConnection}
-            disabled={isTesting}
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isTesting ? 'Testing...' : 'Test Connection'}
-          </button>
-          <button
-            onClick={clearLogs}
-            className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Status:</span>
-          {isConnected === null && (
-            <span className="text-sm text-gray-500">Not tested</span>
-          )}
-          {isConnected === true && (
-            <span className="text-sm text-green-600">✅ Connected</span>
-          )}
-          {isConnected === false && (
-            <span className="text-sm text-red-600">❌ Failed</span>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-1 max-h-48 overflow-auto">
-        {logs.map((log, index) => (
-          <div
-            key={index}
-            className={`text-xs p-2 rounded ${
-              log.type === 'success' ? 'bg-green-100 text-green-800' :
-              log.type === 'error' ? 'bg-red-100 text-red-800' :
-              log.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-gray-100 text-gray-800'
-            }`}
-          >
-            <span className="text-gray-500">[{log.timestamp}]</span> {log.message}
+    <div className="p-4 border rounded-lg bg-gray-50">
+      <h3 className="text-lg font-semibold mb-4">Backend Connection Debugger</h3>
+      
+      <div className="space-y-4">
+        {/* Environment Variables */}
+        <div>
+          <h4 className="font-medium mb-2">Environment Variables:</h4>
+          <div className="bg-white p-3 rounded border text-sm">
+            <div><strong>VITE_API_BASE_URL:</strong> {envVars.VITE_API_BASE_URL || 'Not set'}</div>
+            <div><strong>VITE_PAYMENT_API_URL:</strong> {envVars.VITE_PAYMENT_API_URL || 'Not set'}</div>
+            <div><strong>VITE_APP_ENVIRONMENT:</strong> {envVars.VITE_APP_ENVIRONMENT || 'Not set'}</div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
-          Make sure the Ignite backend is running on localhost:8080
-        </p>
+        {/* Connection Test */}
+        <div>
+          <h4 className="font-medium mb-2">Connection Status:</h4>
+          <div className="flex items-center space-x-4">
+            <span className={`font-medium ${getStatusColor()}`}>
+              {getStatusText()}
+            </span>
+            <button
+              onClick={testConnection}
+              disabled={isLoading}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {isLoading ? 'Testing...' : 'Test Connection'}
+            </button>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded p-3">
+            <h4 className="font-medium text-red-800 mb-1">Error:</h4>
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Instructions */}
+        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+          <h4 className="font-medium text-blue-800 mb-1">Instructions:</h4>
+          <ul className="text-blue-700 text-sm space-y-1">
+            <li>• Check that environment variables are set in Render dashboard</li>
+            <li>• Verify backend service is running at https://ignite-qjis.onrender.com</li>
+            <li>• Ensure CORS is configured correctly on backend</li>
+            <li>• Check browser console for additional error details</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default BackendDebugger;
