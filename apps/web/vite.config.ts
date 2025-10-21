@@ -14,13 +14,13 @@ import { restartEnvFileChange } from './plugins/restartEnvFileChange';
 
 export default defineConfig({
   envPrefix: 'NEXT_PUBLIC_',
-  base: './', // ✅ ensure assets load correctly relative to index.html
+  base: '/', // Use '/' for SPA routing to work correctly
   build: {
     target: 'es2022',
     outDir: 'build', // ✅ match Render publish directory
     sourcemap: false,
     emptyOutDir: true,
-    ssr: false, // ❌ disable SSR for static SPA
+    ssr: false, // ensure SSR is disabled for SPA
     copyPublicDir: true,
   },
   optimizeDeps: {
