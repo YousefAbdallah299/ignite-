@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Star, ArrowRight, Users } from "lucide-react";
 import { useCandidatesAPI } from "@/hooks/useCandidatesAPI";
 

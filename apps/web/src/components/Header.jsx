@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect, useRef } from "react";
 import { Search, Menu, X, User, Briefcase, Users, BookOpen, FileText, Settings, LogOut, ChevronDown, PlusCircle, List, CheckSquare, Building2, GraduationCap, HelpCircle, DollarSign, Shield, Info } from "lucide-react";
 import { useAuthAPI } from "@/hooks/useAuthAPI";

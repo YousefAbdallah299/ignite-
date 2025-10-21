@@ -1,3 +1,4 @@
+import React from 'react';
 import { Check, Star, Users, Building2 } from "lucide-react";
 
 const pricingPlans = [

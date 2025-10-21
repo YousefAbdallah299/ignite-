@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Search, Briefcase, Users } from "lucide-react";
 
 export default function HeroSection() {

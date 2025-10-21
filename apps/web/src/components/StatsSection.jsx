@@ -1,3 +1,4 @@
+import React from 'react';
 import { Users, Building2, TrendingUp, Award } from "lucide-react";
 
 const stats = [

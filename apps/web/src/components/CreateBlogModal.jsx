@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Image, Video, FileText, Upload, Trash2 } from 'lucide-react';
 
 export default function CreateBlogModal({ isOpen, onClose, onSubmit, loading }) {

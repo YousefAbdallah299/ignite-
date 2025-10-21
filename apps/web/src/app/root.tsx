@@ -406,25 +406,26 @@ export function Layout({ children }: { children: ReactNode }) {
     return () => observer.disconnect();
   }, []);
   return (
-    <>
-      <Meta />
-      <Links />
-      {/* Only include LoadFonts if the plugin is enabled */}
-      {/* <LoadFonts /> */}
-      <ClientOnly loader={() => children} />
-      <HotReloadIndicator />
-      <Toaster position="bottom-right" />
-      <ScrollRestoration />
-      <Scripts />
-      {/* External scripts like FontAwesome should be in index.html, not here */}
-    </>
-  );
-}
-
-export default function App() {
-  return (
     <SessionProvider>
-      <Outlet />
+      <html lang="en">
+        <head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <Meta />
+          <Links />
+          <script type="module" src="/src/__create/dev-error-overlay.js"></script>
+          <link rel="icon" href="/src/__create/favicon.png" />
+          <LoadFonts />
+        </head>
+        <body>
+          <ClientOnly loader={() => children} />
+          <HotReloadIndicator />
+          <Toaster position="bottom-right" />
+          <ScrollRestoration />
+          <Scripts />
+          <script src="https://kit.fontawesome.com/2c15cc0cc7.js" crossOrigin="anonymous" async />
+        </body>
+      </html>
     </SessionProvider>
   );
 }

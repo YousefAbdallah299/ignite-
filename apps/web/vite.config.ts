@@ -1,93 +1,26 @@
-import * as path from 'node:path';
-import { reactRouter } from '@react-router/dev/vite';
 import { defineConfig } from 'vite';
-import babel from 'vite-plugin-babel';
+import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import { addRenderIds } from './plugins/addRenderIds';
-import { aliases } from './plugins/aliases';
-import consoleToParent from './plugins/console-to-parent';
-import { layoutWrapperPlugin } from './plugins/layouts';
-import { loadFontsFromTailwindSource } from './plugins/loadFontsFromTailwindSource';
-import { nextPublicProcessEnv } from './plugins/nextPublicProcessEnv';
-import { restart } from './plugins/restart';
-import { restartEnvFileChange } from './plugins/restartEnvFileChange';
+import path from 'node:path';
 
 export default defineConfig({
-  envPrefix: 'NEXT_PUBLIC_',
-  base: './', // ✅ ensure assets load correctly relative to index.html
-  build: {
-    target: 'es2022',
-    outDir: 'build', // ✅ match Render publish directory
-    sourcemap: false,
-    emptyOutDir: true,
-    ssr: false, // ❌ disable SSR for static SPA
-    copyPublicDir: true,
-  },
-  optimizeDeps: {
-    include: ['fast-glob', 'lucide-react'],
-    exclude: [
-      '@hono/auth-js/react',
-      '@hono/auth-js',
-      '@auth/core',
-      'hono/context-storage',
-      '@auth/core/errors',
-      'fsevents',
-      'lightningcss',
+    base: './', // ensures assets load correctly relative to index.html
+    plugins: [
+        react(),       // handles JSX + React automatically
+        tsconfigPaths() // resolves path aliases from tsconfig.json
     ],
-  },
-  logLevel: 'info',
-  plugins: [
-    nextPublicProcessEnv(),
-    restartEnvFileChange(),
-    babel({
-      include: ['src/**/*.{js,jsx,ts,tsx}'],
-      exclude: /node_modules/,
-      babelConfig: {
-        babelrc: false,
-        configFile: false,
-        plugins: ['styled-jsx/babel'],
-      },
-    }),
-    restart({
-      restart: [
-        'src/**/page.jsx',
-        'src/**/page.tsx',
-        'src/**/layout.jsx',
-        'src/**/layout.tsx',
-        'src/**/route.js',
-        'src/**/route.ts',
-      ],
-    }),
-    consoleToParent(),
-    loadFontsFromTailwindSource(),
-    addRenderIds(),
-    tsconfigPaths(),
-    aliases(),
-    layoutWrapperPlugin(),
-  ],
-  resolve: {
-    alias: {
-      lodash: 'lodash-es',
-      'npm:stripe': 'stripe',
-      stripe: path.resolve(__dirname, './src/__create/stripe'),
-      '@auth/create/react': '@hono/auth-js/react',
-      '@auth/create': path.resolve(__dirname, './src/__create/@auth/create'),
-      '@': path.resolve(__dirname, 'src'),
+    build: {
+        outDir: 'build', // output folder
+        emptyOutDir: true,
+        sourcemap: false
     },
-    dedupe: ['react', 'react-dom'],
-  },
-  clearScreen: false,
-  server: {
-    allowedHosts: true,
-    host: '0.0.0.0',
-    port: 4000,
-    hmr: { overlay: false },
-  },
-  preview: {
-    port: 4173,
-    strictPort: true,
-  },
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'src'),
+        },
+        dedupe: ['react', 'react-dom'],
+    },
+    server: {
+        hmr: false, // disable hot reload for preview/production
+    },
 });
-
-
-

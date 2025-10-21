@@ -1,3 +1,4 @@
+import React from 'react';
 import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 
 const footerLinks = {

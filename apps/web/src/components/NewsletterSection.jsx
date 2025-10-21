@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from "react";
 import { Users, Building2, ArrowRight, Check } from "lucide-react";
 
