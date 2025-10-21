@@ -21,7 +21,7 @@ import {
 } from 'react';
 import './global.css';
 
-import fetch from '@/__create/fetch';
+import fetch from '../__create/fetch.js';
 // @ts-ignore
 import { SessionProvider } from '@auth/create/react';
 import { useNavigate } from 'react-router-dom';
@@ -29,10 +29,10 @@ import { serializeError } from 'serialize-error';
 import { Toaster } from 'sonner';
 // @ts-ignore
 import { LoadFonts } from 'virtual:load-fonts.jsx';
-import { HotReloadIndicator } from '../__create/HotReload';
-import { useSandboxStore } from '../__create/hmr-sandbox-store';
-import type { Route } from './+types/root';
-import { useDevServerHeartbeat } from '../__create/useDevServerHeartbeat';
+import { HotReloadIndicator } from '../__create/HotReload.js';
+import { useSandboxStore } from '../__create/hmr-sandbox-store.js';
+import type { Route } from './+types/root.js';
+import { useDevServerHeartbeat } from '../__create/useDevServerHeartbeat.js';
 
 export const links = () => [];
 
@@ -406,25 +406,18 @@ export function Layout({ children }: { children: ReactNode }) {
     return () => observer.disconnect();
   }, []);
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
-        <Links />
-        <script type="module" src="/src/__create/dev-error-overlay.js"></script>
-        <link rel="icon" href="/src/__create/favicon.png" />
-        <LoadFonts />
-      </head>
-      <body>
-        <ClientOnly loader={() => children} />
-        <HotReloadIndicator />
-        <Toaster position="bottom-right" />
-        <ScrollRestoration />
-        <Scripts />
-        <script src="https://kit.fontawesome.com/2c15cc0cc7.js" crossOrigin="anonymous" async />
-      </body>
-    </html>
+    <>
+      <Meta />
+      <Links />
+      {/* Only include LoadFonts if the plugin is enabled */}
+      {/* <LoadFonts /> */}
+      <ClientOnly loader={() => children} />
+      <HotReloadIndicator />
+      <Toaster position="bottom-right" />
+      <ScrollRestoration />
+      <Scripts />
+      {/* External scripts like FontAwesome should be in index.html, not here */}
+    </>
   );
 }
 

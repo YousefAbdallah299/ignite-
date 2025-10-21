@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useSandboxStore } from './hmr-sandbox-store';
+import { useSandboxStore } from './hmr-sandbox-store.js';
 
 export function HotReloadIndicator() {
 	const { status: sandboxStatus } = useSandboxStore();

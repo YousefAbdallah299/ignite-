@@ -12,9 +12,9 @@
 		"lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",
-		"clean": "bun run clean:dist && bun run clean:cache",
-		"clean:dist": "rm -rf dist",
-		"clean:cache": "rm -rf node_modules/.cache",
+		"clean": "npm run clean:dist && npm run clean:cache",
+		"clean:dist": "rimraf dist",
+		"clean:cache": "rimraf node_modules/.cache",
 		"prebuild": "npm run clean && npm run typecheck",
 		"postbuild": "echo 'Build completed successfully'"
 	},

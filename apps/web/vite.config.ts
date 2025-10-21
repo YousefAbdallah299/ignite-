@@ -14,13 +14,13 @@ import { restartEnvFileChange } from './plugins/restartEnvFileChange';
 
 export default defineConfig({
   envPrefix: 'NEXT_PUBLIC_',
-  base: '/', // Use '/' for SPA routing to work correctly
+  base: './', // ✅ ensure assets load correctly relative to index.html
   build: {
     target: 'es2022',
     outDir: 'build', // ✅ match Render publish directory
     sourcemap: false,
     emptyOutDir: true,
-    ssr: false, // ensure SSR is disabled for SPA
+    ssr: false, // ❌ disable SSR for static SPA
     copyPublicDir: true,
   },
   optimizeDeps: {
@@ -61,7 +61,6 @@ export default defineConfig({
     consoleToParent(),
     loadFontsFromTailwindSource(),
     addRenderIds(),
-    reactRouter(), // client-side router for SPA
     tsconfigPaths(),
     aliases(),
     layoutWrapperPlugin(),
@@ -89,3 +88,6 @@ export default defineConfig({
     strictPort: true,
   },
 });
+
+
+

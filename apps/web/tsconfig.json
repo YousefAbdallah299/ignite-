@@ -23,7 +23,8 @@
     "strict": true,
     "allowJs": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@react-router/dev/vite": ["node_modules/@react-router/dev/dist/vite.d.ts"]
     }
   }
 }
