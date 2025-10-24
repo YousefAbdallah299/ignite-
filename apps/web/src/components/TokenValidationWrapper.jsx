@@ -24,14 +24,7 @@ export default function TokenValidationWrapper({ children, requireAuth = true })
         return;
       }
 
-      // Validate token format and expiration
-      const isValid = validateToken();
-      if (!isValid) {
-        console.log('TokenValidationWrapper: Token validation failed');
-        return;
-      }
-
-      console.log('TokenValidationWrapper: Token validation passed');
+      console.log('TokenValidationWrapper: User is authenticated');
     }
   }, [requireAuth, isAuthenticated, validateToken]);
 
@@ -67,13 +60,7 @@ export const usePageTokenValidation = (requireAuth = true) => {
         return;
       }
 
-      const isValid = validateToken();
-      if (!isValid) {
-        console.log('usePageTokenValidation: Token validation failed');
-        return;
-      }
-
-      console.log('usePageTokenValidation: Token validation passed');
+      console.log('usePageTokenValidation: User is authenticated');
     } else {
       console.log('usePageTokenValidation: Authentication not required for this page');
     }

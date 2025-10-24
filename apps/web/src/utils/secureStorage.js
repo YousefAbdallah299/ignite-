@@ -5,36 +5,35 @@ const isDevelopment = import.meta.env.VITE_APP_ENVIRONMENT !== 'production';
 
 export const SecureStorage = {
   setToken: (token) => {
-    // Use sessionStorage instead of localStorage
-    // SessionStorage is cleared when tab closes, reducing XSS risk
+    // Use localStorage for authentication tokens to persist across page refreshes
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('authToken', token);
+      localStorage.setItem('authToken', token);
     }
   },
   
   getToken: () => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('authToken');
+      return localStorage.getItem('authToken');
     }
     return null;
   },
   
   removeToken: () => {
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('authToken');
-      sessionStorage.removeItem('userData');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
     }
   },
   
   setUserData: (userData) => {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('userData', JSON.stringify(userData));
+      localStorage.setItem('userData', JSON.stringify(userData));
     }
   },
   
   getUserData: () => {
     if (typeof window !== 'undefined') {
-      const userData = sessionStorage.getItem('userData');
+      const userData = localStorage.getItem('userData');
       return userData ? JSON.parse(userData) : null;
     }
     return null;

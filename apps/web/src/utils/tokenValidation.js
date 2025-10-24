@@ -47,7 +47,14 @@ export class TokenValidationService {
   static validateAndRedirect() {
     const token = localStorage.getItem('authToken');
     
+    if (!token) {
+      this.redirectToSignIn();
+      return false;
+    }
+    
+    // Only redirect if token is clearly invalid (malformed or expired)
     if (!this.isTokenValid(token)) {
+      console.log('Token validation failed, redirecting to sign-in');
       this.redirectToSignIn();
       return false;
     }

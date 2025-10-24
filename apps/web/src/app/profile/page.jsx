@@ -108,24 +108,6 @@ export default function ProfilePage() {
     console.log('Profile page useEffect - user:', user);
     console.log('User role:', user?.role);
     
-    // Check authentication token first
-    const token = localStorage.getItem('authToken');
-    console.log('Auth token:', token);
-    console.log('Token length:', token?.length);
-    console.log('Token format check:', token?.split('.').length);
-    
-    // Only redirect if there's absolutely no token (not just malformed)
-    if (!token) {
-      console.log('No auth token found, redirecting to login');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      // Prevent infinite redirects
-      if (window.location.pathname !== '/account/signin') {
-        window.location.href = '/account/signin';
-      }
-      return;
-    }
-    
     // Wait for user to be loaded before proceeding
     if (!user) {
       console.log('User not loaded yet, waiting...');
@@ -145,7 +127,7 @@ export default function ProfilePage() {
       return;
     }
     
-    console.log('User is a candidate with token, loading profile');
+    console.log('User is a candidate, loading profile');
     loadProfile();
     loadOffers();
     loadAvailableSkills();
