@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useJobsAPI } from '@/hooks/useJobsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { usePageTokenValidation } from '@/components/TokenValidationWrapper';
+import RevealOnScroll from '@/components/RevealOnScroll';
 import {
   MapPin,
   Clock,
@@ -184,7 +185,7 @@ export default function JobDetailPage() {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back Button */}
-        <div className="mb-6">
+        <div className="mb-6 initial-fade-in">
           <a
             href="/jobs"
             className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
@@ -195,7 +196,8 @@ export default function JobDetailPage() {
         </div>
 
         {/* Job Header */}
-        <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
           <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{job.title}</h1>
@@ -272,18 +274,22 @@ export default function JobDetailPage() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
 
         {/* Job Description */}
-        <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
           <div className="prose max-w-none">
             <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{job.description}</p>
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
 
         {/* Job Details */}
-        <div className="bg-white rounded-xl border border-gray-200 p-8">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Job Details</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -333,10 +339,13 @@ export default function JobDetailPage() {
               )}
             </div>
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

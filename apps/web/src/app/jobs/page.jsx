@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import PageFadeIn from "@/components/PageFadeIn";
 import { useJobsAPI } from "@/hooks/useJobsAPI";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -335,7 +336,7 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageFadeIn className="bg-gray-50">
       <Header />
 
       {/* Hero Section */}
@@ -601,6 +602,6 @@ export default function JobsPage() {
           overflow: hidden;
         }
       `}</style>
-    </div>
+    </PageFadeIn>
   );
 }

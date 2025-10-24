@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import PageFadeIn from "@/components/PageFadeIn";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
@@ -385,7 +386,7 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageFadeIn className="bg-gray-50">
       <Header />
       
       {/* Hero Section */}
@@ -727,6 +728,6 @@ export default function CoursesPage() {
           overflow: hidden;
         }
       `}</style>
-    </div>
+    </PageFadeIn>
   );
 }

@@ -6,6 +6,7 @@ import CoursePreview from "@/components/CoursePreview";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { ArrowLeft } from "lucide-react";
+import RevealOnScroll from '@/components/RevealOnScroll';
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -141,26 +142,32 @@ export default function CourseDetailsPage() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Courses
-        </button>
+        <div className="initial-fade-in">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Courses
+          </button>
+        </div>
 
         {/* Course Preview */}
-        <CoursePreview
-          course={course}
-          isEnrolled={isEnrolled}
-          enrollmentLoading={enrollmentLoading}
-          onEnrollmentChange={handleEnrollmentChange}
-          onContinueLearning={handleContinueLearning}
-          isCandidate={isCandidate}
-        />
+        <RevealOnScroll>
+          <CoursePreview
+            course={course}
+            isEnrolled={isEnrolled}
+            enrollmentLoading={enrollmentLoading}
+            onEnrollmentChange={handleEnrollmentChange}
+            onContinueLearning={handleContinueLearning}
+            isCandidate={isCandidate}
+          />
+        </RevealOnScroll>
       </div>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import RevealOnScroll from '@/components/RevealOnScroll';
 
 export default function OffersPage() {
   const [offers, setOffers] = useState([]);
@@ -42,13 +43,16 @@ export default function OffersPage() {
     <div className="min-h-screen bg-gray-50 page-fade-in">
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">My Offers</h1>
+        <div className="initial-fade-in">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">My Offers</h1>
+        </div>
         {loading ? (
           <div className="text-gray-600">Loading...</div>
         ) : offers.length === 0 ? (
           <div className="text-gray-600">No offers yet.</div>
         ) : (
-          <div className="space-y-4">
+          <RevealOnScroll>
+            <div className="space-y-4">
             {offers.map((o) => (
               <div key={o.id} className="bg-white border border-gray-200 rounded-xl p-6 flex items-center justify-between">
                 <div>
@@ -61,10 +65,13 @@ export default function OffersPage() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          </RevealOnScroll>
         )}
       </div>
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import PageFadeIn from "@/components/PageFadeIn";
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageFadeIn className="bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 initial-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Privacy Policy</h1>
         <p className="text-gray-700 mb-4">Last updated: {new Date().toLocaleDateString()}</p>
         <div className="space-y-6 text-gray-700">
@@ -39,7 +40,7 @@ export default function PrivacyPolicyPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
-    </div>
+    </PageFadeIn>
   );
 }
 

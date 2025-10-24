@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import RevealOnScroll from "@/components/RevealOnScroll";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
@@ -177,7 +178,7 @@ export default function MyCoursesPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-green-50 via-white to-blue-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 initial-fade-in">
             <div className="flex items-center justify-center mb-4">
               <GraduationCap className="w-12 h-12 text-green-600 mr-3" />
               <h1 className="text-4xl font-bold text-gray-900">
@@ -190,7 +191,7 @@ export default function MyCoursesPage() {
           </div>
 
           {/* Back to All Courses */}
-          <div className="text-center">
+          <div className="text-center initial-fade-in">
             <a
               href="/courses"
               className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg font-semibold transition-colors shadow-sm hover:shadow-md border border-gray-200"
@@ -206,7 +207,8 @@ export default function MyCoursesPage() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <RevealOnScroll>
+            <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
                 {loading ? 'Loading...' : `${pagination.total || 0} enrolled courses`}
@@ -215,10 +217,12 @@ export default function MyCoursesPage() {
                 {courses.length > 0 ? 'Click "Continue Learning" to access course content' : 'You haven\'t enrolled in any courses yet'}
               </p>
             </div>
-          </div>
+            </div>
+          </RevealOnScroll>
 
           {/* Course Listings */}
           {courses.length > 0 ? (
+            <RevealOnScroll>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
                 <div key={course.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
@@ -301,7 +305,9 @@ export default function MyCoursesPage() {
                 </div>
               ))}
             </div>
+            </RevealOnScroll>
           ) : (
+            <RevealOnScroll>
             <div className="text-center py-16">
               <GraduationCap className="w-24 h-24 text-gray-300 mx-auto mb-6" />
               <h3 className="text-2xl font-semibold text-gray-900 mb-4">
@@ -318,11 +324,14 @@ export default function MyCoursesPage() {
                 Browse Courses
               </a>
             </div>
+            </RevealOnScroll>
           )}
         </div>
       </section>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

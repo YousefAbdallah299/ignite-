@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import RevealOnScroll from '@/components/RevealOnScroll';
+import PageFadeIn from '@/components/PageFadeIn';
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
@@ -16,10 +17,10 @@ export default function PaymentSuccessPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageFadeIn className="bg-gray-50">
       <Header />
       
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20 initial-fade-in">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-12 text-center">
           {/* Success Icon */}
           <div className="mb-8">
@@ -89,7 +90,7 @@ export default function PaymentSuccessPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
-    </div>
+    </PageFadeIn>
   );
 }
 

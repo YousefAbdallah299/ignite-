@@ -7,6 +7,7 @@ import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcas
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import RevealOnScroll from '@/components/RevealOnScroll';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useCandidatesAPI } from '@/hooks/useCandidatesAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
@@ -507,7 +508,7 @@ export default function ProfilePage() {
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8 initial-fade-in">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-6">
               <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
@@ -546,7 +547,8 @@ export default function ProfilePage() {
           {/* Main Profile Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <RevealOnScroll>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2 text-red-600" />
                 About
@@ -564,10 +566,12 @@ export default function ProfilePage() {
                   {profile.summary || 'No summary provided yet.'}
                 </p>
               )}
-            </div>
+              </div>
+            </RevealOnScroll>
 
             {/* Skills Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <RevealOnScroll>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                   <Award className="w-5 h-5 mr-2 text-red-600" />
@@ -706,10 +710,12 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
-            </div>
+              </div>
+            </RevealOnScroll>
 
             {/* Professional Details */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <RevealOnScroll>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Briefcase className="w-5 h-5 mr-2 text-red-600" />
                 Professional Details
@@ -778,11 +784,13 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
-            </div>
+              </div>
+            </RevealOnScroll>
 
             {/* Save/Cancel Buttons */}
             {isEditing && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <RevealOnScroll>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={handleSave}
@@ -806,14 +814,16 @@ export default function ProfilePage() {
                     {error}
                   </div>
                 )}
-              </div>
+                </div>
+              </RevealOnScroll>
             )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-8">
             {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <RevealOnScroll>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-4">
                 <div className="flex justify-between">
@@ -829,10 +839,12 @@ export default function ProfilePage() {
                   <span className="font-semibold">{formatDate(profile?.createdAt)}</span>
                 </div>
               </div>
-            </div>
+              </div>
+            </RevealOnScroll>
 
             {/* My Offers */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <RevealOnScroll>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">My Offers</h3>
               {offersLoading ? (
                 <div className="space-y-3">
@@ -852,12 +864,15 @@ export default function ProfilePage() {
                   ))}
                 </div>
               )}
-            </div>
+              </div>
+            </RevealOnScroll>
           </div>
         </div>
       </div>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

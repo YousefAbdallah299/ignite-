@@ -5,6 +5,7 @@ import { Check, XCircle, Clock, User, DollarSign, Calendar, Eye, Trash2, Buildin
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import RevealOnScroll from '@/components/RevealOnScroll';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
 import { usePageTokenValidation } from '@/components/TokenValidationWrapper';
@@ -331,13 +332,14 @@ export default function MyOffersPage() {
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 initial-fade-in">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
           <p className="text-gray-600">Manage your company profile and track offers sent to candidates</p>
         </div>
 
         {/* Company & Subscription Card */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-red-100 rounded-lg">
@@ -424,10 +426,12 @@ export default function MyOffersPage() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -487,10 +491,12 @@ export default function MyOffersPage() {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
 
         {/* Offers List */}
-        <div className="bg-white rounded-xl border border-gray-200">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">All Offers</h2>
           </div>
@@ -530,10 +536,13 @@ export default function MyOffersPage() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

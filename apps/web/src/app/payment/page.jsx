@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { usePaymentAPI } from '@/hooks/usePaymentAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { recruitersAPI } from '@/utils/apiClient';
+import RevealOnScroll from '@/components/RevealOnScroll';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -212,7 +213,7 @@ export default function PaymentPage() {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 initial-fade-in">
           <div className="flex items-center justify-center mb-4">
             <a
               href="/profile"
@@ -232,9 +233,10 @@ export default function PaymentPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Payment Form */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Payment Form */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Payment Method</h2>
             
             {/* Payment Method Selection */}
@@ -556,21 +558,26 @@ export default function PaymentPage() {
                 </p>
               </div>
             </div>
+            </div>
           </div>
-        </div>
+        </RevealOnScroll>
 
         {/* Terms */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
-            By proceeding, you agree to our{' '}
-            <a href="/terms" className="text-red-600 hover:text-red-700">Terms of Service</a>
-            {' '}and{' '}
-            <a href="/privacy" className="text-red-600 hover:text-red-700">Privacy Policy</a>
-          </p>
-        </div>
+        <RevealOnScroll>
+          <div className="text-center mt-8">
+            <p className="text-sm text-gray-500">
+              By proceeding, you agree to our{' '}
+              <a href="/terms" className="text-red-600 hover:text-red-700">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" className="text-red-600 hover:text-red-700">Privacy Policy</a>
+            </p>
+          </div>
+        </RevealOnScroll>
       </div>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

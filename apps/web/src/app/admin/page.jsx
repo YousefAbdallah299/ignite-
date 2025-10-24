@@ -7,6 +7,8 @@ import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
 import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
+import RevealOnScroll from '@/components/RevealOnScroll';
+import PageFadeIn from '@/components/PageFadeIn';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
@@ -586,10 +588,12 @@ export default function AdminPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 page-fade-in">
+    <PageFadeIn className="bg-gray-50">
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[calc(100vh-200px)]">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h1>
+        </div>
         {loading ? (
           <div className="text-gray-600 min-h-[600px] flex items-center justify-center">
             <div className="text-center">
@@ -599,7 +603,8 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-8 min-h-[600px]">
-            <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8">
+            <RevealOnScroll>
+              <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8">
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Courses</h2>
                 <div className="space-y-2 mb-4">
@@ -1217,12 +1222,15 @@ export default function AdminPage() {
                   </button>
                 </form>
               </section>
-            </div>
+              </div>
+            </RevealOnScroll>
           </div>
         )}
       </div>
-      <Footer />
-    </div>
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
+    </PageFadeIn>
   );
 }
 

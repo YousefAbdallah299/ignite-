@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X } from 'lucide-react';
 import { candidatesAPI, offersAPI } from '@/utils/apiClient';
+import RevealOnScroll from '@/components/RevealOnScroll';
 
 export default function CandidatePage() {
   const { isAuthenticated, isRecruiter, isAdmin } = useAuthAPI();
@@ -166,7 +167,8 @@ export default function CandidatePage() {
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-6">
               <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
@@ -195,9 +197,11 @@ export default function CandidatePage() {
               </button>
             )}
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Profile Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About Section */}
@@ -317,7 +321,8 @@ export default function CandidatePage() {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
 
       {/* Offer Modal */}
@@ -417,7 +422,9 @@ export default function CandidatePage() {
         </div>
       )}
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Check, Star, Users, Building2 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { useAuthAPI } from '@/hooks/useAuthAPI';
 
 const pricingPlans = [
   {
@@ -46,6 +48,48 @@ const pricingPlans = [
 ];
 
 export default function PricingSection() {
+  const { isAuthenticated, user, isRecruiter, isCandidate } = useAuthAPI();
+  const navigate = useNavigate();
+  
+  const handleCTAClick = (plan) => {
+    // If user is already signed in
+    if (isAuthenticated) {
+      // Check if they already have the appropriate role
+      if (plan.name === 'Job Seeker' && isCandidate) {
+        navigate('/profile');
+        return;
+      }
+      if (plan.name === 'Recruiter' && isRecruiter) {
+        navigate('/subscribe');
+        return;
+      }
+      // If they want to subscribe to recruiter but aren't one
+      if (plan.name === 'Recruiter' && !isRecruiter) {
+        navigate('/subscribe');
+        return;
+      }
+      // Job seeker plan - already signed in
+      navigate('/profile');
+    } else {
+      // Not signed in - go to sign-in page with return URL
+      if (plan.name === 'Recruiter') {
+        navigate('/account/signin', { 
+          state: { 
+            returnUrl: '/subscribe', 
+            message: 'Please sign in to subscribe to the Recruiter plan' 
+          } 
+        });
+      } else {
+        navigate('/account/signin', { 
+          state: { 
+            returnUrl: '/profile', 
+            message: 'Please sign in to get started as a Job Seeker' 
+          } 
+        });
+      }
+    }
+  };
+
   return (
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -131,16 +175,21 @@ export default function PricingSection() {
                   </div>
 
                   {/* CTA Button */}
-                  <a
-                    href={plan.ctaLink}
+                  <button
+                    onClick={() => handleCTAClick(plan)}
                     className={`block w-full text-center py-4 px-6 rounded-xl font-semibold transition-all duration-300 ${
                       isPopular
                         ? 'bg-red-600 hover:bg-red-700 text-white hover:shadow-lg'
                         : 'bg-gray-900 hover:bg-gray-800 text-white hover:shadow-lg'
                     }`}
                   >
-                    {plan.cta}
-                  </a>
+                    {isAuthenticated 
+                      ? (plan.name === 'Job Seeker' && isCandidate ? 'Go to Profile' :
+                         plan.name === 'Recruiter' && isRecruiter ? 'Manage Subscription' :
+                         plan.cta)
+                      : plan.cta
+                    }
+                  </button>
                 </div>
               </div>
             );

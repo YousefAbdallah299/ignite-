@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import RevealOnScroll from '@/components/RevealOnScroll';
+import PageFadeIn from '@/components/PageFadeIn';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 
 export default function PricingPage() {
@@ -80,7 +81,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageFadeIn className="bg-gray-50">
       <Header />
       
       <section className="py-20 bg-gray-50 initial-fade-in">
@@ -210,6 +211,6 @@ export default function PricingPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
-    </div>
+    </PageFadeIn>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import RevealOnScroll from "@/components/RevealOnScroll";
 import { jobsAPI, offersAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -217,7 +218,7 @@ export default function MyJobsPage() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 initial-fade-in">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">My Jobs</h1>
@@ -236,7 +237,8 @@ export default function MyJobsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -262,10 +264,12 @@ export default function MyJobsPage() {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
 
         {/* Jobs List */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Your Posted Jobs</h2>
           </div>
@@ -335,10 +339,12 @@ export default function MyJobsPage() {
               ))}
             </div>
           )}
-        </div>
+          </div>
+        </RevealOnScroll>
 
         {/* Pagination */}
         {totalPages > 1 && (
+          <RevealOnScroll>
           <div className="mt-8 flex items-center justify-center gap-2">
             <button
               onClick={() => fetchMyJobs(currentPage - 1)}
@@ -360,6 +366,7 @@ export default function MyJobsPage() {
               Next
             </button>
           </div>
+          </RevealOnScroll>
         )}
       </div>
 
@@ -469,7 +476,9 @@ export default function MyJobsPage() {
         </div>
       )}
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
 
       {/* Offer Modal */}
       {showOfferModal && selectedApplication && (

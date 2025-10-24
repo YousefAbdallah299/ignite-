@@ -6,6 +6,7 @@ import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
 import { BookOpen, Clock, Users, ArrowLeft, Play, CheckCircle, Lock, ChevronDown, ChevronRight, FileText, Image, Video, ArrowRight, Maximize2, Minimize2, Volume2, VolumeX, X, GraduationCap, Star } from "lucide-react";
+import RevealOnScroll from '@/components/RevealOnScroll';
 
 export default function CourseLearningPage() {
   const params = useParams();
@@ -497,7 +498,7 @@ export default function CourseLearningPage() {
       {/* Course Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between initial-fade-in">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(-1)}
@@ -526,9 +527,10 @@ export default function CourseLearningPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className={`lg:col-span-1 ${showSidebar ? 'block' : 'hidden lg:block'}`}>
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar */}
+            <div className={`lg:col-span-1 ${showSidebar ? 'block' : 'hidden lg:block'}`}>
             <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-6">
               {/* Progress */}
               <div className="mb-6">
@@ -1015,9 +1017,12 @@ export default function CourseLearningPage() {
             )}
           </div>
         </div>
+        </RevealOnScroll>
       </div>
 
-      <Footer />
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
     </div>
   );
 }

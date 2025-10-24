@@ -7,6 +7,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useJobsAPI } from '@/hooks/useJobsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
+import RevealOnScroll from '@/components/RevealOnScroll';
+import PageFadeIn from '@/components/PageFadeIn';
 
 const jobCategories = [
   "Technology",
@@ -211,17 +213,18 @@ export default function CreateJobPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 page-fade-in">
+    <PageFadeIn className="bg-gray-50">
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          <div className="mb-8">
+          <div className="mb-8 initial-fade-in">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Post a New Job</h1>
             <p className="text-gray-600">Fill in the details below to create a new job posting</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <RevealOnScroll>
+            <form onSubmit={handleSubmit} className="space-y-8">
             {/* Job Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -455,11 +458,14 @@ export default function CreateJobPage() {
                 Cancel
               </a>
             </div>
-          </form>
+            </form>
+          </RevealOnScroll>
         </div>
       </div>
 
-      <Footer />
-    </div>
+      <RevealOnScroll>
+        <Footer />
+      </RevealOnScroll>
+    </PageFadeIn>
   );
 }
