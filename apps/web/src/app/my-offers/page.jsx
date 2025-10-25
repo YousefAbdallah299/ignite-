@@ -417,7 +417,7 @@ export default function MyOffersPage() {
                   See Pricing
                 </a>
                 <a
-                  href="/subscribe"
+                  href="/payment"
                   className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />

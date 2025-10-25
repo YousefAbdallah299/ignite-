@@ -60,12 +60,12 @@ export default function PricingSection() {
         return;
       }
       if (plan.name === 'Recruiter' && isRecruiter) {
-        navigate('/subscribe');
+        navigate('/payment');
         return;
       }
       // If they want to subscribe to recruiter but aren't one
       if (plan.name === 'Recruiter' && !isRecruiter) {
-        navigate('/subscribe');
+        navigate('/payment');
         return;
       }
       // Job seeker plan - already signed in

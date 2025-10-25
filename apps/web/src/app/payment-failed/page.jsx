@@ -66,7 +66,7 @@ export default function PaymentFailedPage() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate('/subscribe')}
+              onClick={() => navigate('/payment')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
             >
               <RefreshCw className="w-5 h-5" />

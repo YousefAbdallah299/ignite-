@@ -24,7 +24,6 @@ import PaymentSuccess from './app/payment-success/page.jsx';
 import Pricing from './app/pricing/page.jsx';
 import Privacy from './app/privacy/page.jsx';
 import Profile from './app/profile/page.jsx';
-import Subscribe from './app/subscribe/page.jsx';
 import Terms from './app/terms/page.jsx';
 
 export default function App() {
@@ -52,7 +51,6 @@ export default function App() {
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/terms" element={<Terms />} />
         </Routes>
     );
