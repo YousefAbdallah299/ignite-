@@ -713,7 +713,7 @@ export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
     // Note: Payment endpoint uses /api/payments (not /api/v1/payments)
-    const url = https://ignite-qjis.onrender.com/api/v1/payments/initiate';
+    const url = 'https://ignite-qjis.onrender.com/api/v1/payments/initiate';
     const token = getAuthToken();
     
     const config = {
