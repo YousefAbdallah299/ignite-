@@ -85,7 +85,21 @@ export const useAuthAPI = () => {
       
       return response;
     } catch (err) {
-      setError(err.message || 'Login failed');
+      // Provide more descriptive error messages
+      let errorMessage = 'Login failed';
+      const errorMsg = err.message?.toLowerCase() || '';
+      
+      if (errorMsg.includes('bad credentials') || errorMsg.includes('invalid') || errorMsg.includes('401')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (errorMsg.includes('network') || errorMsg.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (errorMsg.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);

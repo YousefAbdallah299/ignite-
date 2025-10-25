@@ -22,10 +22,10 @@ export default function SignInPage() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
   
-  // Show success toast from state if user was redirected here after registration
+  // Show message from state if user was redirected here (only once)
   useEffect(() => {
-    if (location.state?.showToast && !toastShownRef.current) {
-      toast.success(location.state.message || 'Registration successful! Please sign in to continue.');
+    if (location.state?.message && !toastShownRef.current) {
+      toast.info(location.state.message);
       toastShownRef.current = true;
     }
   }, [location.state]);
@@ -44,22 +44,15 @@ export default function SignInPage() {
         toast.success('Welcome to the admin panel!');
         setTimeout(() => {
           navigate(returnUrl || '/admin');
-        }, 150);
+        }, 100);
       } else {
         toast.success('Welcome back!');
         setTimeout(() => {
           navigate(returnUrl || '/');
-        }, 150);
+        }, 100);
       }
     } catch (err) {
       console.error('Login error:', err);
-      // Show a more descriptive error message
-      const errorMessage = err.message?.toLowerCase() || '';
-      if (errorMessage.includes('invalid') || errorMessage.includes('credentials') || errorMessage.includes('email') || errorMessage.includes('password')) {
-        toast.error('Invalid email or password. Please try again.');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
     }
   };
 
@@ -71,7 +64,9 @@ export default function SignInPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in</h1>
           <p className="text-gray-600 mb-6">
-            Welcome back. Please enter your details.
+            {location.state?.message 
+              ? location.state.message 
+              : 'Welcome back. Please enter your details.'}
           </p>
 
           {error && (

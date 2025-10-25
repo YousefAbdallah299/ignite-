@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,9 +12,7 @@ import { useAuthAPI } from "@/hooks/useAuthAPI";
 export default function SignupPage() {
   const { register, loading, error, clearError } = useAuthAPI();
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const toastShownRef = useRef(false);
   
   // Get role from URL parameter, default to CANDIDATE
   const roleParam = searchParams.get('role');
@@ -25,14 +23,6 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-
-  // Show success message from navigation state (only once)
-  useEffect(() => {
-    if (location.state?.showToast && !toastShownRef.current) {
-      toast.success('Account created successfully! Please sign in to continue.');
-      toastShownRef.current = true;
-    }
-  }, [location.state]);
 
   // Update role when URL parameter changes
   useEffect(() => {
@@ -56,13 +46,12 @@ export default function SignupPage() {
         phoneNumber: phoneNumber || undefined
       });
       
-      // Redirect to sign in page with success message
-      navigate('/account/signin', { 
-        state: { 
-          message: 'Account created successfully! Please sign in to continue.',
-          showToast: true
-        } 
-      });
+      // Show success message and redirect to sign in page
+      toast.success('Account created successfully! Please sign in to continue.');
+      // Delay navigation to allow toast to be visible
+      setTimeout(() => {
+        navigate('/account/signin');
+      }, 100);
     } catch (err) {
       console.error('Registration error:', err);
     }
