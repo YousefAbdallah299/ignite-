@@ -421,8 +421,8 @@ export function Layout({ children }: { children: ReactNode }) {
         </head>
         <body>
           <ClientOnly loader={() => children} />
+          <ClientOnly loader={() => <Toaster position="bottom-right" />} />
           <HotReloadIndicator />
-          <Toaster position="bottom-right" />
           <ScrollRestoration />
           <Scripts />
           <script src="https://kit.fontawesome.com/2c15cc0cc7.js" crossOrigin="anonymous" async />

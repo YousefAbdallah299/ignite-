@@ -22,12 +22,8 @@ export default function SignInPage() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
   
-  // Show message from state if user was redirected here (only once)
+  // Show success toast from state if user was redirected here after registration
   useEffect(() => {
-    if (location.state?.message && !toastShownRef.current) {
-      toast.info(location.state.message);
-      toastShownRef.current = true;
-    }
     if (location.state?.showToast && !toastShownRef.current) {
       toast.success(location.state.message || 'Registration successful! Please sign in to continue.');
       toastShownRef.current = true;
@@ -75,9 +71,7 @@ export default function SignInPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in</h1>
           <p className="text-gray-600 mb-6">
-            {location.state?.message 
-              ? location.state.message 
-              : 'Welcome back. Please enter your details.'}
+            Welcome back. Please enter your details.
           </p>
 
           {error && (
