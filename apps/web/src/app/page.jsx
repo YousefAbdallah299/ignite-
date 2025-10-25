@@ -6,47 +6,25 @@ import TalentedProfessionals from "@/components/TalentedProfessionals";
 import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import PageFadeIn from "@/components/PageFadeIn";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function HomePage() {
   const { user, isAuthenticated, isAdmin, isRecruiter, isCandidate } = useAuthAPI();
-  const [isPageVisible, setIsPageVisible] = useState(false);
-  const [isHeroVisible, setIsHeroVisible] = useState(false);
 
+  // Scroll to top on mount
   useEffect(() => {
-    // Force page animation with JavaScript as backup
-    const timer1 = setTimeout(() => setIsPageVisible(true), 30);
-    const timer2 = setTimeout(() => setIsHeroVisible(true), 150);
-    
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   return (
-    <div 
-      className="min-h-screen bg-white"
-      style={{
-        opacity: isPageVisible ? 1 : 0,
-        transform: isPageVisible ? 'translateY(0)' : 'translateY(40px)',
-        transition: 'opacity 800ms ease-out, transform 800ms ease-out'
-      }}
-    >
+    <PageFadeIn className="bg-white">
       {/* Header Navigation */}
       <Header />
 
-      {/* Hero Section with Search - fades in immediately on page load */}
-      <div 
-        style={{
-          opacity: isHeroVisible ? 1 : 0,
-          transform: isHeroVisible ? 'translateY(0)' : 'translateY(40px)',
-          transition: 'opacity 800ms ease-out, transform 800ms ease-out'
-        }}
-      >
-        <HeroSection />
-      </div>
+      {/* Hero Section with Search */}
+      <HeroSection />
 
       {/* Statistics Section - fades in when scrolling */}
       <RevealOnScroll>
@@ -103,6 +81,6 @@ export default function HomePage() {
           overflow: hidden;
         }
       `}</style>
-    </div>
+    </PageFadeIn>
   );
 }

@@ -41,7 +41,7 @@ const pricingPlans = [
       "Priority support"
     ],
     cta: "Subscribe Now",
-    ctaLink: "/subscribe",
+    ctaLink: "/account/signup?role=recruiter",
     popular: true,
     color: "red"
   }
@@ -71,22 +71,8 @@ export default function PricingSection() {
       // Job seeker plan - already signed in
       navigate('/profile');
     } else {
-      // Not signed in - go to sign-in page with return URL
-      if (plan.name === 'Recruiter') {
-        navigate('/account/signin', { 
-          state: { 
-            returnUrl: '/subscribe', 
-            message: 'Please sign in to subscribe to the Recruiter plan' 
-          } 
-        });
-      } else {
-        navigate('/account/signin', { 
-          state: { 
-            returnUrl: '/profile', 
-            message: 'Please sign in to get started as a Job Seeker' 
-          } 
-        });
-      }
+      // Not signed in - go to signup
+      navigate(plan.ctaLink);
     }
   };
 

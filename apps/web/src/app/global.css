@@ -6,11 +6,9 @@
 @keyframes initialFadeIn {
   from { 
     opacity: 0; 
-    transform: translateY(50px); 
   }
   to { 
     opacity: 1; 
-    transform: translateY(0); 
   }
 }
 
@@ -18,11 +16,9 @@
 @keyframes pageFadeIn {
   from { 
     opacity: 0; 
-    transform: translateY(50px); 
   }
   to { 
     opacity: 1; 
-    transform: translateY(0); 
   }
 }
 
@@ -52,27 +48,29 @@
 }
 
 /* CRITICAL: Force animations to work by placing them after Tailwind with maximum specificity */
-div.page-fade-in {
+/* But exclude header and footer from the fade-in animation */
+div.page-fade-in:not(header):not(.header) {
   opacity: 0 !important;
-  transform: translateY(50px) !important;
   animation: pageFadeIn 1200ms ease-out forwards !important;
 }
 
-div.initial-fade-in {
+div.initial-fade-in:not(header):not(.header) {
   opacity: 0 !important;
-  transform: translateY(50px) !important;
   animation: initialFadeIn 1200ms ease-out 200ms forwards !important;
 }
 
 /* Additional fallback with even higher specificity */
-.min-h-screen.page-fade-in {
+.min-h-screen.page-fade-in:not(header):not(.header) {
   opacity: 0 !important;
-  transform: translateY(50px) !important;
   animation: pageFadeIn 1200ms ease-out forwards !important;
 }
 
-div.initial-fade-in {
-  opacity: 0 !important;
-  transform: translateY(50px) !important;
-  animation: initialFadeIn 1200ms ease-out 200ms forwards !important;
+/* Ensure header and footer are always visible */
+header,
+.header,
+footer,
+.footer {
+  opacity: 1 !important;
+  animation: none !important;
+  transform: none !important;
 }

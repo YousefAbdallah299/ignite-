@@ -365,6 +365,8 @@ export function Layout({ children }: { children: ReactNode }) {
         '*'
       );
     }
+    // Scroll to top on route change
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
   // Smooth fade-in on scroll (only animate elements explicitly marked)
   useEffect(() => {

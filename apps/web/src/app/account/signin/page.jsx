@@ -17,6 +17,11 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const toastShownRef = useRef(false);
   
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+  
   // Show message from state if user was redirected here (only once)
   useEffect(() => {
     if (location.state?.message && !toastShownRef.current) {
