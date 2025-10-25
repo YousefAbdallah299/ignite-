@@ -5,6 +5,8 @@ import { TokenValidationService } from './tokenValidation';
 import { SecureStorage, logger } from './secureStorage';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+// Backend base URL for API calls (without /api/v1 suffix for flexibility)
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'https://ignite-qjis.onrender.com';
 
 // Helper function to get auth token from secure storage
 const getAuthToken = () => {
@@ -712,8 +714,9 @@ export const workshopsAPI = {
 export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
-    // Use the standard API_BASE_URL which includes /api/v1
-    const url = import.meta.env.VITE_PAYMENT_API_URL || `${API_BASE_URL}/payments/initiate`;
+    // Use explicit backend URL to ensure it goes to the backend service, not the static site
+    // Default to using BACKEND_BASE_URL + /api/v1/payments/initiate
+    const url = import.meta.env.VITE_PAYMENT_API_URL || `${BACKEND_BASE_URL}/api/v1/payments/initiate`;
     const token = getAuthToken();
     
     const config = {
