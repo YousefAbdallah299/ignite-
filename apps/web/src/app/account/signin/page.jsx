@@ -41,11 +41,15 @@ export default function SignInPage() {
       
       // Check if user is admin and redirect accordingly
       if (response.role === 'ADMIN') {
-        navigate(returnUrl || '/admin');
         toast.success('Welcome to the admin panel!');
+        setTimeout(() => {
+          navigate(returnUrl || '/admin');
+        }, 100);
       } else {
-        navigate(returnUrl || '/');
         toast.success('Welcome back!');
+        setTimeout(() => {
+          navigate(returnUrl || '/');
+        }, 100);
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -99,24 +103,8 @@ export default function SignInPage() {
             </button>
           </form>
 
-          <div className="my-6 flex items-center gap-4">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-gray-500 text-sm">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-
-          <button
-            onClick={() => {
-              // Google sign-in not implemented in backend yet
-              toast.info('Google sign-in not available yet');
-            }}
-            className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-3 rounded-lg font-semibold"
-          >
-            Continue with Google
-          </button>
-
           <p className="text-sm text-gray-600 mt-6 text-center">
-            Don’t have an account? <a href="/account/register" className="text-red-600 font-medium">Create one</a>
+            Don't have an account? <a href="/account/register" className="text-red-600 font-medium">Create one</a>
           </p>
         </div>
       </div>

@@ -48,7 +48,10 @@ export default function SignupPage() {
       
       // Show success message and redirect to sign in page
       toast.success('Account created successfully! Please sign in to continue.');
-      navigate('/account/signin');
+      // Delay navigation to allow toast to be visible
+      setTimeout(() => {
+        navigate('/account/signin');
+      }, 100);
     } catch (err) {
       console.error('Registration error:', err);
     }
