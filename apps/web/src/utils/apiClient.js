@@ -712,56 +712,11 @@ export const workshopsAPI = {
 export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
-    // Note: Payment endpoint uses /api/payments (not /api/v1/payments)
-    const url = import.meta.env.VITE_PAYMENT_API_URL || 'https://ignite-qjis.onrender.com/api/payments/initiate';
-    const token = getAuthToken();
-    
-    const config = {
+    // Use the same base URL as other APIs
+    return apiCall('/payments/initiate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
       body: JSON.stringify(paymentData),
-    };
-
-    logger.log(`Making payment API call to: ${url}`);
-    logger.log(`Request config:`, config);
-
-    try {
-      const response = await fetch(url, config);
-      
-      logger.log(`Response status: ${response.status}`);
-      
-      if (response.status === 401) {
-        logger.log('Received 401 Unauthorized');
-        TokenValidationService.redirectToSignIn();
-        return;
-      }
-      
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
-          } catch (jsonError) {
-            console.error('Failed to parse error response as JSON:', jsonError);
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
-      const data = await response.json();
-      logger.log(`Payment API response:`, data);
-      return data;
-    } catch (error) {
-      logger.error('Payment API call failed:', error);
-      throw error;
-    }
+    });
   },
 };
 
