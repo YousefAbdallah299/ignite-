@@ -44,15 +44,22 @@ export default function SignInPage() {
         toast.success('Welcome to the admin panel!');
         setTimeout(() => {
           navigate(returnUrl || '/admin');
-        }, 100);
+        }, 150);
       } else {
         toast.success('Welcome back!');
         setTimeout(() => {
           navigate(returnUrl || '/');
-        }, 100);
+        }, 150);
       }
     } catch (err) {
       console.error('Login error:', err);
+      // Show a more descriptive error message
+      const errorMessage = err.message?.toLowerCase() || '';
+      if (errorMessage.includes('invalid') || errorMessage.includes('credentials') || errorMessage.includes('email') || errorMessage.includes('password')) {
+        toast.error('Invalid email or password. Please try again.');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
     }
   };
 

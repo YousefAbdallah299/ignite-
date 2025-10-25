@@ -37,7 +37,7 @@ export default function RegisterPage() {
       // Delay navigation to allow toast to be visible
       setTimeout(() => {
         navigate('/account/signin');
-      }, 100);
+      }, 1500);
     } catch (err) {
       console.error('Registration error:', err);
     }
