@@ -28,6 +28,10 @@ export default function SignInPage() {
       toast.info(location.state.message);
       toastShownRef.current = true;
     }
+    if (location.state?.showToast && !toastShownRef.current) {
+      toast.success(location.state.message || 'Registration successful! Please sign in to continue.');
+      toastShownRef.current = true;
+    }
   }, [location.state]);
 
   const handleSubmit = async (e) => {

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,12 +12,22 @@ import PageFadeIn from '@/components/PageFadeIn';
 export default function RegisterPage() {
   const { register, loading, error, clearError } = useAuthAPI();
   const navigate = useNavigate();
+  const location = useLocation();
+  const toastShownRef = useRef(false);
   const [role, setRole] = useState('CANDIDATE');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  // Show success message from navigation state (only once)
+  useEffect(() => {
+    if (location.state?.showToast && !toastShownRef.current) {
+      toast.success('Account created successfully! Please sign in to continue.');
+      toastShownRef.current = true;
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,12 +42,13 @@ export default function RegisterPage() {
         phoneNumber: phoneNumber || undefined
       });
       
-      // Show success message and redirect to sign in page
-      toast.success('Account created successfully! Please sign in to continue.');
-      // Delay navigation to allow toast to be visible
-      setTimeout(() => {
-        navigate('/account/signin');
-      }, 1500);
+      // Redirect to sign in page with success message
+      navigate('/account/signin', { 
+        state: { 
+          message: 'Account created successfully! Please sign in to continue.',
+          showToast: true
+        } 
+      });
     } catch (err) {
       console.error('Registration error:', err);
     }
