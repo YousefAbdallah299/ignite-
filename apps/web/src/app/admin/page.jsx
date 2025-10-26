@@ -517,14 +517,22 @@ export default function AdminPage() {
       // Get skills for the selected candidate only
       const candidateData = await candidatesAPI.getCandidateById(selectedCandidate.id);
       
-      // Convert Map to array format for the UI
+      // Also fetch all available skills to get their IDs
+      const allSkills = await skillsAPI.getAllSkills();
+      
+      // Convert Map to array format for the UI with proper skill IDs
       // Backend returns skills as Map<String, Integer> (skill name -> rating)
       if (candidateData.skills && typeof candidateData.skills === 'object') {
-        const skillsArray = Object.entries(candidateData.skills).map(([name, rating]) => ({
-          name: name,
-          rating: rating,
-          id: name // Use name as id for the UI
-        }));
+        const skillsArray = Object.entries(candidateData.skills).map(([name, rating]) => {
+          // Find the skill ID from all available skills by matching name
+          const skillInfo = Array.isArray(allSkills) ? allSkills.find(s => s.name === name) : null;
+          
+          return {
+            name: name,
+            rating: rating,
+            id: skillInfo?.id || name // Use skill ID if available, otherwise use name
+          };
+        });
         setAvailableSkills(skillsArray);
       } else {
         setAvailableSkills([]);
@@ -544,8 +552,8 @@ export default function AdminPage() {
 
     setRatingCandidate(true);
     try {
-      // Use skill name instead of id
-      await candidatesAPI.rateCandidateSkill(selectedCandidate.id, selectedSkill.name, skillRating);
+      // selectedSkill.id is now the actual skill ID (Long)
+      await candidatesAPI.rateCandidateSkill(selectedCandidate.id, selectedSkill.id, skillRating);
       alert(`Successfully rated ${selectedCandidate.name}'s ${selectedSkill.name} skill as ${skillRating}%`);
       
       // Reset form
@@ -1129,9 +1137,10 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
                     <select
-                      value={selectedSkill?.name || ''}
+                      value={selectedSkill?.id || ''}
                       onChange={(e) => {
-                        const skill = availableSkills.find(s => s.name === e.target.value);
+                        const skillId = e.target.value;
+                        const skill = availableSkills.find(s => s.id === skillId);
                         setSelectedSkill(skill);
                       }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1139,7 +1148,7 @@ export default function AdminPage() {
                     >
                       <option value="">Choose a skill...</option>
                       {availableSkills.map(skill => (
-                        <option key={skill.name} value={skill.name}>
+                        <option key={skill.id} value={skill.id}>
                           {skill.name} {skill.rating ? `(${skill.rating}%)` : ''}
                         </option>
                       ))}
