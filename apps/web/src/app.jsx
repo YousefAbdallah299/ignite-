@@ -29,6 +29,7 @@ import Terms from './app/terms/page.jsx';
 // ✅ Dynamic pages
 import CandidateDetails from './app/candidates/[id]/page.jsx';
 import CourseDetails from './app/courses/[id]/page.jsx';
+import CourseLearn from './app/courses/[id]/learn/page.jsx';
 
 export default function App() {
     return (
@@ -60,6 +61,7 @@ export default function App() {
             {/* ✅ Dynamic routes */}
             <Route path="/candidates/:id" element={<CandidateDetails />} />
             <Route path="/courses/:id" element={<CourseDetails />} />
+            <Route path="/courses/:id/learn" element={<CourseLearn />} />
         </Routes>
     );
 }
