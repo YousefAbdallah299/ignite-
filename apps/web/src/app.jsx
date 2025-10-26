@@ -26,6 +26,10 @@ import Privacy from './app/privacy/page.jsx';
 import Profile from './app/profile/page.jsx';
 import Terms from './app/terms/page.jsx';
 
+// ✅ Dynamic pages
+import CandidateDetails from './app/candidates/[id]/page.jsx';
+import CourseDetails from './app/courses/[id]/page.jsx';
+
 export default function App() {
     return (
         <Routes>
@@ -52,6 +56,10 @@ export default function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/terms" element={<Terms />} />
+
+            {/* ✅ Dynamic routes */}
+            <Route path="/candidates/:id" element={<CandidateDetails />} />
+            <Route path="/courses/:id" element={<CourseDetails />} />
         </Routes>
     );
 }
