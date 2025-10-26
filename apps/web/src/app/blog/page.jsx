@@ -10,31 +10,36 @@ import PageFadeIn from '@/components/PageFadeIn';
 import { useBlogsAPI } from '@/hooks/useBlogsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 
-// Helper function to format relative time
 const formatRelativeTime = (dateString) => {
-  const now = new Date();
-  const postDate = new Date(dateString);
-  const diffInSeconds = Math.floor((now - postDate) / 1000);
+  if (!dateString) return '';
 
-  if (diffInSeconds < 60) {
-    return 'just now';
-  } else if (diffInSeconds < 3600) {
+  // Convert backend UTC time to local time
+  const postDate = new Date(dateString);
+  const localPostDate = new Date(postDate.toLocaleString()); // adjust to local timezone
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - localPostDate) / 1000);
+
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
     return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-  } else if (diffInSeconds < 86400) {
+  }
+  if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
     return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  } else if (diffInSeconds < 2592000) {
+  }
+  if (diffInSeconds < 2592000) {
     const days = Math.floor(diffInSeconds / 86400);
     return `${days} day${days > 1 ? 's' : ''} ago`;
-  } else if (diffInSeconds < 31536000) {
+  }
+  if (diffInSeconds < 31536000) {
     const months = Math.floor(diffInSeconds / 2592000);
     return `${months} month${months > 1 ? 's' : ''} ago`;
-  } else {
-    const years = Math.floor(diffInSeconds / 31536000);
-    return `${years} year${years > 1 ? 's' : ''} ago`;
   }
+  const years = Math.floor(diffInSeconds / 31536000);
+  return `${years} year${years > 1 ? 's' : ''} ago`;
 };
+
 
 export default function PostsFeedPage() {
   const { getAllBlogs, likeBlog, addComment, createBlog, getBlogLikes, loading, error } = useBlogsAPI();
