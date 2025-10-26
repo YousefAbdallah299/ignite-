@@ -13,6 +13,10 @@ import PageFadeIn from '@/components/PageFadeIn';
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
   const navigate = useNavigate();
+  
+  // Backend URL constant
+  const BACKEND_URL = 'https://ignite-qjis.onrender.com/api/v1';
+  
   const [accessDenied, setAccessDenied] = useState(false);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
@@ -123,8 +127,7 @@ export default function AdminPage() {
       // Test basic connectivity first
       console.log('Testing backend connectivity...');
       try {
-        const backendUrl = 'https://ignite-qjis.onrender.com/api/v1';
-        const testResponse = await fetch(`${backendUrl}/users?page=0&size=5`, { 
+        const testResponse = await fetch(`${BACKEND_URL}/users?page=0&size=5`, { 
           method: 'GET',
           headers: headers
         });
@@ -141,7 +144,7 @@ export default function AdminPage() {
         console.log('Test response data:', testData);
         
         // Load courses from Ignite backend
-        const coursesResponse = await fetch(`${backendUrl}/courses?page=0&size=100`, {
+        const coursesResponse = await fetch(`${BACKEND_URL}/courses?page=0&size=100`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -173,7 +176,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `${backendUrl}/users/search-by-email?${userParams}`;
+          usersUrl = `${BACKEND_URL}/users/search-by-email?${userParams}`;
         } else {
           // Use regular search endpoint with role filtering
           userParams = new URLSearchParams({
@@ -189,7 +192,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `${backendUrl}/users?${userParams}`;
+          usersUrl = `${BACKEND_URL}/users?${userParams}`;
         }
 
         console.log('Fetching users from:', usersUrl);
@@ -309,8 +312,7 @@ export default function AdminPage() {
   const deleteCourse = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const backendUrl = 'https://ignite-qjis.onrender.com/api/v1';
-      const response = await fetch(`${backendUrl}/courses/${id}`, { 
+      const response = await fetch(`${BACKEND_URL}/courses/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -334,7 +336,7 @@ export default function AdminPage() {
   const deleteUser = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${backendUrl}/auth/users/${id}`, { 
+      const response = await fetch(`${BACKEND_URL}/auth/users/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -375,7 +377,6 @@ export default function AdminPage() {
     setUsersLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const backendUrl = 'https://ignite-qjis.onrender.com/api/v1';
       
       const headers = {
         'Authorization': `Bearer ${token}`,
@@ -596,7 +597,7 @@ export default function AdminPage() {
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${backendUrl}/courses`, {
+      const response = await fetch(`${BACKEND_URL}/courses`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1137,10 +1138,17 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
                     <select
-                      value={selectedSkill?.id || ''}
+                      value={selectedSkill ? String(selectedSkill.id) : ''}
                       onChange={(e) => {
                         const skillId = e.target.value;
-                        const skill = availableSkills.find(s => s.id === skillId);
+                        
+                        if (!skillId) {
+                          setSelectedSkill(null);
+                          return;
+                        }
+                        
+                        // Find the skill by matching ID
+                        const skill = availableSkills.find(s => String(s.id) === String(skillId));
                         setSelectedSkill(skill);
                       }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1148,7 +1156,7 @@ export default function AdminPage() {
                     >
                       <option value="">Choose a skill...</option>
                       {availableSkills.map(skill => (
-                        <option key={skill.id} value={skill.id}>
+                        <option key={skill.id} value={String(skill.id)}>
                           {skill.name} {skill.rating ? `(${skill.rating}%)` : ''}
                         </option>
                       ))}
