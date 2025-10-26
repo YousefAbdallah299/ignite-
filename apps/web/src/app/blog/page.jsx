@@ -13,11 +13,11 @@ import { useAuthAPI } from '@/hooks/useAuthAPI';
 const formatRelativeTime = (dateString) => {
   if (!dateString) return '';
 
-  // Convert backend UTC time to local time
-  const postDate = new Date(dateString);
-  const localPostDate = new Date(postDate.toLocaleString()); // adjust to local timezone
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - localPostDate) / 1000);
+  // Force the backend timestamp to be parsed as UTC
+  const utcDate = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+  const localDate = new Date(); // local browser time
+
+  const diffInSeconds = Math.floor((localDate.getTime() - utcDate.getTime()) / 1000);
 
   if (diffInSeconds < 60) return 'just now';
   if (diffInSeconds < 3600) {
@@ -39,6 +39,7 @@ const formatRelativeTime = (dateString) => {
   const years = Math.floor(diffInSeconds / 31536000);
   return `${years} year${years > 1 ? 's' : ''} ago`;
 };
+
 
 
 export default function PostsFeedPage() {
