@@ -516,7 +516,19 @@ export default function AdminPage() {
     try {
       // Get skills for the selected candidate only
       const candidateData = await candidatesAPI.getCandidateById(selectedCandidate.id);
-      setAvailableSkills(candidateData.skills || []);
+      
+      // Convert Map to array format for the UI
+      // Backend returns skills as Map<String, Integer> (skill name -> rating)
+      if (candidateData.skills && typeof candidateData.skills === 'object') {
+        const skillsArray = Object.entries(candidateData.skills).map(([name, rating]) => ({
+          name: name,
+          rating: rating,
+          id: name // Use name as id for the UI
+        }));
+        setAvailableSkills(skillsArray);
+      } else {
+        setAvailableSkills([]);
+      }
     } catch (error) {
       console.error('Error loading candidate skills:', error);
       setAvailableSkills([]);
@@ -532,7 +544,8 @@ export default function AdminPage() {
 
     setRatingCandidate(true);
     try {
-      await candidatesAPI.rateCandidateSkill(selectedCandidate.id, selectedSkill.id, skillRating);
+      // Use skill name instead of id
+      await candidatesAPI.rateCandidateSkill(selectedCandidate.id, selectedSkill.name, skillRating);
       alert(`Successfully rated ${selectedCandidate.name}'s ${selectedSkill.name} skill as ${skillRating}%`);
       
       // Reset form
@@ -1116,9 +1129,9 @@ export default function AdminPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
                     <select
-                      value={selectedSkill?.id || ''}
+                      value={selectedSkill?.name || ''}
                       onChange={(e) => {
-                        const skill = availableSkills.find(s => s.id === parseInt(e.target.value));
+                        const skill = availableSkills.find(s => s.name === e.target.value);
                         setSelectedSkill(skill);
                       }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -1126,8 +1139,8 @@ export default function AdminPage() {
                     >
                       <option value="">Choose a skill...</option>
                       {availableSkills.map(skill => (
-                        <option key={skill.id} value={skill.id}>
-                          {skill.name}
+                        <option key={skill.name} value={skill.name}>
+                          {skill.name} {skill.rating ? `(${skill.rating}%)` : ''}
                         </option>
                       ))}
                     </select>
