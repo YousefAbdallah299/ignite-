@@ -712,8 +712,7 @@ export const workshopsAPI = {
 export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
-    // Note: Payment endpoint uses /api/payments (not /api/v1/payments)
-    const url = 'https://ignite-qjis.onrender.com/api/v1/payments/initiate';
+    const url = `${API_BASE_URL}/payments/initiate`;
     const token = getAuthToken();
     
     const config = {
@@ -727,11 +726,13 @@ export const paymentsAPI = {
 
     logger.log(`Making payment API call to: ${url}`);
     logger.log(`Request config:`, config);
+    logger.log(`Payment data:`, paymentData);
 
     try {
       const response = await fetch(url, config);
       
       logger.log(`Response status: ${response.status}`);
+      logger.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
       
       if (response.status === 401) {
         logger.log('Received 401 Unauthorized');
@@ -747,9 +748,13 @@ export const paymentsAPI = {
           try {
             const errorData = await response.json();
             errorMessage = errorData.message || errorMessage;
+            logger.error('Payment API error:', errorData);
           } catch (jsonError) {
             console.error('Failed to parse error response as JSON:', jsonError);
           }
+        } else {
+          const errorText = await response.text();
+          logger.error('Non-JSON error response:', errorText.substring(0, 200));
         }
         
         throw new Error(errorMessage);
@@ -757,6 +762,27 @@ export const paymentsAPI = {
       
       const data = await response.json();
       logger.log(`Payment API response:`, data);
+      
+      // Validate the response data
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid payment response from server');
+      }
+      
+      // Check if iframeUrl is present and valid
+      if (data.iframeUrl) {
+        logger.log(`Payment iframe URL: ${data.iframeUrl}`);
+        
+        // Validate URL format
+        try {
+          new URL(data.iframeUrl);
+        } catch (urlError) {
+          logger.error('Invalid iframe URL format:', data.iframeUrl);
+          throw new Error('Invalid payment gateway URL returned from server');
+        }
+      } else {
+        logger.warn('No iframeUrl in payment response:', data);
+      }
+      
       return data;
     } catch (error) {
       logger.error('Payment API call failed:', error);

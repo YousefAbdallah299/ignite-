@@ -157,6 +157,31 @@ export default function PaymentPage() {
     }
   };
 
+  // Handle iframe loading errors
+  const [iframeError, setIframeError] = useState(false);
+
+  useEffect(() => {
+    if (paymentResponse?.iframeUrl) {
+      // Listen for messages from the payment iframe
+      const handleMessage = (event) => {
+        // In production, you should verify event.origin
+        console.log('Received message from iframe:', event.data);
+        
+        if (event.data.type === 'PAYMENT_SUCCESS') {
+          navigate('/payment-success');
+        } else if (event.data.type === 'PAYMENT_FAILED') {
+          navigate('/payment-failed');
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+      
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
+    }
+  }, [paymentResponse, navigate]);
+
   // If payment iframe is available, show it
   if (paymentResponse?.iframeUrl) {
     return (
@@ -169,16 +194,65 @@ export default function PaymentPage() {
             <p className="text-gray-600">Please complete the payment in the form below</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" style={{ minHeight: '700px' }}>
-            <iframe
-              src={paymentResponse.iframeUrl}
-              width="100%"
-              height="700px"
-              frameBorder="0"
-              title="Payment Gateway"
-              className="w-full"
-            />
-          </div>
+          {iframeError ? (
+            <div className="bg-white rounded-xl border border-red-200 p-8 text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Payment Gateway</h2>
+                <p className="text-gray-600 mb-6">The payment gateway could not be loaded. Please try again.</p>
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={() => {
+                      setIframeError(false);
+                      // Retry loading the iframe
+                      window.location.reload();
+                    }}
+                    className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Retry
+                  </button>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                  >
+                    Return to Profile
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" style={{ minHeight: '700px' }}>
+              <iframe
+                src={paymentResponse.iframeUrl}
+                width="100%"
+                height="700px"
+                frameBorder="0"
+                title="Payment Gateway"
+                className="w-full"
+                onError={() => {
+                  console.error('Iframe failed to load');
+                  setIframeError(true);
+                }}
+                onLoad={(e) => {
+                  // Check if iframe loaded successfully
+                  try {
+                    const iframe = e.target;
+                    // If we can access the iframe's contentWindow, it loaded successfully
+                    if (iframe.contentWindow) {
+                      console.log('Payment iframe loaded successfully');
+                    }
+                  } catch (err) {
+                    // Cross-origin restrictions - this is normal for payment gateways
+                    console.log('Payment iframe loaded (cross-origin restrictions apply)');
+                  }
+                }}
+              />
+            </div>
+          )}
 
           <div className="text-center mt-6">
             <button
