@@ -270,7 +270,7 @@ export default function PostsFeedPage() {
               <div className="text-gray-900 whitespace-pre-wrap break-words mb-4">{post.content}</div>
               {post.mediaUrl && post.mediaType === 'IMAGE' && (
                 <img 
-                  src={`http://localhost:8080${post.mediaUrl}`} 
+                  src={`https://ignite-7e2w.onrender.com${post.mediaUrl}`} 
                   alt="Post media" 
                   className="w-full h-64 object-cover rounded-lg mb-4" 
                   onError={(e) => {
@@ -284,7 +284,7 @@ export default function PostsFeedPage() {
               )}
               {post.mediaUrl && post.mediaType === 'VIDEO' && (
                 <video 
-                  src={`http://localhost:8080${post.mediaUrl}`} 
+                  src={`https://ignite-7e2w.onrender.com${post.mediaUrl}`} 
                   controls 
                   className="w-full h-64 rounded-lg mb-4"
                   onError={(e) => {
