@@ -694,8 +694,8 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-8 min-h-[600px]">
             <RevealOnScroll>
-              <div className="grid grid-cols-1 xl:grid-cols-5 lg:grid-cols-2 gap-8">
-              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1 xl:col-span-2">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-2">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Courses</h2>
                 <div className="space-y-2 mb-4">
                   {courses.map((c) => (
@@ -946,7 +946,7 @@ export default function AdminPage() {
                 </form>
               </section>
 
-              <section className="bg-white border border-gray-200 rounded-xl p-6">
+              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-lg font-semibold text-gray-900">Users ({totalElements})</h2>
@@ -1089,7 +1089,7 @@ export default function AdminPage() {
               </section>
 
               {/* Skill Rating Section */}
-              <section className="bg-white border border-gray-200 rounded-xl p-6">
+              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Rate Candidate Skills</h2>
                 <div className="space-y-4">
                   {/* Candidate Selection */}
@@ -1197,7 +1197,7 @@ export default function AdminPage() {
               </section>
 
               {/* Workshop Invite Section */}
-              <section className="bg-white border border-gray-200 rounded-xl p-6">
+              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Workshop Invitations</h2>
                 <form onSubmit={sendWorkshopInvite} className="space-y-3">
                   <div>
