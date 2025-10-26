@@ -46,15 +46,6 @@ const apiCall = async (endpoint, options = {}) => {
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
-  
-  // Debug logging
-  console.log('🔍 apiCall Debug:', {
-    API_BASE_URL,
-    endpoint,
-    fullUrl: url,
-    envVar: import.meta.env.VITE_API_BASE_URL,
-  });
-  
   const isFormData = options.body instanceof FormData;
   const defaultHeaders = createHeaders(options.includeAuth !== false, isFormData);
   const config = {

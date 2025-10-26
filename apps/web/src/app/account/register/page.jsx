@@ -40,6 +40,8 @@ export default function RegisterPage() {
       }, 100);
     } catch (err) {
       console.error('Registration error:', err);
+      // Show error toast
+      toast.error(err.message || 'Registration failed. Please try again.');
     }
   };
 

@@ -190,6 +190,7 @@ export default function CreateJobPage() {
       window.location.href = '/jobs';
     } catch (err) {
       console.error('Error creating job:', err);
+      toast.error(err.message || 'Failed to create job. Please try again.');
       setError(err.message || 'Failed to create job');
     } finally {
       setSaving(false);

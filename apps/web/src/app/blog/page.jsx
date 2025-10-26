@@ -150,6 +150,7 @@ export default function PostsFeedPage() {
       }));
     } catch (err) {
       console.error('Error toggling like:', err);
+      toast.error('Failed to toggle like. Please try again.');
     }
   };
 

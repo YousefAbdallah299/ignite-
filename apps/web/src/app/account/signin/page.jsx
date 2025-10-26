@@ -53,6 +53,8 @@ export default function SignInPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
+      // Show error toast
+      toast.error(err.message || 'Login failed. Please try again.');
     }
   };
 
