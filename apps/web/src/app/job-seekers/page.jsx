@@ -107,7 +107,7 @@ function SeekerCard({ seeker, onOpenOfferModal, sendingOfferId, hasOfferSent, us
       <div className="pt-4 border-t border-gray-100">
         <div className="flex gap-2">
           <button
-            onClick={() => window.open(`/candidates/${seeker.id}`, '_blank')}
+            onClick={() => window.open(`/candidates/${seeker.candidateProfileId}`, '_blank')}
             className="flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
           >
             View Profile
