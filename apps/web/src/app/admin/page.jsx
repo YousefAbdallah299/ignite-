@@ -397,7 +397,7 @@ export default function AdminPage() {
           userParams.append('role', selectedRole);
         }
         
-        usersUrl = `${backendUrl}/users/search-by-email?${userParams}`;
+        usersUrl = `${BACKEND_URL}/users/search-by-email?${userParams}`;
       } else {
         userParams = new URLSearchParams({
           page: currentPage.toString(),
@@ -412,7 +412,7 @@ export default function AdminPage() {
           userParams.append('role', selectedRole);
         }
         
-        usersUrl = `${backendUrl}/users?${userParams}`;
+        usersUrl = `${BACKEND_URL}/users?${userParams}`;
       }
 
       const response = await fetch(usersUrl, { headers });
