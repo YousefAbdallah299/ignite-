@@ -712,7 +712,8 @@ export const workshopsAPI = {
 export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
-    const url = `${API_BASE_URL}/payments/initiate`;
+    // HARDCODE absolute URL to prevent React Router from intercepting
+    const url = 'https://ignite-qjis.onrender.com/api/v1/payments/initiate';
     const token = getAuthToken();
     
     const config = {
@@ -724,12 +725,16 @@ export const paymentsAPI = {
       body: JSON.stringify(paymentData),
     };
 
-    logger.log(`Making payment API call to: ${url}`);
-    logger.log(`Request config:`, config);
-    logger.log(`Payment data:`, paymentData);
+    console.log('🔍 Payment API Debug:', {
+      url,
+      method: 'POST',
+      hasToken: !!token,
+      paymentData,
+    });
 
     try {
-      const response = await fetch(url, config);
+      // Use window.fetch to bypass the custom fetch wrapper
+      const response = await window.fetch(url, config);
       
       logger.log(`Response status: ${response.status}`);
       logger.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
