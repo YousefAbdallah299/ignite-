@@ -17,6 +17,7 @@ export default function AdminPage() {
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [emailQuery, setEmailQuery] = useState('');
@@ -281,19 +282,34 @@ export default function AdminPage() {
     return () => clearTimeout(timer);
   }, [emailQuery]);
 
-  useEffect(() => { load(); }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
+  // Initial load
+  useEffect(() => { 
+    load(); 
+  }, []);
+
+  // Load users separately when filters change
+  useEffect(() => { 
+    loadUsers(); 
+  }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
   
-  // Load candidates and skills for skill rating
+  // Load candidates for skill rating
   useEffect(() => {
     if (isAdmin) {
       loadCandidates();
-      loadAvailableSkills();
     }
   }, [isAdmin]);
+
+  // Load skills only when a candidate is selected
+  useEffect(() => {
+    if (selectedCandidate) {
+      loadAvailableSkills();
+    }
+  }, [selectedCandidate]);
 
   const deleteCourse = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
+      const backendUrl = 'https://ignite-qjis.onrender.com/api/v1';
       const response = await fetch(`${backendUrl}/courses/${id}`, { 
         method: 'DELETE',
         headers: {
@@ -318,7 +334,7 @@ export default function AdminPage() {
   const deleteUser = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${backendUrl}auth/users/${id}`, { 
+      const response = await fetch(`${backendUrl}/auth/users/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -352,6 +368,72 @@ export default function AdminPage() {
   const handleRoleChange = (e) => {
     setSelectedRole(e.target.value);
     setCurrentPage(0); // Reset to first page when filtering
+  };
+
+  // Separate function to load only users
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const backendUrl = 'https://ignite-qjis.onrender.com/api/v1';
+      
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      let userParams;
+      let usersUrl;
+      
+      if (debouncedEmailQuery.trim()) {
+        userParams = new URLSearchParams({
+          emailPart: debouncedEmailQuery.trim(),
+          page: currentPage.toString(),
+          size: '20'
+        });
+        
+        if (selectedRole) {
+          userParams.append('role', selectedRole);
+        }
+        
+        usersUrl = `${backendUrl}/users/search-by-email?${userParams}`;
+      } else {
+        userParams = new URLSearchParams({
+          page: currentPage.toString(),
+          size: '20'
+        });
+        
+        if (debouncedSearchQuery.trim()) {
+          userParams.append('query', debouncedSearchQuery.trim());
+        }
+        
+        if (selectedRole) {
+          userParams.append('role', selectedRole);
+        }
+        
+        usersUrl = `${backendUrl}/users?${userParams}`;
+      }
+
+      const response = await fetch(usersUrl, { headers });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
+      const u = await response.json();
+      
+      setUsers(Array.isArray(u.content) ? u.content : []);
+      setTotalPages(u.totalPages || 0);
+      setTotalElements(u.totalElements || 0);
+      
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -424,13 +506,20 @@ export default function AdminPage() {
     }
   };
 
-  // Load available skills
+  // Load available skills for selected candidate only
   const loadAvailableSkills = async () => {
+    if (!selectedCandidate) {
+      setAvailableSkills([]);
+      return;
+    }
+    
     try {
-      const response = await skillsAPI.getAllSkills();
-      setAvailableSkills(response || []);
+      // Get skills for the selected candidate only
+      const candidateData = await candidatesAPI.getCandidateById(selectedCandidate.id);
+      setAvailableSkills(candidateData.skills || []);
     } catch (error) {
-      console.error('Error loading skills:', error);
+      console.error('Error loading candidate skills:', error);
+      setAvailableSkills([]);
     }
   };
 
@@ -486,7 +575,7 @@ export default function AdminPage() {
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
-      const response = await fetch('${backendUrl}/courses', {
+      const response = await fetch(`${backendUrl}/courses`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -605,8 +694,8 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-8 min-h-[600px]">
             <RevealOnScroll>
-              <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8">
-              <section className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="grid grid-cols-1 xl:grid-cols-5 lg:grid-cols-2 gap-8">
+              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1 xl:col-span-2">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Courses</h2>
                 <div className="space-y-2 mb-4">
                   {courses.map((c) => (
@@ -909,7 +998,7 @@ export default function AdminPage() {
                 
                 <div className="max-h-96 overflow-y-auto space-y-2 mb-4 min-h-[200px]">
                   {console.log('Rendering users list - users.length:', users.length, 'users:', users)}
-                  {loading ? (
+                  {usersLoading ? (
                     <div className="space-y-2">
                       {[...Array(5)].map((_, i) => (
                         <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
