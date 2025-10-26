@@ -22,8 +22,6 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [emailQuery, setEmailQuery] = useState('');
   const [debouncedEmailQuery, setDebouncedEmailQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -267,15 +265,6 @@ export default function AdminPage() {
     }
   };
 
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   // Debounce email query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -293,7 +282,7 @@ export default function AdminPage() {
   // Load users separately when filters change
   useEffect(() => { 
     loadUsers(); 
-  }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
+  }, [debouncedEmailQuery, selectedRole, currentPage]);
   
   // Load candidates for skill rating
   useEffect(() => {
@@ -357,11 +346,6 @@ export default function AdminPage() {
     }
   };
   
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(0); // Reset to first page when searching
-  };
-
   const handleEmailSearch = (e) => {
     setEmailQuery(e.target.value);
     setCurrentPage(0); // Reset to first page when searching
@@ -403,10 +387,6 @@ export default function AdminPage() {
           page: currentPage.toString(),
           size: '20'
         });
-        
-        if (debouncedSearchQuery.trim()) {
-          userParams.append('query', debouncedSearchQuery.trim());
-        }
         
         if (selectedRole) {
           userParams.append('role', selectedRole);
@@ -992,28 +972,16 @@ export default function AdminPage() {
                       </select>
                     </div>
                     
-                    {/* Search Inputs - Stacked for better space usage */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-medium text-gray-700 w-16">Name:</label>
-                        <input
-                          type="text"
-                          placeholder="Search by name..."
-                          value={searchQuery}
-                          onChange={handleSearch}
-                          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-medium text-gray-700 w-16">Email:</label>
-                        <input
-                          type="email"
-                          placeholder="Search by email..."
-                          value={emailQuery}
-                          onChange={handleEmailSearch}
-                          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        />
-                      </div>
+                    {/* Email Search Input */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-700 w-16">Email:</label>
+                      <input
+                        type="email"
+                        placeholder="Search by email..."
+                        value={emailQuery}
+                        onChange={handleEmailSearch}
+                        className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
                     </div>
                   </div>
                 </div>
