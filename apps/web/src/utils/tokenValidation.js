@@ -28,6 +28,11 @@ export class TokenValidationService {
     }
   }
 
+  // Alias method for backward compatibility
+  static validateToken() {
+    return this.validateAndRedirect();
+  }
+
   static clearAuthData() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');

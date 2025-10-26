@@ -122,7 +122,8 @@ export default function AdminPage() {
       // Test basic connectivity first
       console.log('Testing backend connectivity...');
       try {
-        const testResponse = await fetch('https://ignite-7e2w.onrender.com/api/v1/users?page=0&size=5', { 
+        const backendUrl = 'https://ignite-qjis.onrender.com/api/v1';
+        const testResponse = await fetch(`${backendUrl}/users?page=0&size=5`, { 
           method: 'GET',
           headers: headers
         });
@@ -139,7 +140,7 @@ export default function AdminPage() {
         console.log('Test response data:', testData);
         
         // Load courses from Ignite backend
-        const coursesResponse = await fetch('https://ignite-7e2w.onrender.com/api/v1/courses?page=0&size=100', {
+        const coursesResponse = await fetch(`${backendUrl}/courses?page=0&size=100`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -171,7 +172,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `https://ignite-7e2w.onrender.com/api/v1/users/search-by-email?${userParams}`;
+          usersUrl = `${backendUrl}/users/search-by-email?${userParams}`;
         } else {
           // Use regular search endpoint with role filtering
           userParams = new URLSearchParams({
@@ -187,7 +188,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `https://ignite-7e2w.onrender.com/api/v1/users?${userParams}`;
+          usersUrl = `${backendUrl}/users?${userParams}`;
         }
 
         console.log('Fetching users from:', usersUrl);
@@ -293,7 +294,7 @@ export default function AdminPage() {
   const deleteCourse = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`https://ignite-7e2w.onrender.com/api/v1/courses/${id}`, { 
+      const response = await fetch(`${backendUrl}/courses/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -317,7 +318,7 @@ export default function AdminPage() {
   const deleteUser = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`https://ignite-7e2w.onrender.com/api/v1/auth/users/${id}`, { 
+      const response = await fetch(`${backendUrl}auth/users/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -485,7 +486,7 @@ export default function AdminPage() {
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
-      const response = await fetch('https://ignite-7e2w.onrender.com/api/v1/courses', {
+      const response = await fetch('${backendUrl}/courses', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
