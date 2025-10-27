@@ -240,7 +240,16 @@ export default function Header() {
                 {/* Dropdown Menu */}
                 {isUserDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    {isAdmin ? null : (
+                    {isAdmin ? (
+                      <a
+                        href="/admin"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        <Shield className="w-4 h-4 mr-3" />
+                        Admin Panel
+                      </a>
+                    ) : (
                       isRecruiter ? (
                         <>
                           <a
@@ -399,7 +408,15 @@ export default function Header() {
                         Welcome, {getFirstName()}
                       </div>
                     </div>
-                    {isAdmin ? null : (
+                    {isAdmin ? (
+                      <a
+                        href="/admin"
+                        className="flex items-center text-gray-500 hover:text-red-600 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                      >
+                        <Shield className="w-4 h-4 mr-3" />
+                        Admin Panel
+                      </a>
+                    ) : (
                       isRecruiter ? (
                         <>
                           <a

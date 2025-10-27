@@ -56,6 +56,7 @@ export default function AdminPage() {
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [skillRating, setSkillRating] = useState(50);
   const [ratingCandidate, setRatingCandidate] = useState(false);
+  const [showSkillRatingModal, setShowSkillRatingModal] = useState(false);
 
   // Available user roles
   const userRoles = [
@@ -537,7 +538,8 @@ export default function AdminPage() {
       await candidatesAPI.rateCandidateSkill(selectedCandidate.id, selectedSkill.id, skillRating);
       alert(`Successfully rated ${selectedCandidate.name}'s ${selectedSkill.name} skill as ${skillRating}%`);
       
-      // Reset form
+      // Close modal and reset form
+      setShowSkillRatingModal(false);
       setSelectedCandidate(null);
       setSelectedSkill(null);
       setSkillRating(50);
@@ -1017,6 +1019,7 @@ export default function AdminPage() {
                   ) : (
                     users.map((u) => {
                       console.log('Rendering user:', u);
+                      const isCandidate = u.role === 'CANDIDATE';
                       return (
                     <div key={u.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start justify-between">
@@ -1036,7 +1039,24 @@ export default function AdminPage() {
                           </div>
                           <p className="text-sm text-gray-600 mb-1">{u.email}</p>
                           {u.phoneNumber && (
-                            <p className="text-sm text-gray-500">{u.phoneNumber}</p>
+                            <p className="text-sm text-gray-500 mb-2">{u.phoneNumber}</p>
+                          )}
+                          
+                          {/* Skill Rating Button for Candidates */}
+                          {isCandidate && (
+                            <button
+                              onClick={() => {
+                                // Set this candidate for skill rating
+                                const candidate = candidates.find(c => c.userId === u.id);
+                                if (candidate) {
+                                  setSelectedCandidate(candidate);
+                                  setShowSkillRatingModal(true);
+                                }
+                              }}
+                              className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1 mt-2"
+                            >
+                              📊 Rate Skills
+                            </button>
                           )}
                         </div>
                         <button 
@@ -1076,122 +1096,6 @@ export default function AdminPage() {
                     </div>
                   </div>
                 )}
-              </section>
-
-              {/* Skill Rating Section */}
-              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Rate Candidate Skills</h2>
-                <div className="space-y-4">
-                  {/* Candidate Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Candidate</label>
-                    <select
-                      value={selectedCandidate?.id || ''}
-                      onChange={(e) => {
-                        const candidate = candidates.find(c => c.id === parseInt(e.target.value));
-                        setSelectedCandidate(candidate);
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    >
-                      <option value="">Choose a candidate...</option>
-                      {candidates.map(candidate => (
-                        <option key={candidate.id} value={candidate.id}>
-                          {candidate.name} - {candidate.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Skill Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
-                    <select
-                      value={selectedSkill ? String(selectedSkill.id) : ''}
-                      onChange={(e) => {
-                        const skillId = e.target.value;
-                        
-                        if (!skillId) {
-                          setSelectedSkill(null);
-                          return;
-                        }
-                        
-                        // Find the skill by matching ID
-                        const skill = availableSkills.find(s => String(s.id) === String(skillId));
-                        setSelectedSkill(skill);
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      disabled={!selectedCandidate}
-                    >
-                      <option value="">Choose a skill...</option>
-                      {availableSkills.map(skill => (
-                        <option key={skill.id} value={String(skill.id)}>
-                          {skill.name} {skill.rating ? `(${skill.rating}%)` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Rating Slider */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Skill Rating: {skillRating}%
-                    </label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="100"
-                      value={skillRating}
-                      onChange={(e) => setSkillRating(parseInt(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                      disabled={!selectedSkill}
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>1%</span>
-                      <span>50%</span>
-                      <span>100%</span>
-                    </div>
-                  </div>
-
-                  {/* Current Skills Display */}
-                  {selectedCandidate && selectedCandidate.skills && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Current Skills</label>
-                      <div className="bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
-                        {Object.entries(selectedCandidate.skills).length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(selectedCandidate.skills).map(([skill, rating]) => (
-                              <span key={skill} className={`px-2 py-1 rounded text-sm ${
-                                rating === 0 
-                                  ? 'bg-gray-100 text-gray-600' 
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {skill}: {rating === 0 ? 'unverified' : `${rating}% verified`}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-gray-500 text-sm">No skills rated yet</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Submit Button */}
-                  <button
-                    onClick={rateCandidateSkill}
-                    disabled={!selectedCandidate || !selectedSkill || ratingCandidate}
-                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
-                  >
-                    {ratingCandidate ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                        Rating...
-                      </div>
-                    ) : (
-                      'Rate Skill'
-                    )}
-                  </button>
-                </div>
               </section>
 
               {/* Workshop Invite Section */}
@@ -1315,6 +1219,130 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      
+      {/* Skill Rating Modal */}
+      {showSkillRatingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-gray-900">Rate Candidate Skills</h2>
+              <button
+                onClick={() => {
+                  setShowSkillRatingModal(false);
+                  setSelectedCandidate(null);
+                  setSelectedSkill(null);
+                  setSkillRating(50);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Candidate Info */}
+              {selectedCandidate && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Candidate:</p>
+                  <p className="text-lg font-semibold text-gray-900">{selectedCandidate.name}</p>
+                  <p className="text-sm text-gray-600">{selectedCandidate.title}</p>
+                </div>
+              )}
+              
+              {/* Skill Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
+                <select
+                  value={selectedSkill ? String(selectedSkill.id) : ''}
+                  onChange={(e) => {
+                    const skillId = e.target.value;
+                    
+                    if (!skillId) {
+                      setSelectedSkill(null);
+                      return;
+                    }
+                    
+                    // Find the skill by matching ID
+                    const skill = availableSkills.find(s => String(s.id) === String(skillId));
+                    setSelectedSkill(skill);
+                  }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  disabled={!selectedCandidate}
+                >
+                  <option value="">Choose a skill...</option>
+                  {availableSkills.map(skill => (
+                    <option key={skill.id} value={String(skill.id)}>
+                      {skill.name} {skill.rating ? `(${skill.rating}%)` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Rating Slider */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Skill Rating: {skillRating}%
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={skillRating}
+                  onChange={(e) => setSkillRating(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  disabled={!selectedSkill}
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1%</span>
+                  <span>50%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              {/* Current Skills Display */}
+              {selectedCandidate && selectedCandidate.skills && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Skills</label>
+                  <div className="bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
+                    {Object.entries(selectedCandidate.skills).length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(selectedCandidate.skills).map(([skill, rating]) => (
+                          <span key={skill} className={`px-2 py-1 rounded text-sm ${
+                            rating === 0 
+                              ? 'bg-gray-100 text-gray-600' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {skill}: {rating === 0 ? 'unverified' : `${rating}% verified`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No skills rated yet</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                onClick={rateCandidateSkill}
+                disabled={!selectedCandidate || !selectedSkill || ratingCandidate}
+                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg text-sm font-semibold"
+              >
+                {ratingCandidate ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                    Rating...
+                  </div>
+                ) : (
+                  'Rate Skill'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
