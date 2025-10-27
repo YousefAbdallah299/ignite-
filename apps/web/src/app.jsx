@@ -32,6 +32,8 @@ import JobCreate from './app/jobs/create/page.jsx';
 import CandidateDetails from './app/candidates/[id]/page.jsx';
 import CourseDetails from './app/courses/[id]/page.jsx';
 import CourseLearn from './app/courses/[id]/learn/page.jsx';
+import JobDetails from './app/jobs/[id]/page.jsx';
+
 
 export default function App() {
     return (
@@ -66,6 +68,8 @@ export default function App() {
             <Route path="/candidates/:id" element={<CandidateDetails />} />
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/courses/:id/learn" element={<CourseLearn />} />
+            <Route path="/jobs/:id" element={<JobDetails />} />
+
         </Routes>
     );
 }
