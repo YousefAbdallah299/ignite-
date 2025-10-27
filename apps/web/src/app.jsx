@@ -25,6 +25,8 @@ import Pricing from './app/pricing/page.jsx';
 import Privacy from './app/privacy/page.jsx';
 import Profile from './app/profile/page.jsx';
 import Terms from './app/terms/page.jsx';
+import JobCreate from './app/jobs/create/page.jsx';
+
 
 // ✅ Dynamic pages
 import CandidateDetails from './app/candidates/[id]/page.jsx';
@@ -57,6 +59,8 @@ export default function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/jobs/create" element={<JobCreate />} />
+
 
             {/* ✅ Dynamic routes */}
             <Route path="/candidates/:id" element={<CandidateDetails />} />
