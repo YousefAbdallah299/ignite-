@@ -278,14 +278,17 @@ export default function JobDetailPage() {
         </RevealOnScroll>
 
         {/* Job Description */}
-        <RevealOnScroll>
-          <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
-          <div className="prose max-w-none">
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{job.description}</p>
-          </div>
-          </div>
-        </RevealOnScroll>
+<RevealOnScroll>
+  <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8 overflow-hidden">
+    <h2 className="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
+    <div className="prose max-w-none break-words">
+      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-hidden text-ellipsis">
+        {job.description}
+      </p>
+    </div>
+  </div>
+</RevealOnScroll>
+
 
         {/* Job Details */}
         <RevealOnScroll>
