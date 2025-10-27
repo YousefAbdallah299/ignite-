@@ -697,6 +697,7 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-8 min-h-[600px]">
+            {/* First Row: Courses and Workshop */}
             <RevealOnScroll>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-2">
@@ -950,7 +951,128 @@ export default function AdminPage() {
                 </form>
               </section>
 
+              {/* Workshop Invite Section */}
               <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Workshop Invitations</h2>
+                <form onSubmit={sendWorkshopInvite} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Workshop Name</label>
+                    <input
+                      type="text"
+                      value={workshopInvite.name}
+                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, name: e.target.value })}
+                      placeholder="Enter workshop name"
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      value={workshopInvite.description}
+                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, description: e.target.value })}
+                      placeholder="Enter workshop description"
+                      className="w-full p-2 border border-gray-300 rounded-lg min-h-16 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Invitation Link</label>
+                    <input
+                      type="url"
+                      value={workshopInvite.invitationLink}
+                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, invitationLink: e.target.value })}
+                      placeholder="Enter meeting/invitation link"
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Start Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={workshopInvite.startDate}
+                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, startDate: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Recipients</label>
+                    <div className="space-y-2">
+                      {/* Email Input */}
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={emailInput}
+                          onChange={(e) => setEmailInput(e.target.value)}
+                          placeholder="Enter recipient email"
+                          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addEmail();
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={addEmail}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      {/* Selected Emails */}
+                      {workshopInvite.recipientEmails.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-600">Recipients ({workshopInvite.recipientEmails.length}):</p>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {workshopInvite.recipientEmails.map((email, index) => (
+                              <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
+                                <span className="text-gray-700 truncate flex-1 mr-2">{email}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeEmail(email)}
+                                  className="text-red-600 hover:text-red-800 font-medium"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={sendingInvite || workshopInvite.recipientEmails.length === 0}
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                  >
+                    {sendingInvite ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                        Sending...
+                      </div>
+                    ) : (
+                      'Send Workshop Invitations'
+                    )}
+                  </button>
+                </form>
+              </section>
+              </div>
+            </RevealOnScroll>
+
+            {/* Second Row: Users */}
+            <RevealOnScroll>
+              <section className="bg-white border border-gray-200 rounded-xl p-6 w-full">
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-lg font-semibold text-gray-900">Users ({totalElements})</h2>
@@ -1097,124 +1219,6 @@ export default function AdminPage() {
                   </div>
                 )}
               </section>
-
-              {/* Workshop Invite Section */}
-              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Workshop Invitations</h2>
-                <form onSubmit={sendWorkshopInvite} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Workshop Name</label>
-                    <input
-                      type="text"
-                      value={workshopInvite.name}
-                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, name: e.target.value })}
-                      placeholder="Enter workshop name"
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                    <textarea
-                      value={workshopInvite.description}
-                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, description: e.target.value })}
-                      placeholder="Enter workshop description"
-                      className="w-full p-2 border border-gray-300 rounded-lg min-h-16 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Invitation Link</label>
-                    <input
-                      type="url"
-                      value={workshopInvite.invitationLink}
-                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, invitationLink: e.target.value })}
-                      placeholder="Enter meeting/invitation link"
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Start Date & Time</label>
-                    <input
-                      type="datetime-local"
-                      value={workshopInvite.startDate}
-                      onChange={(e) => setWorkshopInvite({ ...workshopInvite, startDate: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Recipients</label>
-                    <div className="space-y-2">
-                      {/* Email Input */}
-                      <div className="flex gap-2">
-                        <input
-                          type="email"
-                          value={emailInput}
-                          onChange={(e) => setEmailInput(e.target.value)}
-                          placeholder="Enter recipient email"
-                          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addEmail();
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={addEmail}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium"
-                        >
-                          Add
-                        </button>
-                      </div>
-
-                      {/* Selected Emails */}
-                      {workshopInvite.recipientEmails.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-gray-600">Recipients ({workshopInvite.recipientEmails.length}):</p>
-                          <div className="space-y-1 max-h-24 overflow-y-auto">
-                            {workshopInvite.recipientEmails.map((email, index) => (
-                              <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
-                                <span className="text-gray-700 truncate flex-1 mr-2">{email}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => removeEmail(email)}
-                                  className="text-red-600 hover:text-red-800 font-medium"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={sendingInvite || workshopInvite.recipientEmails.length === 0}
-                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
-                  >
-                    {sendingInvite ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                        Sending...
-                      </div>
-                    ) : (
-                      'Send Workshop Invitations'
-                    )}
-                  </button>
-                </form>
-              </section>
-              </div>
             </RevealOnScroll>
           </div>
         )}
