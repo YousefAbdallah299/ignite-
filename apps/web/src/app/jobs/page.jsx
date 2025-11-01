@@ -187,6 +187,12 @@ export default function JobsPage() {
   }, []);
 
   const loadAppliedJobs = useCallback(async () => {
+    // Don't try to load if user is not a candidate
+    if (!user || !isCandidate) {
+      console.log('Skipping loadAppliedJobs - user is not a candidate');
+      return;
+    }
+
     try {
       console.log('Loading applied jobs for jobs page...');
       console.log('Current user:', user?.id, user?.email);
@@ -205,56 +211,73 @@ export default function JobsPage() {
         console.log('Setting applied jobs to state...');
         setAppliedJobs(new Set(appliedJobIds));
         console.log('Applied jobs Set created with size:', appliedJobIds.length);
+        console.log('Applied jobs Set contents:', Array.from(new Set(appliedJobIds)));
       } else {
         console.log('No applied jobs found or empty response');
-        setAppliedJobs(new Set());
+        // Don't clear existing state if response is empty - might be a temporary issue
+        // Only clear if we got an actual response with empty content
+        if (response && response.content && response.content.length === 0) {
+          setAppliedJobs(new Set());
+        }
       }
     } catch (error) {
       console.error('Error loading applied jobs:', error);
       console.error('Error details:', error.message);
-      setAppliedJobs(new Set());
+      // Don't clear state on error - might be a temporary network issue
+      // Only log the error but keep existing state
     }
-  }, [getMyAppliedJobs, user?.id, isCandidate, isValid]);
+  }, [getMyAppliedJobs, user, user?.id, isCandidate, isValid]);
 
   useEffect(() => {
     fetchJobs();
   }, [filters]);
 
   useEffect(() => {
-    // Clear applied jobs state when user changes or logs out
-    if (!isCandidate || !isValid) {
+    // Only clear applied jobs if we know for sure the user is NOT a candidate (not just undefined)
+    // Don't clear if user is still loading (user === null but might become a candidate)
+    if (user !== null && !isCandidate) {
+      // User is loaded and is NOT a candidate, clear applied jobs
       setAppliedJobs(new Set());
       return;
     }
     
-    // Load applied jobs for the current user
-    loadAppliedJobs();
-  }, [isCandidate, isValid, user?.id, loadAppliedJobs]);
+    // Only load applied jobs if user is authenticated and is a candidate
+    if (user && isCandidate && isValid) {
+      loadAppliedJobs();
+    }
+  }, [isCandidate, isValid, user, user?.id, loadAppliedJobs]);
 
   // Listen for job application updates and refresh applied jobs list
   useEffect(() => {
-    if (!isCandidate || !isValid) return;
+    if (!user || !isCandidate || !isValid) return;
 
     const handleApplicationUpdate = (event) => {
       console.log('Job application updated event received:', event.detail);
-      // Reload applied jobs to ensure UI reflects current state
-      loadAppliedJobs();
+      // Small delay to ensure backend has processed the request
+      setTimeout(() => {
+        loadAppliedJobs();
+      }, 500);
     };
 
     window.addEventListener('jobApplicationUpdated', handleApplicationUpdate);
 
     // Also refresh when page becomes visible
     const handleVisibilityChange = () => {
-      if (!document.hidden && isCandidate && isValid) {
-        loadAppliedJobs();
+      if (!document.hidden && user && isCandidate && isValid) {
+        // Delay slightly to avoid race conditions
+        setTimeout(() => {
+          loadAppliedJobs();
+        }, 300);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Refresh on window focus
     const handleFocus = () => {
-      if (isCandidate && isValid) {
-        loadAppliedJobs();
+      if (user && isCandidate && isValid) {
+        setTimeout(() => {
+          loadAppliedJobs();
+        }, 300);
       }
     };
     window.addEventListener('focus', handleFocus);
@@ -264,7 +287,7 @@ export default function JobsPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [isCandidate, isValid, loadAppliedJobs]);
+  }, [user, isCandidate, isValid, loadAppliedJobs]);
 
   const fetchJobs = async () => {
     try {
@@ -329,24 +352,42 @@ export default function JobsPage() {
       await applyForJob(jobId);
       // Update local state immediately for instant UI feedback
       const jobIdNum = Number(jobId);
-      setAppliedJobs(prev => new Set([...prev, jobIdNum]));
+      setAppliedJobs(prev => {
+        const newSet = new Set(prev);
+        newSet.add(jobIdNum);
+        return newSet;
+      });
       toast.success('Application submitted successfully!');
-      // Reload applied jobs from backend to ensure consistency
-      await loadAppliedJobs();
+      
       // Dispatch custom event to notify other pages (like applied-jobs page) to refresh
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('jobApplicationUpdated', { 
           detail: { jobId, action: 'applied' } 
         }));
       }
+      
+      // Reload applied jobs from backend after a short delay to ensure backend has processed
+      // This ensures the backend state is synced, but we keep the optimistic update
+      setTimeout(async () => {
+        await loadAppliedJobs();
+      }, 1000);
     } catch (err) {
       console.error('Error applying for job:', err);
       if (err.message?.includes('already applied')) {
         toast.error('You have already applied for this job');
         // Reload applied jobs to sync state
-        await loadAppliedJobs();
+        setTimeout(async () => {
+          await loadAppliedJobs();
+        }, 500);
       } else {
         toast.error('Failed to apply for job. Please try again.');
+        // Revert optimistic update on error
+        const jobIdNum = Number(jobId);
+        setAppliedJobs(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(jobIdNum);
+          return newSet;
+        });
       }
     } finally {
       setApplyingJobId(null);
@@ -370,17 +411,28 @@ export default function JobsPage() {
         return newSet;
       });
       toast.success('Application cancelled successfully!');
-      // Reload applied jobs from backend to ensure consistency
-      await loadAppliedJobs();
+      
       // Dispatch custom event to notify other pages (like applied-jobs page) to refresh
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('jobApplicationUpdated', { 
           detail: { jobId, action: 'cancelled' } 
         }));
       }
+      
+      // Reload applied jobs from backend after a short delay to ensure backend has processed
+      setTimeout(async () => {
+        await loadAppliedJobs();
+      }, 1000);
     } catch (err) {
       console.error('Error cancelling application:', err);
       toast.error('Failed to cancel application. Please try again.');
+      // Revert optimistic update on error
+      const jobIdNum = Number(jobId);
+      setAppliedJobs(prev => {
+        const newSet = new Set(prev);
+        newSet.add(jobIdNum);
+        return newSet;
+      });
     } finally {
       setApplyingJobId(null);
     }
