@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -186,6 +186,36 @@ export default function JobsPage() {
     setFilters(initialFilters);
   }, []);
 
+  const loadAppliedJobs = useCallback(async () => {
+    try {
+      console.log('Loading applied jobs for jobs page...');
+      console.log('Current user:', user?.id, user?.email);
+      console.log('isCandidate:', isCandidate);
+      console.log('isValid:', isValid);
+      
+      const response = await getMyAppliedJobs(0, 100); // Get more applied jobs for checking
+      console.log('Applied jobs response:', response);
+      console.log('Response content:', response?.content);
+      console.log('Response length:', response?.content?.length);
+      
+      if (response && response.content) {
+        // Convert all IDs to numbers for consistent comparison
+        const appliedJobIds = response.content.map(job => Number(job.id)).filter(id => !isNaN(id));
+        console.log('Applied job IDs:', appliedJobIds);
+        console.log('Setting applied jobs to state...');
+        setAppliedJobs(new Set(appliedJobIds));
+        console.log('Applied jobs Set created with size:', appliedJobIds.length);
+      } else {
+        console.log('No applied jobs found or empty response');
+        setAppliedJobs(new Set());
+      }
+    } catch (error) {
+      console.error('Error loading applied jobs:', error);
+      console.error('Error details:', error.message);
+      setAppliedJobs(new Set());
+    }
+  }, [getMyAppliedJobs, user?.id, isCandidate, isValid]);
+
   useEffect(() => {
     fetchJobs();
   }, [filters]);
@@ -199,35 +229,42 @@ export default function JobsPage() {
     
     // Load applied jobs for the current user
     loadAppliedJobs();
-  }, [isCandidate, isValid, user?.id]);
+  }, [isCandidate, isValid, user?.id, loadAppliedJobs]);
 
-  const loadAppliedJobs = async () => {
-    try {
-      console.log('Loading applied jobs for jobs page...');
-      console.log('Current user:', user?.id, user?.email);
-      console.log('isCandidate:', isCandidate);
-      console.log('isValid:', isValid);
-      
-      const response = await getMyAppliedJobs(0, 100); // Get more applied jobs for checking
-      console.log('Applied jobs response:', response);
-      console.log('Response content:', response?.content);
-      console.log('Response length:', response?.content?.length);
-      
-      if (response && response.content) {
-        const appliedJobIds = response.content.map(job => job.id);
-        console.log('Applied job IDs:', appliedJobIds);
-        console.log('Setting applied jobs to state...');
-        setAppliedJobs(new Set(appliedJobIds));
-      } else {
-        console.log('No applied jobs found or empty response');
-        setAppliedJobs(new Set());
+  // Listen for job application updates and refresh applied jobs list
+  useEffect(() => {
+    if (!isCandidate || !isValid) return;
+
+    const handleApplicationUpdate = (event) => {
+      console.log('Job application updated event received:', event.detail);
+      // Reload applied jobs to ensure UI reflects current state
+      loadAppliedJobs();
+    };
+
+    window.addEventListener('jobApplicationUpdated', handleApplicationUpdate);
+
+    // Also refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isCandidate && isValid) {
+        loadAppliedJobs();
       }
-    } catch (error) {
-      console.error('Error loading applied jobs:', error);
-      console.error('Error details:', error.message);
-      setAppliedJobs(new Set());
-    }
-  };
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Refresh on window focus
+    const handleFocus = () => {
+      if (isCandidate && isValid) {
+        loadAppliedJobs();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('jobApplicationUpdated', handleApplicationUpdate);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isCandidate, isValid, loadAppliedJobs]);
 
   const fetchJobs = async () => {
     try {
@@ -291,7 +328,8 @@ export default function JobsPage() {
     try {
       await applyForJob(jobId);
       // Update local state immediately for instant UI feedback
-      setAppliedJobs(prev => new Set([...prev, jobId]));
+      const jobIdNum = Number(jobId);
+      setAppliedJobs(prev => new Set([...prev, jobIdNum]));
       toast.success('Application submitted successfully!');
       // Reload applied jobs from backend to ensure consistency
       await loadAppliedJobs();
@@ -325,9 +363,10 @@ export default function JobsPage() {
     try {
       await cancelJobApplication(jobId);
       // Update local state immediately for instant UI feedback
+      const jobIdNum = Number(jobId);
       setAppliedJobs(prev => {
         const newSet = new Set(prev);
-        newSet.delete(jobId);
+        newSet.delete(jobIdNum);
         return newSet;
       });
       toast.success('Application cancelled successfully!');
@@ -531,7 +570,7 @@ export default function JobsPage() {
                       job={job} 
                       onApply={handleApply}
                       onCancel={handleCancel}
-                      isApplied={appliedJobs.has(job.id)}
+                      isApplied={appliedJobs.has(Number(job.id))}
                       isApplying={applyingJobId === job.id}
                       userRole={user?.role}
                     />
