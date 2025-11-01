@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -162,7 +162,7 @@ function JobCard({ job, onApply, onCancel, isApplied, isApplying, userRole }) {
 
 export default function JobsPage() {
   const { getAllJobs, applyForJob, cancelJobApplication, getMyAppliedJobs, loading, error } = useJobsAPI();
-  const { user, isCandidate, isAuthenticated } = useAuthAPI();
+  const { user, isCandidate } = useAuthAPI();
   const { isValid } = usePageTokenValidation(false); // Jobs page doesn't require auth
   const [jobs, setJobs] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -186,22 +186,27 @@ export default function JobsPage() {
     setFilters(initialFilters);
   }, []);
 
-  const loadAppliedJobs = useCallback(async () => {
-    // Don't try to load if user is not authenticated or not a candidate
-    if (!isAuthenticated || !user || !isCandidate) {
-      console.log('Skipping loadAppliedJobs - conditions:', {
-        isAuthenticated,
-        hasUser: !!user,
-        isCandidate
-      });
+  useEffect(() => {
+    fetchJobs();
+  }, [filters]);
+
+  useEffect(() => {
+    // Clear applied jobs state when user changes or logs out
+    if (!isCandidate || !isValid) {
+      setAppliedJobs(new Set());
       return;
     }
+    
+    // Load applied jobs for the current user
+    loadAppliedJobs();
+  }, [isCandidate, isValid, user?.id]);
 
+  const loadAppliedJobs = async () => {
     try {
       console.log('Loading applied jobs for jobs page...');
       console.log('Current user:', user?.id, user?.email);
       console.log('isCandidate:', isCandidate);
-      console.log('isAuthenticated:', isAuthenticated);
+      console.log('isValid:', isValid);
       
       const response = await getMyAppliedJobs(0, 100); // Get more applied jobs for checking
       console.log('Applied jobs response:', response);
@@ -209,128 +214,20 @@ export default function JobsPage() {
       console.log('Response length:', response?.content?.length);
       
       if (response && response.content) {
-        // Convert all IDs to numbers for consistent comparison
-        const appliedJobIds = response.content.map(job => {
-          const id = Number(job.id);
-          console.log('Mapping applied job - Original ID:', job.id, 'Type:', typeof job.id, 'Converted:', id);
-          return id;
-        }).filter(id => {
-          const isValid = !isNaN(id);
-          if (!isValid) {
-            console.warn('Filtered out invalid job ID:', id);
-          }
-          return isValid;
-        });
-        console.log('=== LOADING APPLIED JOBS ===');
-        console.log('Raw response content:', response.content);
-        console.log('Applied job IDs array:', appliedJobIds);
-        console.log('Applied job IDs count:', appliedJobIds.length);
-        const appliedJobsSet = new Set(appliedJobIds);
-        console.log('Setting applied jobs Set with size:', appliedJobsSet.size);
-        console.log('Set contents:', Array.from(appliedJobsSet));
-        setAppliedJobs(appliedJobsSet);
-        console.log('Applied jobs state updated!');
-        console.log('===========================');
+        const appliedJobIds = response.content.map(job => job.id);
+        console.log('Applied job IDs:', appliedJobIds);
+        console.log('Setting applied jobs to state...');
+        setAppliedJobs(new Set(appliedJobIds));
       } else {
         console.log('No applied jobs found or empty response');
-        // Don't clear existing state if response is empty - might be a temporary issue
-        // Only clear if we got an actual response with empty content
-        if (response && response.content && response.content.length === 0) {
-          setAppliedJobs(new Set());
-        }
+        setAppliedJobs(new Set());
       }
     } catch (error) {
       console.error('Error loading applied jobs:', error);
       console.error('Error details:', error.message);
-      // Don't clear state on error - might be a temporary network issue
-      // Only log the error but keep existing state
-    }
-  }, [getMyAppliedJobs, user, user?.id, isCandidate, isAuthenticated]);
-
-  useEffect(() => {
-    fetchJobs();
-  }, [filters]);
-
-  useEffect(() => {
-    // Only clear applied jobs if we know for sure the user is NOT a candidate (not just undefined)
-    // Don't clear if user is still loading (user === null but might become a candidate)
-    if (user !== null && !isCandidate) {
-      // User is loaded and is NOT a candidate, clear applied jobs
-      console.log('Clearing applied jobs - user is not a candidate');
       setAppliedJobs(new Set());
-      return;
     }
-    
-    // Only load applied jobs if user is authenticated and is a candidate
-    // Use isAuthenticated instead of isValid since this page doesn't require auth
-    if (isAuthenticated && user && isCandidate) {
-      console.log('=== TRIGGERING loadAppliedJobs ===');
-      console.log('User:', user?.id, user?.email);
-      console.log('isCandidate:', isCandidate);
-      console.log('isAuthenticated:', isAuthenticated);
-      loadAppliedJobs();
-    } else {
-      console.log('NOT loading applied jobs - conditions:', {
-        isAuthenticated,
-        hasUser: !!user,
-        isCandidate,
-        userRole: user?.role
-      });
-    }
-  }, [isCandidate, isAuthenticated, user, user?.id, loadAppliedJobs]);
-
-  // Additional safety: If we have a candidate user but empty applied jobs, try loading once
-  useEffect(() => {
-    if (isAuthenticated && user && isCandidate && appliedJobs.size === 0) {
-      console.log('=== SAFETY CHECK: Candidate user but empty applied jobs, attempting to load ===');
-      const timer = setTimeout(() => {
-        loadAppliedJobs();
-      }, 2000); // Wait 2 seconds after initial load in case auth is still settling
-      return () => clearTimeout(timer);
-    }
-  }, [user, isCandidate, isAuthenticated, appliedJobs.size, loadAppliedJobs]);
-
-  // Listen for job application updates and refresh applied jobs list
-  useEffect(() => {
-    if (!isAuthenticated || !user || !isCandidate) return;
-
-    const handleApplicationUpdate = (event) => {
-      console.log('Job application updated event received:', event.detail);
-      // Small delay to ensure backend has processed the request
-      setTimeout(() => {
-        loadAppliedJobs();
-      }, 500);
-    };
-
-    window.addEventListener('jobApplicationUpdated', handleApplicationUpdate);
-
-    // Also refresh when page becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated && user && isCandidate) {
-        // Delay slightly to avoid race conditions
-        setTimeout(() => {
-          loadAppliedJobs();
-        }, 300);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Refresh on window focus
-    const handleFocus = () => {
-      if (isAuthenticated && user && isCandidate) {
-        setTimeout(() => {
-          loadAppliedJobs();
-        }, 300);
-      }
-    };
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      window.removeEventListener('jobApplicationUpdated', handleApplicationUpdate);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [user, isCandidate, isAuthenticated, loadAppliedJobs]);
+  };
 
   const fetchJobs = async () => {
     try {
@@ -394,43 +291,18 @@ export default function JobsPage() {
     try {
       await applyForJob(jobId);
       // Update local state immediately for instant UI feedback
-      const jobIdNum = Number(jobId);
-      setAppliedJobs(prev => {
-        const newSet = new Set(prev);
-        newSet.add(jobIdNum);
-        return newSet;
-      });
+      setAppliedJobs(prev => new Set([...prev, jobId]));
       toast.success('Application submitted successfully!');
-      
-      // Dispatch custom event to notify other pages (like applied-jobs page) to refresh
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('jobApplicationUpdated', { 
-          detail: { jobId, action: 'applied' } 
-        }));
-      }
-      
-      // Reload applied jobs from backend after a short delay to ensure backend has processed
-      // This ensures the backend state is synced, but we keep the optimistic update
-      setTimeout(async () => {
-        await loadAppliedJobs();
-      }, 1000);
+      // Reload applied jobs from backend to ensure consistency
+      await loadAppliedJobs();
     } catch (err) {
       console.error('Error applying for job:', err);
       if (err.message?.includes('already applied')) {
         toast.error('You have already applied for this job');
         // Reload applied jobs to sync state
-        setTimeout(async () => {
-          await loadAppliedJobs();
-        }, 500);
+        await loadAppliedJobs();
       } else {
         toast.error('Failed to apply for job. Please try again.');
-        // Revert optimistic update on error
-        const jobIdNum = Number(jobId);
-        setAppliedJobs(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(jobIdNum);
-          return newSet;
-        });
       }
     } finally {
       setApplyingJobId(null);
@@ -447,35 +319,17 @@ export default function JobsPage() {
     try {
       await cancelJobApplication(jobId);
       // Update local state immediately for instant UI feedback
-      const jobIdNum = Number(jobId);
       setAppliedJobs(prev => {
         const newSet = new Set(prev);
-        newSet.delete(jobIdNum);
+        newSet.delete(jobId);
         return newSet;
       });
       toast.success('Application cancelled successfully!');
-      
-      // Dispatch custom event to notify other pages (like applied-jobs page) to refresh
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('jobApplicationUpdated', { 
-          detail: { jobId, action: 'cancelled' } 
-        }));
-      }
-      
-      // Reload applied jobs from backend after a short delay to ensure backend has processed
-      setTimeout(async () => {
-        await loadAppliedJobs();
-      }, 1000);
+      // Reload applied jobs from backend to ensure consistency
+      await loadAppliedJobs();
     } catch (err) {
       console.error('Error cancelling application:', err);
       toast.error('Failed to cancel application. Please try again.');
-      // Revert optimistic update on error
-      const jobIdNum = Number(jobId);
-      setAppliedJobs(prev => {
-        const newSet = new Set(prev);
-        newSet.add(jobIdNum);
-        return newSet;
-      });
     } finally {
       setApplyingJobId(null);
     }
@@ -659,32 +513,17 @@ export default function JobsPage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {jobs.map((job) => {
-                    const jobIdNum = Number(job.id);
-                    const isAppliedCheck = appliedJobs.has(jobIdNum);
-                    // Debug logging for first job only to avoid spam
-                    if (jobs.indexOf(job) === 0) {
-                      console.log('=== JOB APPLIED CHECK DEBUG ===');
-                      console.log('Job ID:', job.id, 'Type:', typeof job.id);
-                      console.log('Job ID as Number:', jobIdNum);
-                      console.log('Applied Jobs Set size:', appliedJobs.size);
-                      console.log('Applied Jobs Set contents:', Array.from(appliedJobs));
-                      console.log('Is Applied Check:', isAppliedCheck);
-                      console.log('Set has job?', appliedJobs.has(jobIdNum));
-                      console.log('==============================');
-                    }
-                    return (
-                      <JobCard 
-                        key={job.id} 
-                        job={job} 
-                        onApply={handleApply}
-                        onCancel={handleCancel}
-                        isApplied={isAppliedCheck}
-                        isApplying={applyingJobId === job.id}
-                        userRole={user?.role}
-                      />
-                    );
-                  })}
+                  {jobs.map((job) => (
+                    <JobCard 
+                      key={job.id} 
+                      job={job} 
+                      onApply={handleApply}
+                      onCancel={handleCancel}
+                      isApplied={appliedJobs.has(job.id)}
+                      isApplying={applyingJobId === job.id}
+                      userRole={user?.role}
+                    />
+                  ))}
                 </div>
 
                 {/* Pagination */}

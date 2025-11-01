@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -126,7 +126,18 @@ export default function AppliedJobsPage() {
     }
   }, [isAuthenticated, isCandidate]);
 
-  const loadAppliedJobs = useCallback(async () => {
+  useEffect(() => {
+    // Clear applied jobs state when user changes or logs out
+    if (!isCandidate) {
+      setAppliedJobs([]);
+      return;
+    }
+    
+    // Load applied jobs for the current user
+    loadAppliedJobs();
+  }, [isCandidate, page, user?.id]);
+
+  const loadAppliedJobs = async () => {
     try {
       console.log('Loading applied jobs...');
       console.log('Current user:', user?.id, user?.email);
@@ -153,51 +164,7 @@ export default function AppliedJobsPage() {
       console.error('Error details:', error.message);
       setAppliedJobs([]);
     }
-  }, [getMyAppliedJobs, page, user?.id]);
-
-  useEffect(() => {
-    // Clear applied jobs state when user changes or logs out
-    if (!isCandidate) {
-      setAppliedJobs([]);
-      return;
-    }
-    
-    // Load applied jobs for the current user
-    loadAppliedJobs();
-  }, [isCandidate, loadAppliedJobs, page]); // Include page to reload when pagination changes
-
-  // Listen for job application updates from other pages
-  useEffect(() => {
-    if (!isCandidate || !isValid) return;
-
-    const handleApplicationUpdate = () => {
-      // Refresh applied jobs when application is made/cancelled on another page
-      loadAppliedJobs();
-    };
-
-    // Listen for custom event dispatched when applications are updated
-    window.addEventListener('jobApplicationUpdated', handleApplicationUpdate);
-
-    // Also refresh when page becomes visible (in case user navigates here after applying)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadAppliedJobs();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Refresh on window focus (when user switches back to this tab)
-    const handleFocus = () => {
-      loadAppliedJobs();
-    };
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      window.removeEventListener('jobApplicationUpdated', handleApplicationUpdate);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [isCandidate, isValid, loadAppliedJobs]);
+  };
 
   const handleCancel = async (jobId) => {
     setCancelingJobId(jobId);
