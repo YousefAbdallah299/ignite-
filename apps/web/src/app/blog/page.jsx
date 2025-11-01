@@ -418,9 +418,6 @@ export default function PostsFeedPage() {
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {like.createdAt ? formatRelativeTime(like.createdAt) : 'Recently liked'}
-                        </div>
                       </div>
                     </div>
                   ))}
