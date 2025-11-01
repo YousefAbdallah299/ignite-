@@ -80,6 +80,12 @@ export default function JobDetailPage() {
       await applyForJob(id);
       setIsApplied(true);
       toast.success('Application submitted successfully!');
+      // Dispatch custom event to notify other pages (like applied-jobs page) to refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('jobApplicationUpdated', { 
+          detail: { jobId: id, action: 'applied' } 
+        }));
+      }
     } catch (err) {
       console.error('Error applying for job:', err);
       if (err.message?.includes('already applied')) {
@@ -104,6 +110,12 @@ export default function JobDetailPage() {
       await cancelJobApplication(id);
       setIsApplied(false);
       toast.success('Application cancelled successfully!');
+      // Dispatch custom event to notify other pages (like applied-jobs page) to refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('jobApplicationUpdated', { 
+          detail: { jobId: id, action: 'cancelled' } 
+        }));
+      }
     } catch (err) {
       console.error('Error cancelling application:', err);
       toast.error('Failed to cancel application. Please try again.');
