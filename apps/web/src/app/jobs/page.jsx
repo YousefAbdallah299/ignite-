@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -188,7 +188,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [filters]);
+  }, [fetchJobs]);
 
   useEffect(() => {
     // Clear applied jobs state when user changes or logs out
@@ -229,7 +229,7 @@ export default function JobsPage() {
     }
   };
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       console.log('Fetching jobs with filters:', filters);
       const categories = filters.category ? [filters.category.toLowerCase()] : null;
@@ -263,14 +263,17 @@ export default function JobsPage() {
         });
         console.log('Jobs set to state:', response.content || []);
       } else {
-        console.log('No response received');
+        console.log('No response received - response is null/undefined');
         setJobs([]);
       }
     } catch (error) {
       console.error("Error fetching jobs:", error);
+      console.error("Error stack:", error.stack);
+      console.error("Error message:", error.message);
+      toast.error('Failed to load jobs. Please try again.');
       setJobs([]);
     }
-  };
+  }, [filters, getAllJobs]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 0 }));

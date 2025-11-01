@@ -58,10 +58,14 @@ const apiCall = async (endpoint, options = {}) => {
 
   logger.log(`Making API call to: ${url}`);
   logger.log(`Request config:`, config);
+  console.log(`[API] Making API call to: ${url}`);
+  console.log(`[API] Request config:`, config);
 
   try {
+    console.log(`[API] Starting fetch request...`);
     const response = await fetch(url, config);
     
+    console.log(`[API] Response received. Status: ${response.status}`);
     logger.log(`Response status: ${response.status}`);
     logger.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
     
@@ -104,17 +108,25 @@ const apiCall = async (endpoint, options = {}) => {
     
     // Check if response is JSON before parsing
     const contentType = response.headers.get('content-type');
+    console.log(`[API] Response content-type:`, contentType);
     if (contentType && contentType.includes('application/json')) {
+      console.log(`[API] Parsing JSON response...`);
       const data = await response.json();
+      console.log(`[API] JSON response parsed successfully:`, data);
       logger.log(`API response data:`, data);
       return data;
     } else {
       // If it's not JSON, return the text
+      console.log(`[API] Response is not JSON, parsing as text...`);
       const text = await response.text();
+      console.log(`[API] Text response received:`, text.substring(0, 200));
       logger.warn('Non-JSON response received:', text.substring(0, 200));
       return text;
     }
   } catch (error) {
+    console.error(`[API] API call failed:`, error);
+    console.error(`[API] Error message:`, error.message);
+    console.error(`[API] Error stack:`, error.stack);
     logger.error('API call failed:', error);
     throw error;
   }
