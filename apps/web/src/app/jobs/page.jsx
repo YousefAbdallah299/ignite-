@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -187,54 +187,7 @@ export default function JobsPage() {
   }, []);
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        console.log('Fetching jobs with filters:', filters);
-        const categories = filters.category ? [filters.category.toLowerCase()] : null;
-        
-        console.log('Calling getAllJobs with params:', {
-          page: filters.page,
-          size: 20,
-          query: filters.search || null,
-          categories: categories
-        });
-        
-        const response = await getAllJobs(
-          filters.page,
-          20,
-          filters.search || null,
-          categories
-        );
-
-        console.log('Jobs response:', response);
-        console.log('Response type:', typeof response);
-        console.log('Response content:', response?.content);
-        console.log('Response length:', response?.content?.length);
-
-        if (response) {
-          setJobs(response.content || []);
-          setPagination({
-            page: response.page + 1,
-            pages: response.totalPages,
-            total: response.totalElements,
-            limit: response.size,
-          });
-          console.log('Jobs set to state:', response.content || []);
-        } else {
-          console.log('No response received - response is null/undefined');
-          setJobs([]);
-        }
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-        console.error("Error stack:", error.stack);
-        console.error("Error message:", error.message);
-        toast.error('Failed to load jobs. Please try again.');
-        setJobs([]);
-      }
-    };
-
     fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   useEffect(() => {
@@ -244,37 +197,80 @@ export default function JobsPage() {
       return;
     }
     
-    const loadAppliedJobs = async () => {
-      try {
-        console.log('Loading applied jobs for jobs page...');
-        console.log('Current user:', user?.id, user?.email);
-        console.log('isCandidate:', isCandidate);
-        console.log('isValid:', isValid);
-        
-        const response = await getMyAppliedJobs(0, 100);
-        console.log('Applied jobs response:', response);
-        console.log('Response content:', response?.content);
-        console.log('Response length:', response?.content?.length);
-        
-        if (response && response.content) {
-          const appliedJobIds = response.content.map(job => job.id);
-          console.log('Applied job IDs:', appliedJobIds);
-          console.log('Setting applied jobs to state...');
-          setAppliedJobs(new Set(appliedJobIds));
-        } else {
-          console.log('No applied jobs found or empty response');
-          setAppliedJobs(new Set());
-        }
-      } catch (error) {
-        console.error('Error loading applied jobs:', error);
-        console.error('Error details:', error.message);
+    // Load applied jobs for the current user
+    loadAppliedJobs();
+  }, [isCandidate, isValid, user?.id]);
+
+  const loadAppliedJobs = async () => {
+    try {
+      console.log('Loading applied jobs for jobs page...');
+      console.log('Current user:', user?.id, user?.email);
+      console.log('isCandidate:', isCandidate);
+      console.log('isValid:', isValid);
+      
+      const response = await getMyAppliedJobs(0, 100); // Get more applied jobs for checking
+      console.log('Applied jobs response:', response);
+      console.log('Response content:', response?.content);
+      console.log('Response length:', response?.content?.length);
+      
+      if (response && response.content) {
+        const appliedJobIds = response.content.map(job => job.id);
+        console.log('Applied job IDs:', appliedJobIds);
+        console.log('Setting applied jobs to state...');
+        setAppliedJobs(new Set(appliedJobIds));
+      } else {
+        console.log('No applied jobs found or empty response');
         setAppliedJobs(new Set());
       }
-    };
-    
-    loadAppliedJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCandidate, isValid, user?.id]);
+    } catch (error) {
+      console.error('Error loading applied jobs:', error);
+      console.error('Error details:', error.message);
+      setAppliedJobs(new Set());
+    }
+  };
+
+  const fetchJobs = async () => {
+    try {
+      console.log('Fetching jobs with filters:', filters);
+      const categories = filters.category ? [filters.category.toLowerCase()] : null;
+      
+      console.log('Calling getAllJobs with params:', {
+        page: filters.page,
+        size: 20,
+        query: filters.search || null,
+        categories: categories
+      });
+      
+      const response = await getAllJobs(
+        filters.page,
+        20,
+        filters.search || null,
+        categories
+      );
+
+      console.log('Jobs response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response content:', response?.content);
+      console.log('Response length:', response?.content?.length);
+
+      if (response) {
+        setJobs(response.content || []);
+        setPagination({
+          page: response.page + 1,
+          pages: response.totalPages,
+          total: response.totalElements,
+          limit: response.size,
+        });
+        console.log('Jobs set to state:', response.content || []);
+      } else {
+        console.log('No response received');
+        setJobs([]);
+      }
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setJobs([]);
+    }
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 0 }));
