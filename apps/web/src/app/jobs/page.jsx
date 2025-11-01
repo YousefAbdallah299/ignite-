@@ -162,7 +162,7 @@ function JobCard({ job, onApply, onCancel, isApplied, isApplying, userRole }) {
 
 export default function JobsPage() {
   const { getAllJobs, applyForJob, cancelJobApplication, getMyAppliedJobs, loading, error } = useJobsAPI();
-  const { user, isCandidate } = useAuthAPI();
+  const { user, isCandidate, isAuthenticated } = useAuthAPI();
   const { isValid } = usePageTokenValidation(false); // Jobs page doesn't require auth
   const [jobs, setJobs] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -187,9 +187,13 @@ export default function JobsPage() {
   }, []);
 
   const loadAppliedJobs = useCallback(async () => {
-    // Don't try to load if user is not a candidate
-    if (!user || !isCandidate) {
-      console.log('Skipping loadAppliedJobs - user is not a candidate');
+    // Don't try to load if user is not authenticated or not a candidate
+    if (!isAuthenticated || !user || !isCandidate) {
+      console.log('Skipping loadAppliedJobs - conditions:', {
+        isAuthenticated,
+        hasUser: !!user,
+        isCandidate
+      });
       return;
     }
 
@@ -197,7 +201,7 @@ export default function JobsPage() {
       console.log('Loading applied jobs for jobs page...');
       console.log('Current user:', user?.id, user?.email);
       console.log('isCandidate:', isCandidate);
-      console.log('isValid:', isValid);
+      console.log('isAuthenticated:', isAuthenticated);
       
       const response = await getMyAppliedJobs(0, 100); // Get more applied jobs for checking
       console.log('Applied jobs response:', response);
@@ -206,12 +210,27 @@ export default function JobsPage() {
       
       if (response && response.content) {
         // Convert all IDs to numbers for consistent comparison
-        const appliedJobIds = response.content.map(job => Number(job.id)).filter(id => !isNaN(id));
-        console.log('Applied job IDs:', appliedJobIds);
-        console.log('Setting applied jobs to state...');
-        setAppliedJobs(new Set(appliedJobIds));
-        console.log('Applied jobs Set created with size:', appliedJobIds.length);
-        console.log('Applied jobs Set contents:', Array.from(new Set(appliedJobIds)));
+        const appliedJobIds = response.content.map(job => {
+          const id = Number(job.id);
+          console.log('Mapping applied job - Original ID:', job.id, 'Type:', typeof job.id, 'Converted:', id);
+          return id;
+        }).filter(id => {
+          const isValid = !isNaN(id);
+          if (!isValid) {
+            console.warn('Filtered out invalid job ID:', id);
+          }
+          return isValid;
+        });
+        console.log('=== LOADING APPLIED JOBS ===');
+        console.log('Raw response content:', response.content);
+        console.log('Applied job IDs array:', appliedJobIds);
+        console.log('Applied job IDs count:', appliedJobIds.length);
+        const appliedJobsSet = new Set(appliedJobIds);
+        console.log('Setting applied jobs Set with size:', appliedJobsSet.size);
+        console.log('Set contents:', Array.from(appliedJobsSet));
+        setAppliedJobs(appliedJobsSet);
+        console.log('Applied jobs state updated!');
+        console.log('===========================');
       } else {
         console.log('No applied jobs found or empty response');
         // Don't clear existing state if response is empty - might be a temporary issue
@@ -226,7 +245,7 @@ export default function JobsPage() {
       // Don't clear state on error - might be a temporary network issue
       // Only log the error but keep existing state
     }
-  }, [getMyAppliedJobs, user, user?.id, isCandidate, isValid]);
+  }, [getMyAppliedJobs, user, user?.id, isCandidate, isAuthenticated]);
 
   useEffect(() => {
     fetchJobs();
@@ -237,19 +256,43 @@ export default function JobsPage() {
     // Don't clear if user is still loading (user === null but might become a candidate)
     if (user !== null && !isCandidate) {
       // User is loaded and is NOT a candidate, clear applied jobs
+      console.log('Clearing applied jobs - user is not a candidate');
       setAppliedJobs(new Set());
       return;
     }
     
     // Only load applied jobs if user is authenticated and is a candidate
-    if (user && isCandidate && isValid) {
+    // Use isAuthenticated instead of isValid since this page doesn't require auth
+    if (isAuthenticated && user && isCandidate) {
+      console.log('=== TRIGGERING loadAppliedJobs ===');
+      console.log('User:', user?.id, user?.email);
+      console.log('isCandidate:', isCandidate);
+      console.log('isAuthenticated:', isAuthenticated);
       loadAppliedJobs();
+    } else {
+      console.log('NOT loading applied jobs - conditions:', {
+        isAuthenticated,
+        hasUser: !!user,
+        isCandidate,
+        userRole: user?.role
+      });
     }
-  }, [isCandidate, isValid, user, user?.id, loadAppliedJobs]);
+  }, [isCandidate, isAuthenticated, user, user?.id, loadAppliedJobs]);
+
+  // Additional safety: If we have a candidate user but empty applied jobs, try loading once
+  useEffect(() => {
+    if (isAuthenticated && user && isCandidate && appliedJobs.size === 0) {
+      console.log('=== SAFETY CHECK: Candidate user but empty applied jobs, attempting to load ===');
+      const timer = setTimeout(() => {
+        loadAppliedJobs();
+      }, 2000); // Wait 2 seconds after initial load in case auth is still settling
+      return () => clearTimeout(timer);
+    }
+  }, [user, isCandidate, isAuthenticated, appliedJobs.size, loadAppliedJobs]);
 
   // Listen for job application updates and refresh applied jobs list
   useEffect(() => {
-    if (!user || !isCandidate || !isValid) return;
+    if (!isAuthenticated || !user || !isCandidate) return;
 
     const handleApplicationUpdate = (event) => {
       console.log('Job application updated event received:', event.detail);
@@ -263,7 +306,7 @@ export default function JobsPage() {
 
     // Also refresh when page becomes visible
     const handleVisibilityChange = () => {
-      if (!document.hidden && user && isCandidate && isValid) {
+      if (!document.hidden && isAuthenticated && user && isCandidate) {
         // Delay slightly to avoid race conditions
         setTimeout(() => {
           loadAppliedJobs();
@@ -274,7 +317,7 @@ export default function JobsPage() {
 
     // Refresh on window focus
     const handleFocus = () => {
-      if (user && isCandidate && isValid) {
+      if (isAuthenticated && user && isCandidate) {
         setTimeout(() => {
           loadAppliedJobs();
         }, 300);
@@ -287,7 +330,7 @@ export default function JobsPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [user, isCandidate, isValid, loadAppliedJobs]);
+  }, [user, isCandidate, isAuthenticated, loadAppliedJobs]);
 
   const fetchJobs = async () => {
     try {
@@ -616,17 +659,32 @@ export default function JobsPage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {jobs.map((job) => (
-                    <JobCard 
-                      key={job.id} 
-                      job={job} 
-                      onApply={handleApply}
-                      onCancel={handleCancel}
-                      isApplied={appliedJobs.has(Number(job.id))}
-                      isApplying={applyingJobId === job.id}
-                      userRole={user?.role}
-                    />
-                  ))}
+                  {jobs.map((job) => {
+                    const jobIdNum = Number(job.id);
+                    const isAppliedCheck = appliedJobs.has(jobIdNum);
+                    // Debug logging for first job only to avoid spam
+                    if (jobs.indexOf(job) === 0) {
+                      console.log('=== JOB APPLIED CHECK DEBUG ===');
+                      console.log('Job ID:', job.id, 'Type:', typeof job.id);
+                      console.log('Job ID as Number:', jobIdNum);
+                      console.log('Applied Jobs Set size:', appliedJobs.size);
+                      console.log('Applied Jobs Set contents:', Array.from(appliedJobs));
+                      console.log('Is Applied Check:', isAppliedCheck);
+                      console.log('Set has job?', appliedJobs.has(jobIdNum));
+                      console.log('==============================');
+                    }
+                    return (
+                      <JobCard 
+                        key={job.id} 
+                        job={job} 
+                        onApply={handleApply}
+                        onCancel={handleCancel}
+                        isApplied={isAppliedCheck}
+                        isApplying={applyingJobId === job.id}
+                        userRole={user?.role}
+                      />
+                    );
+                  })}
                 </div>
 
                 {/* Pagination */}
