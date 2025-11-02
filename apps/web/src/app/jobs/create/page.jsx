@@ -308,7 +308,7 @@ export default function CreateJobPage() {
                 onChange={(e) => setJobData(prev => ({ ...prev, salary: e.target.value }))}
                 placeholder="5000"
                 min="0"
-                step="100"
+                step="1"
                 className="w-full px-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 required
               />
