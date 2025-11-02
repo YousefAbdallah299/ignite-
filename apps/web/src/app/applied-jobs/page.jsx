@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -118,6 +118,8 @@ export default function AppliedJobsPage() {
   const [cancelingJobId, setCancelingJobId] = useState(null);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(0);
+  const [loadingJobs, setLoadingJobs] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Redirect if not a candidate
@@ -126,6 +128,56 @@ export default function AppliedJobsPage() {
     }
   }, [isAuthenticated, isCandidate]);
 
+  const loadAppliedJobs = useCallback(async () => {
+    if (!isValid || !isCandidate) {
+      console.log('Skipping loadAppliedJobs - not authenticated or not a candidate');
+      return;
+    }
+
+    setLoadingJobs(true);
+    setError(null);
+    try {
+      console.log('Loading applied jobs...');
+      console.log('Current user:', user?.id, user?.email);
+      console.log('isCandidate:', isCandidate);
+      console.log('isValid:', isValid);
+      console.log('Page:', page);
+      
+      const response = await getMyAppliedJobs(page, 10);
+      console.log('Applied jobs response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response ? Object.keys(response) : 'null');
+      console.log('Response content:', response?.content);
+      console.log('Response length:', response?.content?.length);
+      
+      if (response) {
+        // Handle different response structures
+        const jobs = Array.isArray(response.content) ? response.content : 
+                     Array.isArray(response) ? response : [];
+        
+        setAppliedJobs(jobs);
+        setPagination({
+          page: (response.page ?? response.number ?? 0) + 1,
+          pages: response.totalPages ?? 0,
+          total: response.totalElements ?? jobs.length,
+          limit: response.size ?? 10,
+        });
+        console.log('Applied jobs set to state:', jobs);
+      } else {
+        console.warn('No response received from getMyAppliedJobs');
+        setAppliedJobs([]);
+      }
+    } catch (error) {
+      console.error('Error loading applied jobs:', error);
+      console.error('Error details:', error.message);
+      setError(error.message || 'Failed to load applied jobs');
+      setAppliedJobs([]);
+      toast.error('Failed to load your applied jobs. Please try again.');
+    } finally {
+      setLoadingJobs(false);
+    }
+  }, [isValid, isCandidate, page, user?.id, getMyAppliedJobs]);
+
   useEffect(() => {
     // Clear applied jobs state when user changes or logs out
     if (!isCandidate) {
@@ -133,38 +185,11 @@ export default function AppliedJobsPage() {
       return;
     }
     
-    // Load applied jobs for the current user
-    loadAppliedJobs();
-  }, [isCandidate, page, user?.id]);
-
-  const loadAppliedJobs = async () => {
-    try {
-      console.log('Loading applied jobs...');
-      console.log('Current user:', user?.id, user?.email);
-      console.log('isCandidate:', isCandidate);
-      console.log('Page:', page);
-      
-      const response = await getMyAppliedJobs(page, 10);
-      console.log('Applied jobs response:', response);
-      console.log('Response content:', response?.content);
-      console.log('Response length:', response?.content?.length);
-      
-      if (response) {
-        setAppliedJobs(response.content || []);
-        setPagination({
-          page: response.page + 1,
-          pages: response.totalPages,
-          total: response.totalElements,
-          limit: response.size,
-        });
-        console.log('Applied jobs set to state:', response.content || []);
-      }
-    } catch (error) {
-      console.error('Error loading applied jobs:', error);
-      console.error('Error details:', error.message);
-      setAppliedJobs([]);
+    // Only load applied jobs when user is authenticated and token is valid
+    if (isValid && isCandidate) {
+      loadAppliedJobs();
     }
-  };
+  }, [isCandidate, isValid, page, loadAppliedJobs]);
 
   const handleCancel = async (jobId) => {
     setCancelingJobId(jobId);
@@ -238,7 +263,30 @@ export default function AppliedJobsPage() {
         </RevealOnScroll>
 
         {/* Applied Jobs Grid */}
-        {appliedJobs.length === 0 ? (
+        {loadingJobs ? (
+          <RevealOnScroll>
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your applied jobs...</p>
+            </div>
+          </RevealOnScroll>
+        ) : error ? (
+          <RevealOnScroll>
+            <div className="text-center py-12">
+              <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Error loading applications
+              </h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <button
+                onClick={loadAppliedJobs}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </RevealOnScroll>
+        ) : appliedJobs.length === 0 ? (
           <RevealOnScroll>
           <div className="text-center py-12">
             <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
