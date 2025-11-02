@@ -340,7 +340,7 @@ export default function AdminPage() {
       }
       
       console.log('User deleted successfully');
-      load(); // Reload the users list
+      loadUsers(); // Reload only the users list with proper loading state
     } catch (error) {
       console.error('Error deleting user:', error);
       alert(`Error deleting user: ${error.message}`);

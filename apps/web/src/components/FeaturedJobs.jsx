@@ -159,9 +159,6 @@ function JobCard({ job }) {
 					</div>
 				</div>
 				<div className="flex gap-2">
-					<a href={`/jobs/${job.id}`} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-semibold text-sm text-center">
-						Apply Now
-					</a>
 					<a href={`/jobs/${job.id}`} className="flex-1 border border-red-600 text-red-700 hover:bg-red-50 py-2.5 rounded-lg font-semibold text-sm text-center">
 						View Job
 					</a>

@@ -45,7 +45,7 @@ const jobTypes = [
   "internship",
 ];
 
-function JobCard({ job, onApply, onCancel, isApplied, isApplying, userRole }) {
+function JobCard({ job }) {
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown';
     
@@ -127,25 +127,6 @@ function JobCard({ job, onApply, onCancel, isApplied, isApplying, userRole }) {
       {/* Actions */}
       <div className="pt-4 border-t border-gray-100">
         <div className="flex gap-2">
-          {userRole === 'CANDIDATE' ? (
-            isApplied ? (
-              <button 
-                onClick={() => onCancel(job.id)}
-                disabled={isApplying}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2.5 rounded-lg font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isApplying ? 'Canceling...' : 'Cancel Application'}
-              </button>
-            ) : (
-              <button 
-                onClick={() => onApply(job.id)}
-                disabled={isApplying}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isApplying ? 'Applying...' : 'Apply Now'}
-              </button>
-            )
-          ) : null}
           <a 
             href={`/jobs/${job.id}`} 
             className="flex-1 border border-red-600 text-red-700 hover:bg-red-50 py-2.5 rounded-lg font-semibold text-sm text-center"
@@ -516,12 +497,7 @@ export default function JobsPage() {
                   {jobs.map((job) => (
                     <JobCard 
                       key={job.id} 
-                      job={job} 
-                      onApply={handleApply}
-                      onCancel={handleCancel}
-                      isApplied={appliedJobs.has(job.id)}
-                      isApplying={applyingJobId === job.id}
-                      userRole={user?.role}
+                      job={job}
                     />
                   ))}
                 </div>
