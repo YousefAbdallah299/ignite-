@@ -489,6 +489,27 @@ export default function AdminPage() {
     }
   };
 
+  // Find a specific candidate profile by userId via paginated search
+  const findCandidateByUserId = async (userId) => {
+    try {
+      let pageIndex = 0;
+      const pageSize = 50;
+      const maxPages = 40; // Safety cap to avoid infinite loops
+      
+      while (pageIndex < maxPages) {
+        const page = await candidatesAPI.getAllCandidates(pageIndex, pageSize);
+        const list = page?.content || [];
+        const match = list.find(c => c.userId === userId);
+        if (match) return match;
+        if (page?.last) break;
+        pageIndex += 1;
+      }
+    } catch (e) {
+      console.error('Error searching candidate by userId:', userId, e);
+    }
+    return null;
+  };
+
   // Load available skills for selected candidate only
   const loadAvailableSkills = async () => {
     if (!selectedCandidate) {
@@ -1172,14 +1193,9 @@ export default function AdminPage() {
                                 // Try from cache first
                                 let candidate = candidates.find(c => c.userId === u.id);
                                 
-                                // If not found, fetch on-demand by querying with email (narrow request)
+                                // If not found, fetch on-demand by paginating until found
                                 if (!candidate) {
-                                  try {
-                                    const page = await candidatesAPI.getAllCandidates(0, 5, u.email);
-                                    candidate = page?.content?.find(c => c.userId === u.id) || page?.content?.[0];
-                                  } catch (e) {
-                                    console.error('On-demand candidate fetch failed for user:', u.id, e);
-                                  }
+                                  candidate = await findCandidateByUserId(u.id);
                                 }
                                 
                                 if (candidate) {
