@@ -481,6 +481,7 @@ export default function AdminPage() {
   // Load candidates for skill rating
   const loadCandidates = async () => {
     try {
+      // Prefetch a reasonable page; on-demand fetch will cover cache misses
       const response = await candidatesAPI.getAllCandidates(0, 100);
       setCandidates(response.content || []);
     } catch (error) {
@@ -1167,12 +1168,26 @@ export default function AdminPage() {
                           {/* Skill Rating Button for Candidates */}
                           {isCandidate && (
                             <button
-                              onClick={() => {
-                                // Set this candidate for skill rating
-                                const candidate = candidates.find(c => c.userId === u.id);
+                              onClick={async () => {
+                                // Try from cache first
+                                let candidate = candidates.find(c => c.userId === u.id);
+                                
+                                // If not found, fetch on-demand by querying with email (narrow request)
+                                if (!candidate) {
+                                  try {
+                                    const page = await candidatesAPI.getAllCandidates(0, 5, u.email);
+                                    candidate = page?.content?.find(c => c.userId === u.id) || page?.content?.[0];
+                                  } catch (e) {
+                                    console.error('On-demand candidate fetch failed for user:', u.id, e);
+                                  }
+                                }
+                                
                                 if (candidate) {
                                   setSelectedCandidate(candidate);
                                   setShowSkillRatingModal(true);
+                                } else {
+                                  console.warn('Candidate profile not found for user id:', u.id);
+                                  alert('No candidate profile found for this user.');
                                 }
                               }}
                               className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1 mt-2"
