@@ -610,7 +610,8 @@ export const candidatesAPI = {
     
     return apiCall(`/candidates?${params.toString()}`, {
       method: 'GET',
-      includeAuth: false,
+      // Include auth to allow admins to see all candidates; if no token, header won't be set
+      includeAuth: true,
     });
   },
 

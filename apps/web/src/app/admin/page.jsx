@@ -489,23 +489,67 @@ export default function AdminPage() {
     }
   };
 
-  // Find a specific candidate profile by userId via paginated search
-  const findCandidateByUserId = async (userId) => {
+  // Try to find a candidate profile for a given user record using multiple strategies
+  const findCandidateForUser = async (user) => {
     try {
-      let pageIndex = 0;
-      const pageSize = 50;
-      const maxPages = 40; // Safety cap to avoid infinite loops
-      
-      while (pageIndex < maxPages) {
-        const page = await candidatesAPI.getAllCandidates(pageIndex, pageSize);
-        const list = page?.content || [];
-        const match = list.find(c => c.userId === userId);
-        if (match) return match;
-        if (page?.last) break;
-        pageIndex += 1;
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+
+      // 1) Try cache by userId if available on objects
+      let match = candidates.find(c => (
+        (c.userId != null && String(c.userId) === String(user.id)) ||
+        (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
+      ));
+      if (match) return match;
+
+      // 2) Try on-demand fetch by email (narrow, backend supports query filter)
+      if (user.email) {
+        try {
+          const byEmail = await candidatesAPI.getAllCandidates(0, 5, user.email);
+          match = (byEmail?.content || []).find(c => (
+            (c.userId != null && String(c.userId) === String(user.id)) ||
+            (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
+          )) || (byEmail?.content || [])[0];
+          if (match) return match;
+        } catch (e) {
+          console.error('Candidate search by email failed:', user.email, e);
+        }
+      }
+
+      // 3) Try on-demand fetch by full name
+      if (fullName) {
+        try {
+          const byName = await candidatesAPI.getAllCandidates(0, 5, fullName);
+          match = (byName?.content || []).find(c => (
+            (c.userId != null && String(c.userId) === String(user.id)) ||
+            (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
+          )) || (byName?.content || [])[0];
+          if (match) return match;
+        } catch (e) {
+          console.error('Candidate search by name failed:', fullName, e);
+        }
+      }
+
+      // 4) Last resort: paginate through candidates and try to match by name
+      try {
+        let pageIndex = 0;
+        const pageSize = 50;
+        const maxPages = 40;
+        while (pageIndex < maxPages) {
+          const page = await candidatesAPI.getAllCandidates(pageIndex, pageSize);
+          const list = page?.content || [];
+          match = list.find(c => (
+            (c.userId != null && String(c.userId) === String(user.id)) ||
+            (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
+          ));
+          if (match) return match;
+          if (page?.last) break;
+          pageIndex += 1;
+        }
+      } catch (e) {
+        console.error('Candidate paginated search failed for user:', user.id, e);
       }
     } catch (e) {
-      console.error('Error searching candidate by userId:', userId, e);
+      console.error('Error searching candidate for user:', user?.id, e);
     }
     return null;
   };
@@ -1191,11 +1235,14 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                 // Try from cache first
-                                let candidate = candidates.find(c => c.userId === u.id);
+                                let candidate = candidates.find(c => (
+                                  (c.userId != null && String(c.userId) === String(u.id)) ||
+                                  (c.name && [u.first_name, u.last_name].filter(Boolean).join(' ').trim().toLowerCase() === c.name.trim().toLowerCase())
+                                ));
                                 
                                 // If not found, fetch on-demand by paginating until found
                                 if (!candidate) {
-                                  candidate = await findCandidateByUserId(u.id);
+                                  candidate = await findCandidateForUser(u);
                                 }
                                 
                                 if (candidate) {
