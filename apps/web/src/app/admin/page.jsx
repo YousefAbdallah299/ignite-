@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -30,6 +30,8 @@ export default function AdminPage() {
   const [totalElements, setTotalElements] = useState(0);
 
   const [newCourse, setNewCourse] = useState({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
+  const [courseImage, setCourseImage] = useState({ preview: '', data: '', name: '' });
+  const courseImageInputRef = useRef(null);
   const [sections, setSections] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([
     'Web Development', 'Data Science', 'Marketing', 'Design', 'Business', 
@@ -591,6 +593,38 @@ export default function AdminPage() {
     }
   };
 
+  const handleCourseImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, or SVG).');
+      if (courseImageInputRef.current) {
+        courseImageInputRef.current.value = '';
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setCourseImage({
+          preview: reader.result,
+          data: reader.result,
+          name: file.name
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearCourseImage = () => {
+    setCourseImage({ preview: '', data: '', name: '' });
+    if (courseImageInputRef.current) {
+      courseImageInputRef.current.value = '';
+    }
+  };
+
   // Rate candidate skill
   const rateCandidateSkill = async () => {
     if (!selectedCandidate || !selectedSkill) {
@@ -628,6 +662,7 @@ export default function AdminPage() {
         description: newCourse.description,
         categories: newCourse.categories, // Backend expects array of categories
         skillLevel: newCourse.skillLevel,
+        imageUrl: courseImage.data || null,
         sections: sections.map(section => ({
           title: section.title,
           content: '', // Backend expects content field
@@ -693,6 +728,7 @@ export default function AdminPage() {
       // Reset form completely
       setNewCourse({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
       setSections([]);
+      clearCourseImage();
       
       // Reload courses list
       load();
@@ -893,6 +929,46 @@ export default function AdminPage() {
                           ))}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Course Cover Image Upload */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-700">Course Cover Image</label>
+                    {courseImage.preview ? (
+                      <div className="relative">
+                        <img
+                          src={courseImage.preview}
+                          alt="Course cover preview"
+                          className="w-full h-44 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={clearCourseImage}
+                          className="absolute top-2 right-2 bg-white/95 text-red-600 text-xs font-semibold px-2 py-1 rounded shadow hover:bg-white"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="course-cover-upload"
+                        className="flex flex-col items-center justify-center gap-1 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500 cursor-pointer hover:border-red-300 hover:text-red-600 transition-colors text-sm"
+                      >
+                        <span className="font-semibold">Upload course cover</span>
+                        <span className="text-xs text-gray-400">PNG, JPG, or WEBP up to 3MB</span>
+                        <input
+                          id="course-cover-upload"
+                          type="file"
+                          accept="image/*"
+                          ref={courseImageInputRef}
+                          onChange={handleCourseImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                    <p className="text-[11px] text-gray-500">
+                      The cover image will be shown on course cards and promotional areas.
+                    </p>
                   </div>
                   {/* Sections Builder - Compact */}
                   <div className="border border-gray-200 rounded-lg p-3">

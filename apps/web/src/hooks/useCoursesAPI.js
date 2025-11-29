@@ -46,6 +46,10 @@ export const useCoursesAPI = () => {
     return handleApiCall(() => coursesAPI.cancelEnrollment(id));
   }, [handleApiCall]);
 
+  const requestCourse = useCallback(async () => {
+    return handleApiCall(() => coursesAPI.requestCourse());
+  }, [handleApiCall]);
+
   const getLessonsBySection = useCallback(async (sectionId) => {
     return handleApiCall(() => coursesAPI.getLessonsBySection(sectionId));
   }, [handleApiCall]);
@@ -68,6 +72,7 @@ export const useCoursesAPI = () => {
     deleteCourse,
     enrollCourse,
     cancelEnrollment,
+    requestCourse,
     getLessonsBySection,
     getNumberOfLessonsBySection,
     clearError,

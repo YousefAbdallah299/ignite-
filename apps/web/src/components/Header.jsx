@@ -86,9 +86,11 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <a href="/" className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">I</span>
-                </div>
+                <img
+                  src="/ignite-logo.png"
+                  alt="Ignite logo"
+                  className="h-10 w-auto object-contain"
+                />
                 <span className="ml-2 text-2xl font-bold text-gray-900">Ignite</span>
               </a>
             </div>

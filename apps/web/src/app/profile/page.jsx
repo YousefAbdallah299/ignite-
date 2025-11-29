@@ -23,6 +23,28 @@ function OfferCard({ offer, onRespond }) {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const normalizeSalaryInput = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'number') return value;
+    const digitsOnly = value.toString().replace(/[^\d.]/g, '');
+    if (!digitsOnly) return null;
+    const parsed = Number(digitsOnly);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return 'Not specified';
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return value;
+    }
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(numeric);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'PENDING': return 'text-yellow-600 bg-yellow-50';
@@ -246,7 +268,9 @@ export default function ProfilePage() {
         title: profile.title || 'Software Developer', // Required field
         summary: profile.summary || null,
         resumeUrl: profile.resumeUrl || null,
-        location: profile.location || null
+        location: profile.location || null,
+        expectedSalary: normalizeSalaryInput(profile.expectedSalary),
+        expectedPosition: profile.expectedPosition?.trim() || null
       };
       
       console.log('Saving profile with payload:', updatePayload);
@@ -531,6 +555,20 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
+                {(profile.expectedPosition || profile.expectedSalary) && (
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+                    {profile.expectedPosition && (
+                      <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-700">
+                        Expected Role: {profile.expectedPosition}
+                      </span>
+                    )}
+                    {profile.expectedSalary && (
+                      <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-700">
+                        Target Salary: {formatCurrency(profile.expectedSalary)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <button
@@ -735,7 +773,20 @@ export default function ProfilePage() {
                     <p className="text-gray-900">{profile.title || 'Not specified'}</p>
                   )}
                 </div>
-                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Expected Position</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profile.expectedPosition || ''}
+                      onChange={(e) => setProfile({ ...profile, expectedPosition: e.target.value })}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="e.g., Senior Frontend Engineer"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{profile.expectedPosition || 'Not specified'}</p>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
@@ -763,6 +814,25 @@ export default function ProfilePage() {
                         <p className="text-gray-500">No resume uploaded</p>
                       )}
                     </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={profile.expectedSalary ?? ''}
+                      onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value })}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="e.g., 85000"
+                    />
+                  ) : (
+                    <p className="text-gray-900">
+                      {profile.expectedSalary ? formatCurrency(profile.expectedSalary) : 'Not specified'}
+                    </p>
                   )}
                 </div>
 

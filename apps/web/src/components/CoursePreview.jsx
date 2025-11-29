@@ -37,6 +37,15 @@ const CoursePreview = ({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-8">
+      {course.thumbnailUrl && (
+        <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100">
+          <img
+            src={course.thumbnailUrl}
+            alt={`${course.title} preview`}
+            className="w-full max-h-80 object-cover"
+          />
+        </div>
+      )}
       {/* Course Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">

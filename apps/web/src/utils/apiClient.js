@@ -246,6 +246,13 @@ export const coursesAPI = {
     });
   },
 
+  // Request a course
+  requestCourse: async () => {
+    return apiCall('/courses/request', {
+      method: 'POST',
+    });
+  },
+
   // Get lessons by section
   getLessonsBySection: async (sectionId) => {
     return apiCall(`/courses/sections/${sectionId}/lessons`, {
@@ -316,6 +323,20 @@ export const coursesAPI = {
   markLessonComplete: async (courseId, lessonId, completed = true) => {
     return apiCall(`/courses/${courseId}/lessons/${lessonId}/complete?completed=${completed}`, {
       method: 'POST',
+    });
+  },
+
+  // Course Requests
+  requestCourse: async (payload) => {
+    return apiCall('/courses/requests', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getCourseRequests: async () => {
+    return apiCall('/courses/requests', {
+      method: 'GET',
     });
   },
 };

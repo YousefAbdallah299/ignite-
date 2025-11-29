@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
@@ -8,7 +8,8 @@ import PageFadeIn from "@/components/PageFadeIn";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
-import { Search, Filter, Clock, DollarSign, Star, BookOpen, Play, User, ArrowRight, CheckCircle, GraduationCap } from "lucide-react";
+import { Search, Filter, BookOpen, Play, ArrowRight, CheckCircle, GraduationCap, X } from "lucide-react";
+import { toast } from "sonner";
 
 const courseCategories = [
   'Web Development', 'Data Science', 'Marketing', 'Design', 'Business', 
@@ -19,6 +20,7 @@ const courseCategories = [
 function CourseCard({ course, onEnrollmentChange, enrolledCourseIds, isCandidate }) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+  const courseThumbnail = course?.thumbnailUrl || course?.thumbnail_url || course?.thumbnail || null;
 
   // Check enrollment status on component mount
   useEffect(() => {
@@ -90,9 +92,17 @@ function CourseCard({ course, onEnrollmentChange, enrolledCourseIds, isCandidate
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
-      {/* Course Image Placeholder */}
-      <div className="h-48 bg-gradient-to-br from-red-100 to-pink-100 flex items-center justify-center">
-        <BookOpen className="w-16 h-16 text-red-600" />
+      {/* Course Image */}
+      <div className="h-48 bg-gradient-to-br from-red-100 to-pink-100 flex items-center justify-center overflow-hidden">
+        {courseThumbnail ? (
+          <img
+            src={courseThumbnail}
+            alt={`${course.title} cover`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <BookOpen className="w-16 h-16 text-red-600" />
+        )}
       </div>
 
       {/* Course Content */}
@@ -221,6 +231,15 @@ export default function CoursesPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
   const [availableCategories, setAvailableCategories] = useState([]);
+  const promoContent = {
+    title: "Looking for something else?",
+    text: "Tell us what you want to learn next and grab early access to new bootcamps.",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=60",
+    ctaLabel: "Explore live cohorts",
+    ctaLink: "/pricing"
+  };
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [showPromo, setShowPromo] = useState(false);
 
   useEffect(() => {
     // Get URL parameters on component mount
@@ -264,6 +283,14 @@ export default function CoursesPage() {
     fetchAvailableCategories();
   }, [isCandidate]);
 
+  useEffect(() => {
+    const dismissed = localStorage.getItem('igniteCoursesPromoDismissed');
+    if (!dismissed) {
+      const timer = setTimeout(() => setShowPromo(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   const fetchAvailableCategories = async () => {
     try {
       // First try to get categories from actual courses
@@ -295,6 +322,8 @@ export default function CoursesPage() {
       setAvailableCategories(courseCategories);
     }
   };
+
+ 
 
   const fetchCourses = async () => {
     try {
@@ -351,6 +380,31 @@ export default function CoursesPage() {
       setCourses([]);
       setPagination({ page: 1, pages: 0, total: 0, limit: 20 });
     }
+  };
+
+  const handleCourseRequestSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!isCandidate) {
+      toast.error('Only candidates can request courses.');
+      return;
+    }
+
+    setRequestLoading(true);
+    try {
+      await coursesAPI.requestCourse();
+      toast.success('Course request submitted! We\'ll notify you when new courses are available.');
+    } catch (error) {
+      console.error('Failed to submit course request:', error);
+      toast.error(error?.message || 'Unable to submit request right now.');
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const dismissPromo = () => {
+    setShowPromo(false);
+    localStorage.setItem('igniteCoursesPromoDismissed', 'true');
   };
 
   const handleFilterChange = (key, value) => {
@@ -431,6 +485,38 @@ export default function CoursesPage() {
       {/* Main Content */}
       <RevealOnScroll>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <section className="bg-white border border-gray-200 rounded-2xl p-6 mb-8 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Request a course</h2>
+              <p className="text-gray-600 text-sm">Tell us what you want to learn next and we'll notify you when it launches.</p>
+            </div>
+          </div>
+
+          {isCandidate ? (
+            <form onSubmit={handleCourseRequestSubmit}>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={requestLoading}
+                  className="px-6 py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60"
+                >
+                  {requestLoading ? 'Submitting...' : 'Request a Course'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-800">
+              <p>
+                You need a candidate account to request new courses.{" "}
+                <a href="/account/signin" className="underline font-semibold">Sign in</a> or{" "}
+                <a href="/account/register" className="underline font-semibold">create an account</a>.
+              </p>
+            </div>
+          )}
+        </section>
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
           <div className="lg:w-80">
@@ -713,6 +799,39 @@ export default function CoursesPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
+
+      {showPromo && (
+        <div className="fixed bottom-6 right-6 z-50 w-full max-w-sm">
+          <div className="relative bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+            <button
+              type="button"
+              onClick={dismissPromo}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {promoContent.image && (
+              <img
+                src={promoContent.image}
+                alt="Courses spotlight"
+                className="w-full h-32 object-cover"
+              />
+            )}
+            <div className="p-5 space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">{promoContent.title}</h3>
+              <p className="text-sm text-gray-600">{promoContent.text}</p>
+              <a
+                href={promoContent.ctaLink}
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700"
+                onClick={dismissPromo}
+              >
+                {promoContent.ctaLabel}
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .line-clamp-2 {

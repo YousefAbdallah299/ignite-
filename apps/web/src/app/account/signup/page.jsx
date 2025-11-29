@@ -22,6 +22,7 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
   // Update role when URL parameter changes
@@ -36,14 +37,31 @@ export default function SignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     clearError();
+
+    if (!email.trim()) {
+      toast.error('Email is required.');
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      toast.error('Mobile number is required.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+
     try {
       await register({ 
         first_name: firstName, 
         last_name: lastName, 
         email, 
-        password, 
+        password,
+        confirmPassword,
         role,
-        phoneNumber: phoneNumber || undefined
+        phoneNumber: phoneNumber.trim()
       });
       
       // Show success message and redirect to sign in page
@@ -140,11 +158,23 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
               <input
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
+                required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
