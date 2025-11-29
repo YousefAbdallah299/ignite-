@@ -19,12 +19,14 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [showAgreementModal, setShowAgreementModal] = useState(true);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    console.log('Form submitted', { agreementAccepted, email, phoneNumber, password, confirmPassword });
     clearError();
     
     if (!agreementAccepted) {
@@ -48,16 +50,23 @@ export default function RegisterPage() {
       return;
     }
 
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long.');
+      return;
+    }
+
+    console.log('Calling register function...');
     try {
-      await register({ 
+      const result = await register({ 
         first_name: firstName, 
         last_name: lastName, 
-        email, 
+        email: email.trim(), 
         password,
         confirmPassword,
         role,
         phoneNumber: phoneNumber.trim()
       });
+      console.log('Registration successful:', result);
       
       // Show success message and redirect to sign in page
       toast.success('Account created successfully! Please sign in to continue.');
@@ -182,11 +191,16 @@ export default function RegisterPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white py-3 rounded-lg font-semibold"
+                  disabled={loading || !agreementAccepted}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold"
                 >
                   {loading ? 'Creating account...' : 'Create Account'}
                 </button>
+                {!agreementAccepted && (
+                  <p className="text-xs text-red-600 text-center mt-2">
+                    Please accept the registration agreement to continue
+                  </p>
+                )}
               </form>
 
               <p className="text-sm text-gray-600 mt-6 text-center">
