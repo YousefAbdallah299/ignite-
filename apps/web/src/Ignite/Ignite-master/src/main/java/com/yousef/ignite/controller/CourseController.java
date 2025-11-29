@@ -9,6 +9,7 @@ import com.yousef.ignite.dto.response.PagedResponse;
 import com.yousef.ignite.service.CourseService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -76,8 +77,9 @@ public class CourseController {
 
     @PostMapping("/request")
     public ResponseEntity<Void> requestCourse(
-            @RequestHeader("Authorization") String token) {
-        courseService.requestCourse(token);
+            @RequestHeader("Authorization") String token,
+            @RequestBody @Valid com.yousef.ignite.dto.request.CourseRequestCreateDTO dto) {
+        courseService.requestCourse(token, dto);
         return ResponseEntity.ok().build();
     }
 

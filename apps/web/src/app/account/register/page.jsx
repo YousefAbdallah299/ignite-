@@ -19,7 +19,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [showAgreementModal, setShowAgreementModal] = useState(true);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -49,62 +49,42 @@ export default function RegisterPage() {
       const errorMsg = 'Please review and accept the registration agreement to continue.';
       setValidationError(errorMsg);
       setShowAgreementModal(true);
-      toast.error(errorMsg);
-      alert(errorMsg); // Fallback alert
       return;
     }
 
     if (!firstName.trim()) {
       console.log('Validation failed: First name missing');
-      const errorMsg = 'First name is required.';
-      setValidationError(errorMsg);
-      toast.error(errorMsg);
-      alert(errorMsg);
+      setValidationError('First name is required.');
       return;
     }
 
     if (!lastName.trim()) {
       console.log('Validation failed: Last name missing');
-      const errorMsg = 'Last name is required.';
-      setValidationError(errorMsg);
-      toast.error(errorMsg);
-      alert(errorMsg);
+      setValidationError('Last name is required.');
       return;
     }
 
     if (!email.trim()) {
       console.log('Validation failed: Email missing');
-      const errorMsg = 'Email is required.';
-      setValidationError(errorMsg);
-      toast.error(errorMsg);
-      alert(errorMsg);
+      setValidationError('Email is required.');
       return;
     }
 
     if (!phoneNumber.trim()) {
       console.log('Validation failed: Phone number missing');
-      const errorMsg = 'Phone number is required.';
-      setValidationError(errorMsg);
-      toast.error(errorMsg);
-      alert(errorMsg);
+      setValidationError('Phone number is required.');
       return;
     }
 
     if (!password || password.length < 8) {
       console.log('Validation failed: Password too short');
-      const errorMsg = 'Password must be at least 8 characters long.';
-      setValidationError(errorMsg);
-      toast.error(errorMsg);
-      alert(errorMsg);
+      setValidationError('Password must be at least 8 characters long.');
       return;
     }
 
     if (password !== confirmPassword) {
       console.log('Validation failed: Passwords do not match', { password, confirmPassword });
-      const errorMsg = 'Passwords do not match. Please check and try again.';
-      setValidationError(errorMsg);
-      toast.error(errorMsg);
-      alert(errorMsg); // Fallback alert
+      setValidationError('Passwords do not match. Please check and try again.');
       return;
     }
 
@@ -126,12 +106,16 @@ export default function RegisterPage() {
       const result = await register(registerData);
       console.log('Registration successful:', result);
       
-      // Show success message and redirect to sign in page
-      toast.success('Account created successfully! Please sign in to continue.');
-      // Delay navigation to allow toast to be visible
-      setTimeout(() => {
-        navigate('/account/signin');
-      }, 100);
+      // Redirect to resume upload page for candidates
+      if (role === 'CANDIDATE') {
+        navigate('/account/upload-resume');
+      } else {
+        // For recruiters, go to sign in
+        toast.success('Account created successfully! Please sign in to continue.');
+        setTimeout(() => {
+          navigate('/account/signin');
+        }, 100);
+      }
     } catch (err) {
       console.error('Registration error caught:', err);
       console.error('Error details:', {

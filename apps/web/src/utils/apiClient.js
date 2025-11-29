@@ -247,9 +247,10 @@ export const coursesAPI = {
   },
 
   // Request a course
-  requestCourse: async () => {
+  requestCourse: async (requestData) => {
     return apiCall('/courses/request', {
       method: 'POST',
+      body: JSON.stringify(requestData),
     });
   },
 

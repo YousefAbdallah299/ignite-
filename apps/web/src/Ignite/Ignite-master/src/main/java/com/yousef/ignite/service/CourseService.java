@@ -18,7 +18,7 @@ public interface CourseService {
     void cancelEnrollment(String token, Long courseId);
     PagedResponse<CourseSummaryResponseDTO> getEnrolledCourses(int page, int size, String token);
 
-    void requestCourse(String token);
+    void requestCourse(String token, com.yousef.ignite.dto.request.CourseRequestCreateDTO dto);
     List<CourseLessonResponseDTO> getLessonsBySection(Long sectionId);
     CourseResponseDTO getCourseById(Long id);
 

@@ -391,13 +391,13 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public void requestCourse(String token) {
+    public void requestCourse(String token, com.yousef.ignite.dto.request.CourseRequestCreateDTO dto) {
         User user = getUserFromToken(token);
         if (!user.getRole().equals(UserRole.CANDIDATE)) {
             throw new UnauthorizedAccessException("Only candidates can request courses");
         }
-        emailService.sendCourseRequestEmailToIgnite(user, LocalDateTime.now());
-        emailService.sendCourseRequestEmailToCandidate(user);
+        emailService.sendCourseRequestEmailToIgnite(user, dto.getTitle(), dto.getDescription(), LocalDateTime.now());
+        emailService.sendCourseRequestEmailToCandidate(user, dto.getTitle());
     }
 
 }

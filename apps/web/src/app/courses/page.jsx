@@ -240,6 +240,11 @@ export default function CoursesPage() {
   };
   const [requestLoading, setRequestLoading] = useState(false);
   const [showPromo, setShowPromo] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    title: '',
+    description: ''
+  });
 
   useEffect(() => {
     // Get URL parameters on component mount
@@ -390,10 +395,25 @@ export default function CoursesPage() {
       return;
     }
 
+    if (!requestForm.title.trim()) {
+      toast.error('Please enter a course name.');
+      return;
+    }
+
+    if (!requestForm.description.trim()) {
+      toast.error('Please enter a course description.');
+      return;
+    }
+
     setRequestLoading(true);
     try {
-      await coursesAPI.requestCourse();
+      await coursesAPI.requestCourse({
+        title: requestForm.title.trim(),
+        description: requestForm.description.trim()
+      });
       toast.success('Course request submitted! We\'ll notify you when new courses are available.');
+      setShowRequestModal(false);
+      setRequestForm({ title: '', description: '' });
     } catch (error) {
       console.error('Failed to submit course request:', error);
       toast.error(error?.message || 'Unable to submit request right now.');
@@ -495,17 +515,15 @@ export default function CoursesPage() {
           </div>
 
           {isCandidate ? (
-            <form onSubmit={handleCourseRequestSubmit}>
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={requestLoading}
-                  className="px-6 py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60"
-                >
-                  {requestLoading ? 'Submitting...' : 'Request a Course'}
-                </button>
-              </div>
-            </form>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowRequestModal(true)}
+                className="px-6 py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
+              >
+                Request a Course
+              </button>
+            </div>
           ) : (
             <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-800">
               <p>
@@ -799,6 +817,77 @@ export default function CoursesPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
+
+      {/* Course Request Modal */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-10 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Request a Course</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRequestModal(false);
+                  setRequestForm({ title: '', description: '' });
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCourseRequestSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Course Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={requestForm.title}
+                  onChange={(e) => setRequestForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g. Advanced Product Analytics"
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={requestForm.description}
+                  onChange={(e) => setRequestForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={5}
+                  placeholder="Tell us what you want to learn, what skills you're looking for, or what outcomes you expect..."
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRequestModal(false);
+                    setRequestForm({ title: '', description: '' });
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={requestLoading}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {requestLoading ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showPromo && (
         <div className="fixed bottom-6 right-6 z-50 w-full max-w-sm">

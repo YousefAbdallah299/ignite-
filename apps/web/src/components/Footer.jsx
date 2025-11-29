@@ -4,8 +4,7 @@ import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 const footerLinks = {
   "For Job Seekers": [
     { name: "Browse Jobs", href: "/jobs" },
-    { name: "Browse Courses", href: "/courses" },
-    { name: "Career Advice", href: "/blog?category=career-advice" }
+    { name: "Browse Courses", href: "/courses" }
   ],
   "For Employers": [
     { name: "Post a Job", href: "/jobs" },

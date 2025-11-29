@@ -13,9 +13,9 @@
 
      void sendVerificationEmail(User user) ;
 
-     void sendCourseRequestEmailToCandidate(User user) ;
+    void sendCourseRequestEmailToCandidate(User user, String courseTitle);
 
-     void sendCourseRequestEmailToIgnite(User user, LocalDateTime endDate) ;
+    void sendCourseRequestEmailToIgnite(User user, String courseTitle, String courseDescription, LocalDateTime endDate);
 
      void sendForgotPasswordEmail(String email, String token) ;
 
