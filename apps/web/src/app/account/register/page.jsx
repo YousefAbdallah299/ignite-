@@ -22,50 +22,108 @@ export default function RegisterPage() {
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Form submitted', { agreementAccepted, email, phoneNumber, password, confirmPassword });
-    clearError();
     
+    console.log('=== FORM SUBMISSION START ===');
+    console.log('Form data:', { 
+      agreementAccepted, 
+      email, 
+      phoneNumber, 
+      password, 
+      confirmPassword,
+      firstName,
+      lastName,
+      role
+    });
+    
+    clearError();
+    setValidationError('');
+    
+    // Validation checks
     if (!agreementAccepted) {
+      console.log('Validation failed: Agreement not accepted');
+      const errorMsg = 'Please review and accept the registration agreement to continue.';
+      setValidationError(errorMsg);
       setShowAgreementModal(true);
-      toast.error('Please review and accept the registration agreement to continue.');
+      toast.error(errorMsg);
+      alert(errorMsg); // Fallback alert
+      return;
+    }
+
+    if (!firstName.trim()) {
+      console.log('Validation failed: First name missing');
+      const errorMsg = 'First name is required.';
+      setValidationError(errorMsg);
+      toast.error(errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
+    if (!lastName.trim()) {
+      console.log('Validation failed: Last name missing');
+      const errorMsg = 'Last name is required.';
+      setValidationError(errorMsg);
+      toast.error(errorMsg);
+      alert(errorMsg);
       return;
     }
 
     if (!email.trim()) {
-      toast.error('Email is required.');
+      console.log('Validation failed: Email missing');
+      const errorMsg = 'Email is required.';
+      setValidationError(errorMsg);
+      toast.error(errorMsg);
+      alert(errorMsg);
       return;
     }
 
     if (!phoneNumber.trim()) {
-      toast.error('Phone number is required.');
+      console.log('Validation failed: Phone number missing');
+      const errorMsg = 'Phone number is required.';
+      setValidationError(errorMsg);
+      toast.error(errorMsg);
+      alert(errorMsg);
+      return;
+    }
+
+    if (!password || password.length < 8) {
+      console.log('Validation failed: Password too short');
+      const errorMsg = 'Password must be at least 8 characters long.';
+      setValidationError(errorMsg);
+      toast.error(errorMsg);
+      alert(errorMsg);
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match.');
+      console.log('Validation failed: Passwords do not match', { password, confirmPassword });
+      const errorMsg = 'Passwords do not match. Please check and try again.';
+      setValidationError(errorMsg);
+      toast.error(errorMsg);
+      alert(errorMsg); // Fallback alert
       return;
     }
 
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters long.');
-      return;
-    }
-
-    console.log('Calling register function...');
+    console.log('All validations passed, calling register function...');
+    
     try {
-      const result = await register({ 
-        first_name: firstName, 
-        last_name: lastName, 
+      const registerData = { 
+        first_name: firstName.trim(), 
+        last_name: lastName.trim(), 
         email: email.trim(), 
         password,
         confirmPassword,
         role,
         phoneNumber: phoneNumber.trim()
-      });
+      };
+      
+      console.log('Register data being sent:', { ...registerData, password: '***', confirmPassword: '***' });
+      
+      const result = await register(registerData);
       console.log('Registration successful:', result);
       
       // Show success message and redirect to sign in page
@@ -75,7 +133,12 @@ export default function RegisterPage() {
         navigate('/account/signin');
       }, 100);
     } catch (err) {
-      console.error('Registration error:', err);
+      console.error('Registration error caught:', err);
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        response: err.response
+      });
       // Show error toast
       toast.error(err.message || 'Registration failed. Please try again.');
     }
@@ -110,7 +173,10 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <div className="mb-4 text-sm text-red-600">{error}</div>
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
+              )}
+              {validationError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{validationError}</div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -192,7 +258,15 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading || !agreementAccepted}
-                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold"
+                  onClick={(e) => {
+                    console.log('Button clicked!', { loading, agreementAccepted });
+                    if (!agreementAccepted) {
+                      e.preventDefault();
+                      setShowAgreementModal(true);
+                      toast.error('Please accept the registration agreement first.');
+                    }
+                  }}
+                  className="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors"
                 >
                   {loading ? 'Creating account...' : 'Create Account'}
                 </button>
