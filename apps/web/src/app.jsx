@@ -7,6 +7,7 @@ import About from './app/about/page.jsx';
 import AccountRegister from './app/account/register/page.jsx';
 import AccountSignin from './app/account/signin/page.jsx';
 import AccountSignup from './app/account/signup/page.jsx';
+import UploadResume from './app/account/upload-resume/page.jsx';
 import Admin from './app/admin/page.jsx';
 import AppliedJobs from './app/applied-jobs/page.jsx';
 import Blog from './app/blog/page.jsx';
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/account/register" element={<AccountRegister />} />
             <Route path="/account/signin" element={<AccountSignin />} />
             <Route path="/account/signup" element={<AccountSignup />} />
+            <Route path="/account/upload-resume" element={<UploadResume />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/applied-jobs" element={<AppliedJobs />} />
             <Route path="/blog" element={<Blog />} />

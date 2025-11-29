@@ -271,7 +271,11 @@ export default function ProfilePage() {
         summary: profile.summary || null,
         resumeUrl: profile.resumeUrl || null,
         location: profile.location || null,
-        expectedSalary: profile.expectedSalary ? normalizeSalaryInput(profile.expectedSalary) : null,
+        expectedSalary: profile.expectedSalary !== null && profile.expectedSalary !== undefined 
+          ? (typeof profile.expectedSalary === 'number' 
+              ? profile.expectedSalary 
+              : normalizeSalaryInput(profile.expectedSalary))
+          : null,
         expectedPosition: profile.expectedPosition?.trim() || null
       };
       
@@ -830,27 +834,39 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
                   {isEditing ? (
                     <input
-                      type="number"
-                      min="0"
-                      step="100"
-                      value={profile.expectedSalary ?? ''}
+                      type="text"
+                      value={profile.expectedSalary !== null && profile.expectedSalary !== undefined ? String(profile.expectedSalary) : ''}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow empty string or valid number input
-                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                          setProfile({ ...profile, expectedSalary: value });
+                        try {
+                          const value = e.target.value;
+                          // Allow empty string or valid number input
+                          if (value === '') {
+                            setProfile({ ...profile, expectedSalary: null });
+                          } else if (/^\d*\.?\d*$/.test(value)) {
+                            // Keep as string in state for now, convert on save
+                            setProfile({ ...profile, expectedSalary: value });
+                          }
+                        } catch (error) {
+                          console.error('Error updating expected salary:', error);
+                          // Keep previous value on error
                         }
                       }}
                       onBlur={(e) => {
-                        // Convert to number on blur
-                        const value = e.target.value;
-                        if (value === '') {
-                          setProfile({ ...profile, expectedSalary: null });
-                        } else {
-                          const numValue = parseFloat(value);
-                          if (!isNaN(numValue)) {
-                            setProfile({ ...profile, expectedSalary: numValue });
+                        try {
+                          const value = e.target.value;
+                          if (value === '') {
+                            setProfile({ ...profile, expectedSalary: null });
+                          } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue) && isFinite(numValue)) {
+                              setProfile({ ...profile, expectedSalary: numValue });
+                            } else {
+                              setProfile({ ...profile, expectedSalary: null });
+                            }
                           }
+                        } catch (error) {
+                          console.error('Error parsing salary:', error);
+                          setProfile({ ...profile, expectedSalary: null });
                         }
                       }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"

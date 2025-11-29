@@ -412,6 +412,9 @@ export default function CoursesPage() {
         description: requestForm.description.trim()
       };
       console.log('Sending course request:', requestData);
+      console.log('Request URL will be:', '/courses/request');
+      console.log('Request method: POST');
+      console.log('Request body:', JSON.stringify(requestData));
       await coursesAPI.requestCourse(requestData);
       toast.success('Course request submitted! We\'ll notify you when new courses are available.');
       setShowRequestModal(false);

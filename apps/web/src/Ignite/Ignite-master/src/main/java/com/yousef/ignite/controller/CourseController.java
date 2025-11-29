@@ -36,9 +36,12 @@ public class CourseController {
         return courseService.getAllCourses(page, size, query, categories);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CourseResponseDTO> getCourseById(@PathVariable Long id) {
-        return ResponseEntity.ok(courseService.getCourseById(id));
+    @PostMapping("/request")
+    public ResponseEntity<Void> requestCourse(
+            @RequestHeader("Authorization") String token,
+            @RequestBody @Valid com.yousef.ignite.dto.request.CourseRequestCreateDTO dto) {
+        courseService.requestCourse(token, dto);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
@@ -48,6 +51,11 @@ public class CourseController {
             @RequestHeader("Authorization") String token)
     {
         return courseService.getEnrolledCourses(page, size, token);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CourseResponseDTO> getCourseById(@PathVariable Long id) {
+        return ResponseEntity.ok(courseService.getCourseById(id));
     }
 
 
@@ -71,15 +79,6 @@ public class CourseController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long id) {
         courseService.enrollCourse(token, id);
-        return ResponseEntity.ok().build();
-    }
-
-
-    @PostMapping("/request")
-    public ResponseEntity<Void> requestCourse(
-            @RequestHeader("Authorization") String token,
-            @RequestBody @Valid com.yousef.ignite.dto.request.CourseRequestCreateDTO dto) {
-        courseService.requestCourse(token, dto);
         return ResponseEntity.ok().build();
     }
 
