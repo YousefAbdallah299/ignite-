@@ -407,15 +407,22 @@ export default function CoursesPage() {
 
     setRequestLoading(true);
     try {
-      await coursesAPI.requestCourse({
+      const requestData = {
         title: requestForm.title.trim(),
         description: requestForm.description.trim()
-      });
+      };
+      console.log('Sending course request:', requestData);
+      await coursesAPI.requestCourse(requestData);
       toast.success('Course request submitted! We\'ll notify you when new courses are available.');
       setShowRequestModal(false);
       setRequestForm({ title: '', description: '' });
     } catch (error) {
       console.error('Failed to submit course request:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response
+      });
       toast.error(error?.message || 'Unable to submit request right now.');
     } finally {
       setRequestLoading(false);

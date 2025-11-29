@@ -2,7 +2,7 @@ import React from 'react';
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
@@ -126,6 +126,8 @@ export default function ProfilePage() {
   const [addingSkills, setAddingSkills] = useState(false);
   const [newSkillNames, setNewSkillNames] = useState('');
   const [showAddSkillsForm, setShowAddSkillsForm] = useState(false);
+  const salaryDebounceRef = useRef(null);
+  const positionDebounceRef = useRef(null);
 
   useEffect(() => {
     console.log('Profile page useEffect - user:', user);
@@ -269,7 +271,7 @@ export default function ProfilePage() {
         summary: profile.summary || null,
         resumeUrl: profile.resumeUrl || null,
         location: profile.location || null,
-        expectedSalary: normalizeSalaryInput(profile.expectedSalary),
+        expectedSalary: profile.expectedSalary ? normalizeSalaryInput(profile.expectedSalary) : null,
         expectedPosition: profile.expectedPosition?.trim() || null
       };
       
@@ -779,7 +781,14 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={profile.expectedPosition || ''}
-                      onChange={(e) => setProfile({ ...profile, expectedPosition: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setProfile({ ...profile, expectedPosition: value });
+                        // Clear previous timeout
+                        if (positionDebounceRef.current) {
+                          clearTimeout(positionDebounceRef.current);
+                        }
+                      }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       placeholder="e.g., Senior Frontend Engineer"
                     />
@@ -825,7 +834,25 @@ export default function ProfilePage() {
                       min="0"
                       step="100"
                       value={profile.expectedSalary ?? ''}
-                      onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty string or valid number input
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setProfile({ ...profile, expectedSalary: value });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Convert to number on blur
+                        const value = e.target.value;
+                        if (value === '') {
+                          setProfile({ ...profile, expectedSalary: null });
+                        } else {
+                          const numValue = parseFloat(value);
+                          if (!isNaN(numValue)) {
+                            setProfile({ ...profile, expectedSalary: numValue });
+                          }
+                        }
+                      }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       placeholder="e.g., 85000"
                     />

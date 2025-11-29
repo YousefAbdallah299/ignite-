@@ -177,19 +177,12 @@ export default function UploadResumePage() {
                 disabled={!resumeFile || uploading || loading}
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors"
               >
-                {uploading || loading ? 'Uploading...' : 'Upload Resume'}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/account/signin')}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Skip for now
+                {uploading || loading ? 'Uploading...' : 'Upload Resume & Continue'}
               </button>
             </div>
 
             <p className="text-xs text-gray-500 text-center">
-              You can update your resume later in your profile settings
+              Resume upload is required to complete your registration
             </p>
           </form>
         </div>

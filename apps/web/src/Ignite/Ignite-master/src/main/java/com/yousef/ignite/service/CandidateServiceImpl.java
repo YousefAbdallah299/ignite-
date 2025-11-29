@@ -53,6 +53,8 @@ public class CandidateServiceImpl implements CandidateService {
                 .resumeUrl(profile.getResumeUrl())
                 .location(profile.getLocation())
                 .createdAt(profile.getCreatedAt())
+                .expectedSalary(profile.getExpectedSalary())
+                .expectedPosition(profile.getExpectedPosition())
                 .skills(skills)
                 .build();
     }
@@ -84,6 +86,12 @@ public class CandidateServiceImpl implements CandidateService {
         }
         if (request.getLocation() != null) {
             profile.setLocation(request.getLocation());
+        }
+        if (request.getExpectedSalary() != null) {
+            profile.setExpectedSalary(request.getExpectedSalary());
+        }
+        if (request.getExpectedPosition() != null) {
+            profile.setExpectedPosition(request.getExpectedPosition());
         }
 
         CandidateProfile saved = candidateProfileRepository.save(profile);

@@ -58,7 +58,7 @@ export default function SignupPage() {
         first_name: firstName, 
         last_name: lastName, 
         email, 
-        password,
+        password, 
         confirmPassword,
         role,
         phoneNumber: phoneNumber.trim()

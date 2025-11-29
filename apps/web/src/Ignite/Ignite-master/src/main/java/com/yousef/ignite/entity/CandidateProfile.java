@@ -37,6 +37,8 @@ public class CandidateProfile {
     private String location;
     private LocalDateTime createdAt;
     private String resumeUrl;
+    private Double expectedSalary;
+    private String expectedPosition;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
