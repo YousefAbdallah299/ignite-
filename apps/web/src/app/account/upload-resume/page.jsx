@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,10 +12,20 @@ import { Upload, FileText, X, CheckCircle } from 'lucide-react';
 export default function UploadResumePage() {
   const { updateMyProfile, loading } = useCandidatesAPI();
   const navigate = useNavigate();
+  const location = useLocation();
   const [resumeFile, setResumeFile] = useState(null);
   const [resumePreview, setResumePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [currentSalary, setCurrentSalary] = useState('');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (location.state?.promptCompleteProfile) {
+      toast.message('Complete your profile', {
+        description: 'Upload your resume and add your current salary to finish registration.',
+      });
+    }
+  }, [location.state]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -60,6 +70,11 @@ export default function UploadResumePage() {
       return;
     }
 
+    if (!currentSalary || Number.isNaN(parseFloat(currentSalary)) || parseFloat(currentSalary) <= 0) {
+      toast.error('Please enter your current salary to continue');
+      return;
+    }
+
     setUploading(true);
     try {
       // Convert file to base64 or upload to a service
@@ -73,10 +88,11 @@ export default function UploadResumePage() {
           await updateMyProfile({
             title: 'New Candidate',
             summary: '',
-            resumeUrl: base64Data
+            resumeUrl: base64Data,
+            expectedSalary: parseFloat(currentSalary),
           });
 
-          toast.success('Resume uploaded successfully!');
+          toast.success('Profile completed successfully!');
           setTimeout(() => {
             navigate('/account/signin');
           }, 1500);
@@ -105,13 +121,33 @@ export default function UploadResumePage() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Your Resume</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Profile</h1>
             <p className="text-gray-600">
-              Complete your profile by uploading your resume. This helps recruiters find you.
+              Upload your resume and add your current salary. Both are required to finish setting up your account.
             </p>
           </div>
 
           <form onSubmit={handleUpload} className="space-y-6">
+            {/* Current salary */}
+            <div className="space-y-2">
+              <label htmlFor="current-salary" className="block text-sm font-medium text-gray-900">
+                Current salary (required)
+              </label>
+              <input
+                id="current-salary"
+                name="current-salary"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="100"
+                value={currentSalary}
+                onChange={(e) => setCurrentSalary(e.target.value)}
+                className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-red-500 focus:ring-red-500"
+                placeholder="e.g. 75000"
+                required
+              />
+            </div>
+
             {/* File Upload Area */}
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-red-400 transition-colors">
               {!resumeFile ? (
@@ -177,12 +213,12 @@ export default function UploadResumePage() {
                 disabled={!resumeFile || uploading || loading}
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors"
               >
-                {uploading || loading ? 'Uploading...' : 'Upload Resume & Continue'}
+                {uploading || loading ? 'Submitting...' : 'Submit & Continue'}
               </button>
             </div>
 
             <p className="text-xs text-gray-500 text-center">
-              Resume upload is required to complete your registration
+              Resume upload and current salary are required to complete your registration
             </p>
           </form>
         </div>

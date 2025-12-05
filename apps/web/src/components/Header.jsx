@@ -87,15 +87,9 @@ export default function Header() {
             <div className="flex-shrink-0">
               <a href="/" className="flex items-center">
                 <img
-                  src="/logo.png"
+                  src="/ignite-logo.png"
                   alt="Ignite logo"
                   className="h-10 w-auto object-contain"
-                  onError={(e) => {
-                    // Fallback to ignite-logo.png if logo.png doesn't exist
-                    if (e.target.src !== '/ignite-logo.png') {
-                      e.target.src = '/ignite-logo.png';
-                    }
-                  }}
                 />
                 <span className="ml-2 text-2xl font-bold text-gray-900">Ignite</span>
               </a>
