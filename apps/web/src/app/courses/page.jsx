@@ -20,7 +20,7 @@ const courseCategories = [
 function CourseCard({ course, onEnrollmentChange, enrolledCourseIds, isCandidate }) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
-  const courseThumbnail = course?.thumbnailUrl || course?.thumbnail_url || course?.thumbnail || null;
+  const courseThumbnail = course?.imageUrl || course?.thumbnailUrl || course?.thumbnail_url || course?.thumbnail || null;
 
   // Check enrollment status on component mount
   useEffect(() => {
@@ -348,10 +348,11 @@ export default function CoursesPage() {
         const coursesWithDetails = await Promise.all(
           response.content.map(async (course) => {
             try {
-              // Fetch individual course details to get section count
+              // Fetch individual course details to get section count and ensure imageUrl is included
               const courseDetails = await coursesAPI.getCourseById(course.id);
               return {
                 ...course,
+                imageUrl: course.imageUrl || courseDetails?.imageUrl || null,
                 sectionCount: courseDetails?.sections?.length || 0,
                 skillLevel: course.skillLevel || 'BEGINNER'
               };

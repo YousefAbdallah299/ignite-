@@ -106,9 +106,10 @@ export default function RegisterPage() {
       const result = await register(registerData);
       console.log('Registration successful:', result);
       
-      // Redirect to resume & salary completion for candidates
+      // Redirect to profile page for candidates to complete their profile
       if (role === 'CANDIDATE') {
-        navigate('/account/upload-resume', { state: { promptCompleteProfile: true } });
+        toast.success('Account created successfully! Please complete your profile.');
+        navigate('/profile', { state: { completeProfile: true } });
       } else {
         // For recruiters, go to sign in
         toast.success('Account created successfully! Please sign in to continue.');

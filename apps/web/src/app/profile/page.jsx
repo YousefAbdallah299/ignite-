@@ -3,6 +3,7 @@ import React from 'react';
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
@@ -113,6 +114,7 @@ export default function ProfilePage() {
   const { getMyProfile, updateMyProfile, loading: profileLoading } = useCandidatesAPI();
   const { getMyOffers, respondToOffer, loading: offersLoading } = useOffersAPI();
   const { isValid } = usePageTokenValidation(true); // Profile page requires auth
+  const location = useLocation();
   
   const [profile, setProfile] = useState(null);
   const [offers, setOffers] = useState([]);
@@ -157,6 +159,16 @@ export default function ProfilePage() {
     loadOffers();
     loadAvailableSkills();
   }, [user]);
+
+  // Auto-enable edit mode if coming from registration
+  useEffect(() => {
+    if (location.state?.completeProfile && profile && !isEditing) {
+      setIsEditing(true);
+      toast.message('Complete your profile', {
+        description: 'Please add your resume and current salary to finish registration.',
+      });
+    }
+  }, [location.state, profile, isEditing]);
 
 
   const loadProfile = async () => {
@@ -264,18 +276,36 @@ export default function ProfilePage() {
     setSaving(true);
     setError(null);
     
+    // Validate required fields: resume and current salary
+    const resumeUrl = profile.resumeUrl?.trim() || '';
+    const expectedSalary = profile.expectedSalary !== null && profile.expectedSalary !== undefined 
+      ? (typeof profile.expectedSalary === 'number' 
+          ? profile.expectedSalary 
+          : normalizeSalaryInput(profile.expectedSalary))
+      : null;
+    
+    if (!resumeUrl) {
+      setError('Resume is required. Please add a resume URL or upload a resume.');
+      setSaving(false);
+      toast.error('Resume is required to save your profile.');
+      return;
+    }
+    
+    if (!expectedSalary || expectedSalary <= 0 || Number.isNaN(expectedSalary)) {
+      setError('Current salary is required. Please enter your current salary.');
+      setSaving(false);
+      toast.error('Current salary is required to save your profile.');
+      return;
+    }
+    
     try {
       // Create the update payload using the exact DTO structure
       const updatePayload = {
         title: profile.title || 'Software Developer', // Required field
         summary: profile.summary || null,
-        resumeUrl: profile.resumeUrl || null,
+        resumeUrl: resumeUrl,
         location: profile.location || null,
-        expectedSalary: profile.expectedSalary !== null && profile.expectedSalary !== undefined 
-          ? (typeof profile.expectedSalary === 'number' 
-              ? profile.expectedSalary 
-              : normalizeSalaryInput(profile.expectedSalary))
-          : null,
+        expectedSalary: expectedSalary,
         expectedPosition: profile.expectedPosition?.trim() || null
       };
       
@@ -802,7 +832,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Resume <span className="text-red-600">*</span>
+                  </label>
                   {isEditing ? (
                     <input
                       type="url"
@@ -810,6 +842,7 @@ export default function ProfilePage() {
                       onChange={(e) => setProfile({ ...profile, resumeUrl: e.target.value })}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       placeholder="https://example.com/resume.pdf"
+                      required
                     />
                   ) : (
                     <div>
@@ -831,7 +864,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Salary <span className="text-red-600">*</span>
+                  </label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -871,6 +906,7 @@ export default function ProfilePage() {
                       }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       placeholder="e.g., 85000"
+                      required
                     />
                   ) : (
                     <p className="text-gray-900">
