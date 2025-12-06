@@ -3,6 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Menu, X, User, Briefcase, Users, BookOpen, FileText, Settings, LogOut, ChevronDown, PlusCircle, List, CheckSquare, Building2, GraduationCap, HelpCircle, DollarSign, Shield, Info } from "lucide-react";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 
+// Helper function to get logo URL - try public folder first, fallback to backend if needed
+const getLogoUrl = () => {
+  // First try the public folder (standard Next.js/React approach)
+  // If that doesn't work in production, we can serve from backend
+  return '/ignite-logo.png';
+};
+
 export default function Header() {
   const { user, logout, isAuthenticated, isRecruiter, isAdmin, isCandidate } = useAuthAPI();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,9 +94,15 @@ export default function Header() {
             <div className="flex-shrink-0">
               <a href="/" className="flex items-center">
                 <img
-                  src="/ignite-logo.png"
+                  src={getLogoUrl()}
                   alt="Ignite logo"
                   className="h-10 w-auto object-contain"
+                  onError={(e) => {
+                    // If logo fails to load from public folder, try backend
+                    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+                    const backendBaseUrl = apiBaseUrl.replace(/\/api\/v1$/, '');
+                    e.target.src = `${backendBaseUrl}/uploads/ignite-logo.png`;
+                  }}
                 />
                 <span className="ml-2 text-2xl font-bold text-gray-900">Ignite</span>
               </a>

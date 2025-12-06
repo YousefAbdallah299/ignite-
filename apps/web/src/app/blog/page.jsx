@@ -10,6 +10,13 @@ import PageFadeIn from '@/components/PageFadeIn';
 import { useBlogsAPI } from '@/hooks/useBlogsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 
+// Helper function to get backend base URL (without /api/v1) for serving uploads
+const getBackendBaseUrl = () => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+  // Remove /api/v1 from the end to get the base URL
+  return apiBaseUrl.replace(/\/api\/v1$/, '');
+};
+
 const formatRelativeTime = (dateString) => {
   if (!dateString) return '';
 
@@ -276,7 +283,7 @@ export default function PostsFeedPage() {
               <div className="text-gray-900 whitespace-pre-wrap break-words mb-4">{post.content}</div>
               {post.mediaUrl && post.mediaType === 'IMAGE' && (
                 <img 
-                  src={`https://ignite-7e2w.onrender.com${post.mediaUrl}`} 
+                  src={`${getBackendBaseUrl()}${post.mediaUrl}`} 
                   alt="Post media" 
                   className="w-full h-64 object-cover rounded-lg mb-4" 
                   onError={(e) => {
@@ -290,7 +297,7 @@ export default function PostsFeedPage() {
               )}
               {post.mediaUrl && post.mediaType === 'VIDEO' && (
                 <video 
-                  src={`https://ignite-7e2w.onrender.com${post.mediaUrl}`} 
+                  src={`${getBackendBaseUrl()}${post.mediaUrl}`} 
                   controls 
                   className="w-full h-64 rounded-lg mb-4"
                   onError={(e) => {
