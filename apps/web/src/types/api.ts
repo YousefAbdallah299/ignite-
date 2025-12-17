@@ -87,8 +87,8 @@ export interface SendOfferDTO {
 export interface UpdateCandidateProfileDTO {
   title: string;
   summary?: string;
-  resumeUrl?: string;
   availableFrom?: string; // ISO date string
+  // Resume is handled separately via file upload
 }
 
 export interface WorkshopInvitationRequestDTO {
@@ -203,7 +203,7 @@ export interface CandidateProfileResponseDTO {
   name: string;
   title: string;
   summary?: string;
-  resumeUrl?: string;
+  resumeFilePath?: string; // Changed from resumeUrl to resumeFilePath
   availableFrom?: string;
   skills: Record<string, number>; // skill name -> rating
 }

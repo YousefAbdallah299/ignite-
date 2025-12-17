@@ -652,6 +652,16 @@ export const candidatesAPI = {
       body: JSON.stringify({ skillId, rating }),
     });
   },
+
+  // Upload resume file
+  uploadResume: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiCall('/candidates/me/resume', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };
 
 // Recruiters API
@@ -765,6 +775,70 @@ export const paymentsAPI = {
   },
 };
 
+// Admin Privileges API
+export const adminPrivilegesAPI = {
+  // Create custom admin
+  createCustomAdmin: async (adminData) => {
+    return apiCall('/admin/custom-admins', {
+      method: 'POST',
+      body: JSON.stringify(adminData),
+    });
+  },
+
+  // Get all custom admins
+  getAllCustomAdmins: async () => {
+    return apiCall('/admin/custom-admins', {
+      method: 'GET',
+    });
+  },
+
+  // Get custom admin privileges
+  getCustomAdminPrivileges: async (userId) => {
+    return apiCall(`/admin/custom-admins/${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // Update custom admin privileges
+  updateCustomAdminPrivileges: async (userId, privileges) => {
+    return apiCall(`/admin/custom-admins/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(privileges),
+    });
+  },
+
+  // Delete custom admin
+  deleteCustomAdmin: async (userId) => {
+    return apiCall(`/admin/custom-admins/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Check if user has privilege
+  checkPrivilege: async (privilegeName) => {
+    // This will be handled client-side using the user's privilege data
+    return null;
+  },
+};
+
+// Candidate Comments API
+export const candidateCommentsAPI = {
+  // Create comment
+  createComment: async (candidateProfileId, content) => {
+    return apiCall('/candidates/comments', {
+      method: 'POST',
+      body: JSON.stringify({ candidateProfileId, content }),
+    });
+  },
+
+  // Get comments for a candidate
+  getComments: async (candidateProfileId) => {
+    return apiCall(`/candidates/comments/${candidateProfileId}`, {
+      method: 'GET',
+    });
+  },
+};
+
 // Export all APIs
 export default {
   auth: authAPI,
@@ -777,4 +851,6 @@ export default {
   skills: skillsAPI,
   workshops: workshopsAPI,
   payments: paymentsAPI,
+  adminPrivileges: adminPrivilegesAPI,
+  candidateComments: candidateCommentsAPI,
 };

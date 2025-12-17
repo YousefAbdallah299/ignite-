@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
-import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X } from 'lucide-react';
-import { candidatesAPI, offersAPI } from '@/utils/apiClient';
+import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send } from 'lucide-react';
+import { candidatesAPI, offersAPI, candidateCommentsAPI } from '@/utils/apiClient';
 
 export default function CandidatePage() {
   const { isAuthenticated, isRecruiter, isAdmin } = useAuthAPI();
@@ -20,6 +20,10 @@ export default function CandidatePage() {
     salary: '',
     currency: 'USD'
   });
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [sendingComment, setSendingComment] = useState(false);
   const id = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
 
   useEffect(() => {
@@ -38,6 +42,47 @@ export default function CandidatePage() {
     };
     if (id) load();
   }, [id]);
+
+  // Load comments if user is admin or subscribed recruiter
+  useEffect(() => {
+    const loadComments = async () => {
+      if (!id || !isAuthenticated || (!isAdmin && !isRecruiter)) return;
+      
+      try {
+        setLoadingComments(true);
+        const commentsData = await candidateCommentsAPI.getComments(id);
+        setComments(commentsData || []);
+      } catch (error) {
+        // Silently fail if user doesn't have permission
+        if (error.message?.includes('permission') || error.message?.includes('Unauthorized')) {
+          setComments([]);
+        } else {
+          console.error('Error loading comments:', error);
+        }
+      } finally {
+        setLoadingComments(false);
+      }
+    };
+    
+    loadComments();
+  }, [id, isAuthenticated, isAdmin, isRecruiter]);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !data) return;
+    
+    try {
+      setSendingComment(true);
+      const comment = await candidateCommentsAPI.createComment(data.id, newComment.trim());
+      setComments([comment, ...comments]);
+      setNewComment('');
+      toast.success('Comment added successfully');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment: ' + (error.message || 'Unknown error'));
+    } finally {
+      setSendingComment(false);
+    }
+  };
 
   const sendOffer = async () => {
     if (!data) return;
@@ -259,9 +304,9 @@ export default function CandidatePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
                   <div>
-                    {data.resumeUrl ? (
+                    {data.resumeFilePath ? (
                       <a 
-                        href={data.resumeUrl} 
+                        href={data.resumeFilePath} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-red-600 hover:text-red-700 flex items-center"
@@ -284,6 +329,61 @@ export default function CandidatePage() {
                 </div>
               </div>
             </div>
+
+            {/* Admin Comments Section - Only visible to admins and subscribed recruiters */}
+            {(isAdmin || (isRecruiter && isAuthenticated)) && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <MessageSquare className="w-5 h-5 mr-2 text-red-600" />
+                  Admin Comments
+                </h2>
+                
+                {/* Add Comment Form - Only for admins */}
+                {isAdmin && (
+                  <div className="mb-6">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment about this candidate..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent min-h-24 mb-3"
+                      rows={4}
+                    />
+                    <button
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || sendingComment}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {sendingComment ? 'Sending...' : 'Add Comment'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                {loadingComments ? (
+                  <div className="text-center py-4 text-gray-500">Loading comments...</div>
+                ) : comments.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">No comments yet</div>
+                ) : (
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="font-medium text-gray-900">{comment.adminName}</p>
+                            <p className="text-sm text-gray-500">{comment.adminEmail}</p>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            {new Date(comment.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

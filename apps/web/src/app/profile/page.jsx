@@ -191,7 +191,6 @@ export default function ProfilePage() {
           const basicProfile = {
             title: 'Software Developer', // Required field
             summary: '',
-            resumeUrl: '',
             location: ''
           };
           const newProfile = await updateMyProfile(basicProfile);
@@ -260,8 +259,8 @@ export default function ProfilePage() {
       const updatePayload = {
         title: profile.title || 'Software Developer', // Required field
         summary: profile.summary || null,
-        resumeUrl: profile.resumeUrl || null,
         location: profile.location || null
+        // Resume is handled separately via file upload
       };
       
       console.log('Saving profile with payload:', updatePayload);
@@ -750,18 +749,40 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
                   {isEditing ? (
-                    <input
-                      type="url"
-                      value={profile.resumeUrl || ''}
-                      onChange={(e) => setProfile({ ...profile, resumeUrl: e.target.value })}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="https://example.com/resume.pdf"
-                    />
+                    <div>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            try {
+                              setSaving(true);
+                              const updatedProfile = await candidatesAPI.uploadResume(file);
+                              setProfile(updatedProfile);
+                              toast.success('Resume uploaded successfully!');
+                            } catch (err) {
+                              console.error('Error uploading resume:', err);
+                              toast.error('Failed to upload resume: ' + (err.message || 'Unknown error'));
+                            } finally {
+                              setSaving(false);
+                            }
+                          }
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        disabled={saving}
+                      />
+                      {profile.resumeFilePath && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          Current resume: <a href={profile.resumeFilePath} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-700">View</a>
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <div>
-                      {profile.resumeUrl ? (
+                      {profile.resumeFilePath ? (
                         <a 
-                          href={profile.resumeUrl} 
+                          href={profile.resumeFilePath} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-red-600 hover:text-red-700 flex items-center"

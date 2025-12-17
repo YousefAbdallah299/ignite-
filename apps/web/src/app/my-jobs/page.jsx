@@ -424,7 +424,7 @@ export default function MyJobsPage() {
                             <div className="flex items-center gap-2">
                               <FileText className="w-4 h-4 text-gray-400" />
                               <span className="text-sm text-gray-600">
-                                {application.resumeUrl ? 'Resume Available' : 'No Resume'}
+                                {application.resumeFilePath ? 'Resume Available' : 'No Resume'}
                               </span>
                             </div>
                             

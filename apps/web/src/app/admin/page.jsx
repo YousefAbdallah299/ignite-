@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { X } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI, adminPrivilegesAPI } from '@/utils/apiClient';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
@@ -51,6 +53,22 @@ export default function AdminPage() {
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [skillRating, setSkillRating] = useState(50);
   const [ratingCandidate, setRatingCandidate] = useState(false);
+
+  // Admin privileges state
+  const [adminPrivileges, setAdminPrivileges] = useState(null);
+  const [loadingPrivileges, setLoadingPrivileges] = useState(true);
+  const [customAdmins, setCustomAdmins] = useState([]);
+  const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
+  const [newAdminForm, setNewAdminForm] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    canManageCourses: false,
+    canManageUsers: false,
+    canRateSkills: false,
+    canManageWorkshops: false
+  });
 
   // Available user roles
   const userRoles = [
@@ -285,8 +303,102 @@ export default function AdminPage() {
     if (isAdmin) {
       loadCandidates();
       loadAvailableSkills();
+      loadAdminPrivileges();
+      loadCustomAdmins();
     }
   }, [isAdmin]);
+
+  // Load admin privileges for current user
+  const loadAdminPrivileges = async () => {
+    try {
+      setLoadingPrivileges(true);
+      // Try to get current user's privileges
+      // If user has privileges, they're a custom admin
+      // If not, they're a full admin with all privileges
+      const customAdminsList = await adminPrivilegesAPI.getAllCustomAdmins();
+      const currentUserPrivileges = customAdminsList.find(admin => admin.email === user?.email);
+      
+      if (currentUserPrivileges) {
+        setAdminPrivileges(currentUserPrivileges);
+      } else {
+        // Full admin - has all privileges
+        setAdminPrivileges({
+          canManageCourses: true,
+          canManageUsers: true,
+          canRateSkills: true,
+          canManageWorkshops: true,
+          canManageCustomAdmins: true
+        });
+      }
+    } catch (error) {
+      console.error('Error loading admin privileges:', error);
+      // Default to full admin if error
+      setAdminPrivileges({
+        canManageCourses: true,
+        canManageUsers: true,
+        canRateSkills: true,
+        canManageWorkshops: true,
+        canManageCustomAdmins: true
+      });
+    } finally {
+      setLoadingPrivileges(false);
+    }
+  };
+
+  // Load custom admins list
+  const loadCustomAdmins = async () => {
+    try {
+      const admins = await adminPrivilegesAPI.getAllCustomAdmins();
+      setCustomAdmins(admins || []);
+    } catch (error) {
+      console.error('Error loading custom admins:', error);
+    }
+  };
+
+  // Helper function to check if user has a privilege
+  const hasPrivilege = (privilegeName) => {
+    if (!adminPrivileges) return false;
+    // Full admins (no privileges object) have all privileges
+    if (adminPrivileges.canManageCustomAdmins) return true;
+    return adminPrivileges[privilegeName] === true;
+  };
+
+  // Create custom admin
+  const handleCreateCustomAdmin = async (e) => {
+    e.preventDefault();
+    try {
+      await adminPrivilegesAPI.createCustomAdmin(newAdminForm);
+      toast.success('Custom admin created successfully!');
+      setShowCreateAdminModal(false);
+      setNewAdminForm({
+        email: '',
+        password: '',
+        firstName: '',
+        lastName: '',
+        canManageCourses: false,
+        canManageUsers: false,
+        canRateSkills: false,
+        canManageWorkshops: false
+      });
+      loadCustomAdmins();
+    } catch (error) {
+      console.error('Error creating custom admin:', error);
+      alert('Failed to create custom admin: ' + (error.message || 'Unknown error'));
+    }
+  };
+
+  // Delete custom admin
+  const handleDeleteCustomAdmin = async (userId) => {
+    if (!confirm('Are you sure you want to delete this custom admin?')) return;
+    try {
+      await adminPrivilegesAPI.deleteCustomAdmin(userId);
+      toast.success('Custom admin deleted successfully!');
+      loadCustomAdmins();
+    } catch (error) {
+      console.error('Error deleting custom admin:', error);
+      alert('Failed to delete custom admin: ' + (error.message || 'Unknown error'));
+    }
+  };
 
   const deleteCourse = async (id) => { 
     try {
@@ -600,6 +712,8 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-8 min-h-[600px]">
             <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8">
+              {/* Courses Section - Only if has privilege */}
+              {hasPrivilege('canManageCourses') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Courses</h2>
                 <div className="space-y-2 mb-4">
@@ -850,7 +964,10 @@ export default function AdminPage() {
                   <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">Create Course</button>
                 </form>
               </section>
+              )}
 
+              {/* Users Section - Only if has privilege */}
+              {hasPrivilege('canManageUsers') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
@@ -992,8 +1109,10 @@ export default function AdminPage() {
                   </div>
                 )}
               </section>
+              )}
 
-              {/* Skill Rating Section */}
+              {/* Skill Rating Section - Only if has privilege */}
+              {hasPrivilege('canRateSkills') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Rate Candidate Skills</h2>
                 <div className="space-y-4">
@@ -1100,8 +1219,10 @@ export default function AdminPage() {
                   </button>
                 </div>
               </section>
+              )}
 
-              {/* Workshop Invite Section */}
+              {/* Workshop Invite Section - Only if has privilege */}
+              {hasPrivilege('canManageWorkshops') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Workshop Invitations</h2>
                 <form onSubmit={sendWorkshopInvite} className="space-y-3">

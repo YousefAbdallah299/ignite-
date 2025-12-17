@@ -61,11 +61,11 @@ function SeekerCard({ seeker, onOpenOfferModal, sendingOfferId, hasOfferSent, us
             {getAvailabilityStatus().status}
           </span>
         </div>
-        {seeker.resumeUrl && (
+        {seeker.resumeFilePath && (
           <div className="flex items-center gap-2 text-gray-500">
             <FileText className="w-4 h-4" />
             <a 
-              href={seeker.resumeUrl} 
+              href={seeker.resumeFilePath} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-red-600 hover:text-red-700"
