@@ -770,7 +770,7 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
                   {isEditing ? (
                     <div className="space-y-2">
-                      <input
+                    <input
                         type="file"
                         accept=".pdf,.doc,.docx"
                         onChange={(e) => {
@@ -790,7 +790,7 @@ export default function ProfilePage() {
                             setResumeFile(file);
                           }
                         }}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                       {resumeFile && (
                         <p className="text-sm text-gray-600">Selected: {resumeFile.name}</p>

@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI, adminAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
@@ -310,10 +310,25 @@ export default function AdminPage() {
 
   const loadMyPrivileges = async () => {
     try {
-      const privileges = await adminAPI.getMyPrivileges();
-      setMyPrivileges(privileges || []);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:8080/api/v1/admin/my-privileges', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const privileges = await response.json();
+        setMyPrivileges(privileges || []);
+      } else {
+        console.error('Error loading privileges:', response.status);
+        setMyPrivileges([]);
+      }
     } catch (error) {
       console.error('Error loading privileges:', error);
+      setMyPrivileges([]);
     }
   };
 
@@ -334,7 +349,21 @@ export default function AdminPage() {
 
     setCreatingAdmin(true);
     try {
-      await adminAPI.createCustomAdmin(customAdminForm);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:8080/api/v1/admin/custom-admin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customAdminForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}: ${response.statusText}` }));
+        throw new Error(errorData.message || `Failed to create custom admin: ${response.status}`);
+      }
+
       alert('Custom admin created successfully!');
       setCustomAdminForm({
         firstName: '',
