@@ -6,7 +6,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI, adminAPI } from '@/utils/apiClient';
+
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
@@ -139,7 +142,7 @@ export default function AdminPage() {
       // Test basic connectivity first
       console.log('Testing backend connectivity...');
       try {
-        const testResponse = await fetch('http://localhost:8080/api/v1/users?page=0&size=5', { 
+        const testResponse = await fetch(`${API_BASE_URL}/users?page=0&size=5`, { 
           method: 'GET',
           headers: headers
         });
@@ -156,7 +159,7 @@ export default function AdminPage() {
         console.log('Test response data:', testData);
         
         // Load courses from Ignite backend
-        const coursesResponse = await fetch('http://localhost:8080/api/v1/courses?page=0&size=100', {
+        const coursesResponse = await fetch(`${API_BASE_URL}/courses?page=0&size=100`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -188,7 +191,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `http://localhost:8080/api/v1/users/search-by-email?${userParams}`;
+          usersUrl = `${API_BASE_URL}/users/search-by-email?${userParams}`;
         } else {
           // Use regular search endpoint with role filtering
           userParams = new URLSearchParams({
@@ -204,7 +207,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `http://localhost:8080/api/v1/users?${userParams}`;
+          usersUrl = `${API_BASE_URL}/users?${userParams}`;
         }
 
         console.log('Fetching users from:', usersUrl);
@@ -310,22 +313,8 @@ export default function AdminPage() {
 
   const loadMyPrivileges = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:8080/api/v1/admin/my-privileges', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const privileges = await response.json();
-        setMyPrivileges(privileges || []);
-      } else {
-        console.error('Error loading privileges:', response.status);
-        setMyPrivileges([]);
-      }
+      const privileges = await adminAPI.getMyPrivileges();
+      setMyPrivileges(privileges || []);
     } catch (error) {
       console.error('Error loading privileges:', error);
       setMyPrivileges([]);
@@ -349,21 +338,7 @@ export default function AdminPage() {
 
     setCreatingAdmin(true);
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:8080/api/v1/admin/custom-admin', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(customAdminForm)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}: ${response.statusText}` }));
-        throw new Error(errorData.message || `Failed to create custom admin: ${response.status}`);
-      }
-
+      await adminAPI.createCustomAdmin(customAdminForm);
       alert('Custom admin created successfully!');
       setCustomAdminForm({
         firstName: '',
@@ -384,20 +359,7 @@ export default function AdminPage() {
 
   const deleteCourse = async (id) => { 
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:8080/api/v1/courses/${id}`, { 
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete course');
-      }
-      
+      await coursesAPI.deleteCourse(id);
       console.log('Course deleted successfully');
       load(); // Reload the courses list
     } catch (error) {
@@ -409,7 +371,7 @@ export default function AdminPage() {
   const deleteUser = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:8080/api/v1/auth/users/${id}`, { 
+      const response = await fetch(`${API_BASE_URL}/auth/users/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -577,7 +539,7 @@ export default function AdminPage() {
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:8080/api/v1/courses', {
+      const response = await fetch(`${API_BASE_URL}/courses`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
