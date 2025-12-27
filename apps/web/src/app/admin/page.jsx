@@ -1,27 +1,22 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
-import RevealOnScroll from '@/components/RevealOnScroll';
-import PageFadeIn from '@/components/PageFadeIn';
+import { coursesAPI, candidatesAPI, skillsAPI, adminAPI } from '@/utils/apiClient';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
   const navigate = useNavigate();
-  
-  // Backend URL constant
-  const BACKEND_URL = 'https://ignite-qjis.onrender.com/api/v1';
-  
   const [accessDenied, setAccessDenied] = useState(false);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [usersLoading, setUsersLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [emailQuery, setEmailQuery] = useState('');
   const [debouncedEmailQuery, setDebouncedEmailQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -30,8 +25,6 @@ export default function AdminPage() {
   const [totalElements, setTotalElements] = useState(0);
 
   const [newCourse, setNewCourse] = useState({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
-  const [courseImage, setCourseImage] = useState({ preview: '', data: '', name: '' });
-  const courseImageInputRef = useRef(null);
   const [sections, setSections] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([
     'Web Development', 'Data Science', 'Marketing', 'Design', 'Business', 
@@ -58,7 +51,25 @@ export default function AdminPage() {
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [skillRating, setSkillRating] = useState(50);
   const [ratingCandidate, setRatingCandidate] = useState(false);
-  const [showSkillRatingModal, setShowSkillRatingModal] = useState(false);
+
+  // Custom admin creation state
+  const [showCustomAdminForm, setShowCustomAdminForm] = useState(false);
+  const [customAdminForm, setCustomAdminForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    privileges: []
+  });
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const [myPrivileges, setMyPrivileges] = useState([]);
+  
+  const availablePrivileges = [
+    { name: 'MANAGE_COURSES', label: 'Manage Courses' },
+    { name: 'MANAGE_USERS', label: 'Manage Users' },
+    { name: 'MANAGE_WORKSHOPS', label: 'Manage Workshops' },
+    { name: 'RATE_SKILLS', label: 'Rate Skills' }
+  ];
 
   // Available user roles
   const userRoles = [
@@ -128,7 +139,7 @@ export default function AdminPage() {
       // Test basic connectivity first
       console.log('Testing backend connectivity...');
       try {
-        const testResponse = await fetch(`${BACKEND_URL}/users?page=0&size=5`, { 
+        const testResponse = await fetch('http://localhost:8080/api/v1/users?page=0&size=5', { 
           method: 'GET',
           headers: headers
         });
@@ -145,7 +156,7 @@ export default function AdminPage() {
         console.log('Test response data:', testData);
         
         // Load courses from Ignite backend
-        const coursesResponse = await fetch(`${BACKEND_URL}/courses?page=0&size=100`, {
+        const coursesResponse = await fetch('http://localhost:8080/api/v1/courses?page=0&size=100', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -177,7 +188,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `${BACKEND_URL}/users/search-by-email?${userParams}`;
+          usersUrl = `http://localhost:8080/api/v1/users/search-by-email?${userParams}`;
         } else {
           // Use regular search endpoint with role filtering
           userParams = new URLSearchParams({
@@ -193,7 +204,7 @@ export default function AdminPage() {
             userParams.append('role', selectedRole);
           }
           
-          usersUrl = `${BACKEND_URL}/users?${userParams}`;
+          usersUrl = `http://localhost:8080/api/v1/users?${userParams}`;
         }
 
         console.log('Fetching users from:', usersUrl);
@@ -268,6 +279,15 @@ export default function AdminPage() {
     }
   };
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Debounce email query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -277,34 +297,66 @@ export default function AdminPage() {
     return () => clearTimeout(timer);
   }, [emailQuery]);
 
-  // Initial load
-  useEffect(() => { 
-    load(); 
-  }, []);
-
-  // Load users separately when filters change
-  useEffect(() => { 
-    loadUsers(); 
-  }, [debouncedEmailQuery, selectedRole, currentPage]);
+  useEffect(() => { load(); }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
   
-  // Load candidates for skill rating
+  // Load candidates and skills for skill rating
   useEffect(() => {
     if (isAdmin) {
       loadCandidates();
+      loadAvailableSkills();
+      loadMyPrivileges();
     }
   }, [isAdmin]);
 
-  // Load skills only when a candidate is selected
-  useEffect(() => {
-    if (selectedCandidate) {
-      loadAvailableSkills();
+  const loadMyPrivileges = async () => {
+    try {
+      const privileges = await adminAPI.getMyPrivileges();
+      setMyPrivileges(privileges || []);
+    } catch (error) {
+      console.error('Error loading privileges:', error);
     }
-  }, [selectedCandidate]);
+  };
+
+  const hasPrivilege = (privilegeName) => {
+    // Full admins have all privileges
+    if (myPrivileges.length === 0 || myPrivileges.some(p => p.privilegeName === privilegeName && p.enabled)) {
+      return true;
+    }
+    return false;
+  };
+
+  const createCustomAdmin = async (e) => {
+    e.preventDefault();
+    if (customAdminForm.privileges.length === 0) {
+      alert('Please select at least one privilege');
+      return;
+    }
+
+    setCreatingAdmin(true);
+    try {
+      await adminAPI.createCustomAdmin(customAdminForm);
+      alert('Custom admin created successfully!');
+      setCustomAdminForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        privileges: []
+      });
+      setShowCustomAdminForm(false);
+      load(); // Reload users list
+    } catch (error) {
+      console.error('Error creating custom admin:', error);
+      alert(`Error creating custom admin: ${error.message}`);
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
 
   const deleteCourse = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${BACKEND_URL}/courses/${id}`, { 
+      const response = await fetch(`http://localhost:8080/api/v1/courses/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -328,7 +380,7 @@ export default function AdminPage() {
   const deleteUser = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${BACKEND_URL}/auth/users/${id}`, { 
+      const response = await fetch(`http://localhost:8080/api/v1/auth/users/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -342,13 +394,18 @@ export default function AdminPage() {
       }
       
       console.log('User deleted successfully');
-      loadUsers(); // Reload only the users list with proper loading state
+      load(); // Reload the users list
     } catch (error) {
       console.error('Error deleting user:', error);
       alert(`Error deleting user: ${error.message}`);
     }
   };
   
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(0); // Reset to first page when searching
+  };
+
   const handleEmailSearch = (e) => {
     setEmailQuery(e.target.value);
     setCurrentPage(0); // Reset to first page when searching
@@ -357,67 +414,6 @@ export default function AdminPage() {
   const handleRoleChange = (e) => {
     setSelectedRole(e.target.value);
     setCurrentPage(0); // Reset to first page when filtering
-  };
-
-  // Separate function to load only users
-  const loadUsers = async () => {
-    setUsersLoading(true);
-    try {
-      const token = localStorage.getItem('authToken');
-      
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-
-      let userParams;
-      let usersUrl;
-      
-      if (debouncedEmailQuery.trim()) {
-        userParams = new URLSearchParams({
-          emailPart: debouncedEmailQuery.trim(),
-          page: currentPage.toString(),
-          size: '20'
-        });
-        
-        if (selectedRole) {
-          userParams.append('role', selectedRole);
-        }
-        
-        usersUrl = `${BACKEND_URL}/users/search-by-email?${userParams}`;
-      } else {
-        userParams = new URLSearchParams({
-          page: currentPage.toString(),
-          size: '20'
-        });
-        
-        if (selectedRole) {
-          userParams.append('role', selectedRole);
-        }
-        
-        usersUrl = `${BACKEND_URL}/users?${userParams}`;
-      }
-
-      const response = await fetch(usersUrl, { headers });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
-      
-      const u = await response.json();
-      
-      setUsers(Array.isArray(u.content) ? u.content : []);
-      setTotalPages(u.totalPages || 0);
-      setTotalElements(u.totalElements || 0);
-      
-    } catch (error) {
-      console.error('Error loading users:', error);
-      setUsers([]);
-    } finally {
-      setUsersLoading(false);
-    }
   };
 
   const handlePageChange = (newPage) => {
@@ -483,7 +479,6 @@ export default function AdminPage() {
   // Load candidates for skill rating
   const loadCandidates = async () => {
     try {
-      // Prefetch a reasonable page; on-demand fetch will cover cache misses
       const response = await candidatesAPI.getAllCandidates(0, 100);
       setCandidates(response.content || []);
     } catch (error) {
@@ -491,137 +486,13 @@ export default function AdminPage() {
     }
   };
 
-  // Try to find a candidate profile for a given user record using multiple strategies
-  const findCandidateForUser = async (user) => {
-    try {
-      const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
-
-      // 1) Try cache by userId if available on objects
-      let match = candidates.find(c => (
-        (c.userId != null && String(c.userId) === String(user.id)) ||
-        (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
-      ));
-      if (match) return match;
-
-      // 2) Try on-demand fetch by email (narrow, backend supports query filter)
-      if (user.email) {
-        try {
-          const byEmail = await candidatesAPI.getAllCandidates(0, 5, user.email);
-          match = (byEmail?.content || []).find(c => (
-            (c.userId != null && String(c.userId) === String(user.id)) ||
-            (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
-          )) || (byEmail?.content || [])[0];
-          if (match) return match;
-        } catch (e) {
-          console.error('Candidate search by email failed:', user.email, e);
-        }
-      }
-
-      // 3) Try on-demand fetch by full name
-      if (fullName) {
-        try {
-          const byName = await candidatesAPI.getAllCandidates(0, 5, fullName);
-          match = (byName?.content || []).find(c => (
-            (c.userId != null && String(c.userId) === String(user.id)) ||
-            (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
-          )) || (byName?.content || [])[0];
-          if (match) return match;
-        } catch (e) {
-          console.error('Candidate search by name failed:', fullName, e);
-        }
-      }
-
-      // 4) Last resort: paginate through candidates and try to match by name
-      try {
-        let pageIndex = 0;
-        const pageSize = 50;
-        const maxPages = 40;
-        while (pageIndex < maxPages) {
-          const page = await candidatesAPI.getAllCandidates(pageIndex, pageSize);
-          const list = page?.content || [];
-          match = list.find(c => (
-            (c.userId != null && String(c.userId) === String(user.id)) ||
-            (c.name && fullName && c.name.trim().toLowerCase() === fullName.toLowerCase())
-          ));
-          if (match) return match;
-          if (page?.last) break;
-          pageIndex += 1;
-        }
-      } catch (e) {
-        console.error('Candidate paginated search failed for user:', user.id, e);
-      }
-    } catch (e) {
-      console.error('Error searching candidate for user:', user?.id, e);
-    }
-    return null;
-  };
-
-  // Load available skills for selected candidate only
+  // Load available skills
   const loadAvailableSkills = async () => {
-    if (!selectedCandidate) {
-      setAvailableSkills([]);
-      return;
-    }
-    
     try {
-      // Get skills for the selected candidate only
-      const candidateData = await candidatesAPI.getCandidateById(selectedCandidate.id);
-      
-      // Also fetch all available skills to get their IDs
-      const allSkills = await skillsAPI.getAllSkills();
-      
-      // Convert Map to array format for the UI with proper skill IDs
-      // Backend returns skills as Map<String, Integer> (skill name -> rating)
-      if (candidateData.skills && typeof candidateData.skills === 'object') {
-        const skillsArray = Object.entries(candidateData.skills).map(([name, rating]) => {
-          // Find the skill ID from all available skills by matching name
-          const skillInfo = Array.isArray(allSkills) ? allSkills.find(s => s.name === name) : null;
-          
-          return {
-            name: name,
-            rating: rating,
-            id: skillInfo?.id || name // Use skill ID if available, otherwise use name
-          };
-        });
-        setAvailableSkills(skillsArray);
-      } else {
-        setAvailableSkills([]);
-      }
+      const response = await skillsAPI.getAllSkills();
+      setAvailableSkills(response || []);
     } catch (error) {
-      console.error('Error loading candidate skills:', error);
-      setAvailableSkills([]);
-    }
-  };
-
-  const handleCourseImageChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (PNG, JPG, or SVG).');
-      if (courseImageInputRef.current) {
-        courseImageInputRef.current.value = '';
-      }
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setCourseImage({
-          preview: reader.result,
-          data: reader.result,
-          name: file.name
-        });
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const clearCourseImage = () => {
-    setCourseImage({ preview: '', data: '', name: '' });
-    if (courseImageInputRef.current) {
-      courseImageInputRef.current.value = '';
+      console.error('Error loading skills:', error);
     }
   };
 
@@ -634,12 +505,10 @@ export default function AdminPage() {
 
     setRatingCandidate(true);
     try {
-      // selectedSkill.id is now the actual skill ID (Long)
       await candidatesAPI.rateCandidateSkill(selectedCandidate.id, selectedSkill.id, skillRating);
       alert(`Successfully rated ${selectedCandidate.name}'s ${selectedSkill.name} skill as ${skillRating}%`);
       
-      // Close modal and reset form
-      setShowSkillRatingModal(false);
+      // Reset form
       setSelectedCandidate(null);
       setSelectedSkill(null);
       setSkillRating(50);
@@ -662,7 +531,6 @@ export default function AdminPage() {
         description: newCourse.description,
         categories: newCourse.categories, // Backend expects array of categories
         skillLevel: newCourse.skillLevel,
-        imageUrl: courseImage.data || null,
         sections: sections.map(section => ({
           title: section.title,
           content: '', // Backend expects content field
@@ -680,7 +548,7 @@ export default function AdminPage() {
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${BACKEND_URL}/courses`, {
+      const response = await fetch('http://localhost:8080/api/v1/courses', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -728,7 +596,6 @@ export default function AdminPage() {
       // Reset form completely
       setNewCourse({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
       setSections([]);
-      clearCourseImage();
       
       // Reload courses list
       load();
@@ -784,12 +651,10 @@ export default function AdminPage() {
   });
 
   return (
-    <PageFadeIn className="bg-gray-50">
+    <div className="min-h-screen bg-gray-50 page-fade-in">
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[calc(100vh-200px)]">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h1>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h1>
         {loading ? (
           <div className="text-gray-600 min-h-[600px] flex items-center justify-center">
             <div className="text-center">
@@ -799,10 +664,111 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-8 min-h-[600px]">
-            {/* First Row: Courses and Workshop */}
-            <RevealOnScroll>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-2">
+            {/* Custom Admin Creation Section */}
+            {hasPrivilege('MANAGE_USERS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Custom Admin Management</h2>
+                  <button
+                    onClick={() => setShowCustomAdminForm(!showCustomAdminForm)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  >
+                    {showCustomAdminForm ? 'Cancel' : '+ Create Custom Admin'}
+                  </button>
+                </div>
+                
+                {showCustomAdminForm && (
+                  <form onSubmit={createCustomAdmin} className="space-y-4 border-t border-gray-200 pt-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input
+                          type="text"
+                          value={customAdminForm.firstName}
+                          onChange={(e) => setCustomAdminForm({ ...customAdminForm, firstName: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input
+                          type="text"
+                          value={customAdminForm.lastName}
+                          onChange={(e) => setCustomAdminForm({ ...customAdminForm, lastName: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={customAdminForm.email}
+                        onChange={(e) => setCustomAdminForm({ ...customAdminForm, email: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input
+                        type="password"
+                        value={customAdminForm.password}
+                        onChange={(e) => setCustomAdminForm({ ...customAdminForm, password: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Privileges</label>
+                      <div className="space-y-2">
+                        {availablePrivileges.map(priv => (
+                          <label key={priv.name} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={customAdminForm.privileges.includes(priv.name)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setCustomAdminForm({
+                                    ...customAdminForm,
+                                    privileges: [...customAdminForm.privileges, priv.name]
+                                  });
+                                } else {
+                                  setCustomAdminForm({
+                                    ...customAdminForm,
+                                    privileges: customAdminForm.privileges.filter(p => p !== priv.name)
+                                  });
+                                }
+                              }}
+                              className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                            />
+                            <span className="text-sm text-gray-700">{priv.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={creatingAdmin}
+                      className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                    >
+                      {creatingAdmin ? 'Creating...' : 'Create Custom Admin'}
+                    </button>
+                  </form>
+                )}
+              </section>
+            )}
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8">
+              {hasPrivilege('MANAGE_COURSES') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Courses</h2>
                 <div className="space-y-2 mb-4">
                   {courses.map((c) => (
@@ -930,46 +896,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Course Cover Image Upload */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-medium text-gray-700">Course Cover Image</label>
-                    {courseImage.preview ? (
-                      <div className="relative">
-                        <img
-                          src={courseImage.preview}
-                          alt="Course cover preview"
-                          className="w-full h-44 object-cover rounded-lg border border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={clearCourseImage}
-                          className="absolute top-2 right-2 bg-white/95 text-red-600 text-xs font-semibold px-2 py-1 rounded shadow hover:bg-white"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <label
-                        htmlFor="course-cover-upload"
-                        className="flex flex-col items-center justify-center gap-1 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500 cursor-pointer hover:border-red-300 hover:text-red-600 transition-colors text-sm"
-                      >
-                        <span className="font-semibold">Upload course cover</span>
-                        <span className="text-xs text-gray-400">PNG, JPG, or WEBP up to 3MB</span>
-                        <input
-                          id="course-cover-upload"
-                          type="file"
-                          accept="image/*"
-                          ref={courseImageInputRef}
-                          onChange={handleCourseImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                    <p className="text-[11px] text-gray-500">
-                      The cover image will be shown on course cards and promotional areas.
-                    </p>
-                  </div>
                   {/* Sections Builder - Compact */}
                   <div className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-3">
@@ -1092,9 +1018,265 @@ export default function AdminPage() {
                   <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">Create Course</button>
                 </form>
               </section>
+              )}
+
+              {hasPrivilege('MANAGE_USERS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">Users ({totalElements})</h2>
+                  </div>
+                  
+                  {/* Search and Filter Controls - More Compact */}
+                  <div className="space-y-2">
+                    {/* Role Filter */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-700 w-16">Filter:</label>
+                      <select
+                        value={selectedRole}
+                        onChange={handleRoleChange}
+                        className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      >
+                        {userRoles.map(role => (
+                          <option key={role.value} value={role.value}>
+                            {role.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* Search Inputs - Stacked for better space usage */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-medium text-gray-700 w-16">Name:</label>
+                        <input
+                          type="text"
+                          placeholder="Search by name..."
+                          value={searchQuery}
+                          onChange={handleSearch}
+                          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-medium text-gray-700 w-16">Email:</label>
+                        <input
+                          type="email"
+                          placeholder="Search by email..."
+                          value={emailQuery}
+                          onChange={handleEmailSearch}
+                          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="max-h-96 overflow-y-auto space-y-2 mb-4 min-h-[200px]">
+                  {console.log('Rendering users list - users.length:', users.length, 'users:', users)}
+                  {loading ? (
+                    <div className="space-y-2">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="h-4 bg-gray-300 rounded w-32"></div>
+                                <div className="h-5 bg-gray-300 rounded-full w-16"></div>
+                              </div>
+                              <div className="h-3 bg-gray-300 rounded w-48 mb-1"></div>
+                              <div className="h-3 bg-gray-300 rounded w-32"></div>
+                            </div>
+                            <div className="h-6 bg-gray-300 rounded w-12"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : users.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="text-4xl mb-2">👥</div>
+                      <p className="text-sm">No users found</p>
+                      <p className="text-xs mt-1">
+                        Check console for API response details
+                      </p>
+                    </div>
+                  ) : (
+                    users.map((u) => {
+                      console.log('Rendering user:', u);
+                      return (
+                    <div key={u.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900">
+                              {u.first_name} {u.last_name}
+                            </h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                              u.role === 'RECRUITER' ? 'bg-blue-100 text-blue-800' :
+                              u.role === 'CANDIDATE' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {u.role || 'USER'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">{u.email}</p>
+                          {u.phoneNumber && (
+                            <p className="text-sm text-gray-500">{u.phoneNumber}</p>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => deleteUser(u.id)} 
+                          className="text-red-600 hover:text-red-800 font-medium text-sm ml-2"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Page {currentPage + 1} of {totalPages} ({totalElements} total users)
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 0}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= totalPages - 1}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </section>
+              )}
+
+              {/* Skill Rating Section */}
+              {hasPrivilege('RATE_SKILLS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Rate Candidate Skills</h2>
+                <div className="space-y-4">
+                  {/* Candidate Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Candidate</label>
+                    <select
+                      value={selectedCandidate?.id || ''}
+                      onChange={(e) => {
+                        const candidate = candidates.find(c => c.id === parseInt(e.target.value));
+                        setSelectedCandidate(candidate);
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="">Choose a candidate...</option>
+                      {candidates.map(candidate => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.name} - {candidate.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Skill Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
+                    <select
+                      value={selectedSkill?.id || ''}
+                      onChange={(e) => {
+                        const skill = availableSkills.find(s => s.id === parseInt(e.target.value));
+                        setSelectedSkill(skill);
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      disabled={!selectedCandidate}
+                    >
+                      <option value="">Choose a skill...</option>
+                      {availableSkills.map(skill => (
+                        <option key={skill.id} value={skill.id}>
+                          {skill.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Rating Slider */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Skill Rating: {skillRating}%
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="100"
+                      value={skillRating}
+                      onChange={(e) => setSkillRating(parseInt(e.target.value))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      disabled={!selectedSkill}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>1%</span>
+                      <span>50%</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+
+                  {/* Current Skills Display */}
+                  {selectedCandidate && selectedCandidate.skills && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Current Skills</label>
+                      <div className="bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
+                        {Object.entries(selectedCandidate.skills).length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(selectedCandidate.skills).map(([skill, rating]) => (
+                              <span key={skill} className={`px-2 py-1 rounded text-sm ${
+                                rating === 0 
+                                  ? 'bg-gray-100 text-gray-600' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {skill}: {rating === 0 ? 'unverified' : `${rating}% verified`}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">No skills rated yet</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <button
+                    onClick={rateCandidateSkill}
+                    disabled={!selectedCandidate || !selectedSkill || ratingCandidate}
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                  >
+                    {ratingCandidate ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                        Rating...
+                      </div>
+                    ) : (
+                      'Rate Skill'
+                    )}
+                  </button>
+                </div>
+              </section>
+              )}
 
               {/* Workshop Invite Section */}
-              <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-1">
+              {hasPrivilege('MANAGE_WORKSHOPS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Workshop Invitations</h2>
                 <form onSubmit={sendWorkshopInvite} className="space-y-3">
                   <div>
@@ -1209,302 +1391,13 @@ export default function AdminPage() {
                   </button>
                 </form>
               </section>
-              </div>
-            </RevealOnScroll>
-
-            {/* Second Row: Users */}
-            <RevealOnScroll>
-              <section className="bg-white border border-gray-200 rounded-xl p-6 w-full">
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-gray-900">Users ({totalElements})</h2>
-                  </div>
-                  
-                  {/* Search and Filter Controls - More Compact */}
-                  <div className="space-y-2">
-                    {/* Role Filter */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-medium text-gray-700 w-16">Filter:</label>
-                      <select
-                        value={selectedRole}
-                        onChange={handleRoleChange}
-                        className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      >
-                        {userRoles.map(role => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    {/* Email Search Input */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-medium text-gray-700 w-16">Email:</label>
-                      <input
-                        type="email"
-                        placeholder="Search by email..."
-                        value={emailQuery}
-                        onChange={handleEmailSearch}
-                        className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="max-h-96 overflow-y-auto space-y-2 mb-4 min-h-[200px]">
-                  {console.log('Rendering users list - users.length:', users.length, 'users:', users)}
-                  {usersLoading ? (
-                    <div className="space-y-2">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="h-4 bg-gray-300 rounded w-32"></div>
-                                <div className="h-5 bg-gray-300 rounded-full w-16"></div>
-                              </div>
-                              <div className="h-3 bg-gray-300 rounded w-48 mb-1"></div>
-                              <div className="h-3 bg-gray-300 rounded w-32"></div>
-                            </div>
-                            <div className="h-6 bg-gray-300 rounded w-12"></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : users.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <div className="text-4xl mb-2">👥</div>
-                      <p className="text-sm">No users found</p>
-                      <p className="text-xs mt-1">
-                        Check console for API response details
-                      </p>
-                    </div>
-                  ) : (
-                    users.map((u) => {
-                      console.log('Rendering user:', u);
-                      const isCandidate = u.role === 'CANDIDATE';
-                      return (
-                    <div key={u.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-gray-900">
-                              {u.first_name} {u.last_name}
-                            </h3>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
-                              u.role === 'RECRUITER' ? 'bg-blue-100 text-blue-800' :
-                              u.role === 'CANDIDATE' ? 'bg-green-100 text-green-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {u.role || 'USER'}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-1">{u.email}</p>
-                          {u.phoneNumber && (
-                            <p className="text-sm text-gray-500 mb-2">{u.phoneNumber}</p>
-                          )}
-                          
-                          {/* Skill Rating Button for Candidates */}
-                          {isCandidate && (
-                            <button
-                              onClick={async () => {
-                                // Try from cache first
-                                let candidate = candidates.find(c => (
-                                  (c.userId != null && String(c.userId) === String(u.id)) ||
-                                  (c.name && [u.first_name, u.last_name].filter(Boolean).join(' ').trim().toLowerCase() === c.name.trim().toLowerCase())
-                                ));
-                                
-                                // If not found, fetch on-demand by paginating until found
-                                if (!candidate) {
-                                  candidate = await findCandidateForUser(u);
-                                }
-                                
-                                if (candidate) {
-                                  setSelectedCandidate(candidate);
-                                  setShowSkillRatingModal(true);
-                                } else {
-                                  console.warn('Candidate profile not found for user id:', u.id);
-                                  alert('No candidate profile found for this user.');
-                                }
-                              }}
-                              className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1 mt-2"
-                            >
-                              📊 Rate Skills
-                            </button>
-                          )}
-                        </div>
-                        <button 
-                          onClick={() => deleteUser(u.id)} 
-                          className="text-red-600 hover:text-red-800 font-medium text-sm ml-2"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      Page {currentPage + 1} of {totalPages} ({totalElements} total users)
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 0}
-                        className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage >= totalPages - 1}
-                        className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </section>
-            </RevealOnScroll>
+              )}
+            </div>
           </div>
         )}
       </div>
-      
-      {/* Skill Rating Modal */}
-      {showSkillRatingModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold text-gray-900">Rate Candidate Skills</h2>
-              <button
-                onClick={() => {
-                  setShowSkillRatingModal(false);
-                  setSelectedCandidate(null);
-                  setSelectedSkill(null);
-                  setSkillRating(50);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              {/* Candidate Info */}
-              {selectedCandidate && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700">Candidate:</p>
-                  <p className="text-lg font-semibold text-gray-900">{selectedCandidate.name}</p>
-                  <p className="text-sm text-gray-600">{selectedCandidate.title}</p>
-                </div>
-              )}
-              
-              {/* Skill Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Skill</label>
-                <select
-                  value={selectedSkill ? String(selectedSkill.id) : ''}
-                  onChange={(e) => {
-                    const skillId = e.target.value;
-                    
-                    if (!skillId) {
-                      setSelectedSkill(null);
-                      return;
-                    }
-                    
-                    // Find the skill by matching ID
-                    const skill = availableSkills.find(s => String(s.id) === String(skillId));
-                    setSelectedSkill(skill);
-                  }}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  disabled={!selectedCandidate}
-                >
-                  <option value="">Choose a skill...</option>
-                  {availableSkills.map(skill => (
-                    <option key={skill.id} value={String(skill.id)}>
-                      {skill.name} {skill.rating ? `(${skill.rating}%)` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Rating Slider */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skill Rating: {skillRating}%
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="100"
-                  value={skillRating}
-                  onChange={(e) => setSkillRating(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  disabled={!selectedSkill}
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1%</span>
-                  <span>50%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-
-              {/* Current Skills Display */}
-              {selectedCandidate && selectedCandidate.skills && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Skills</label>
-                  <div className="bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
-                    {Object.entries(selectedCandidate.skills).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(selectedCandidate.skills).map(([skill, rating]) => (
-                          <span key={skill} className={`px-2 py-1 rounded text-sm ${
-                            rating === 0 
-                              ? 'bg-gray-100 text-gray-600' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {skill}: {rating === 0 ? 'unverified' : `${rating}% verified`}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No skills rated yet</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                onClick={rateCandidateSkill}
-                disabled={!selectedCandidate || !selectedSkill || ratingCandidate}
-                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg text-sm font-semibold"
-              >
-                {ratingCandidate ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                    Rating...
-                  </div>
-                ) : (
-                  'Rate Skill'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <RevealOnScroll>
-        <Footer />
-      </RevealOnScroll>
-    </PageFadeIn>
+      <Footer />
+    </div>
   );
 }
 

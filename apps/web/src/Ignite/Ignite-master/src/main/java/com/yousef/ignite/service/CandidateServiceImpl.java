@@ -1,9 +1,12 @@
 package com.yousef.ignite.service;
 
+import com.yousef.ignite.dto.enums.RecruiterStatus;
 import com.yousef.ignite.dto.enums.UserRole;
+import com.yousef.ignite.dto.request.CandidateCommentRequestDTO;
 import com.yousef.ignite.dto.request.CandidateSkillRatingRequestDTO;
 import com.yousef.ignite.dto.request.CandidateSkillsAddRequestDTO;
 import com.yousef.ignite.dto.request.UpdateCandidateProfileDTO;
+import com.yousef.ignite.dto.response.CandidateCommentResponseDTO;
 import com.yousef.ignite.dto.response.CandidateProfileResponseDTO;
 import com.yousef.ignite.dto.response.PagedResponse;
 import com.yousef.ignite.dto.response.SkillResponseDTO;
@@ -12,13 +15,22 @@ import com.yousef.ignite.exception.custom.ResourceNotFoundException;
 import com.yousef.ignite.exception.custom.UnauthorizedAccessException;
 import com.yousef.ignite.repository.*;
 import com.yousef.ignite.service.security.JwtUtils;
+import com.yousef.ignite.util.FileUploadUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +41,8 @@ public class CandidateServiceImpl implements CandidateService {
     private final SkillRepository skillRepository;
     private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
+    private final CandidateCommentRepository candidateCommentRepository;
+    private final RecruiterProfileRepository recruiterProfileRepository;
 
     private User getUserFromToken(String bearerToken) {
         String token = bearerToken.substring(7);
@@ -81,9 +95,7 @@ public class CandidateServiceImpl implements CandidateService {
         if (request.getSummary() != null) {
             profile.setSummary(request.getSummary());
         }
-        if (request.getResumeUrl() != null) {
-            profile.setResumeUrl(request.getResumeUrl());
-        }
+        // Resume URL is no longer updated via this endpoint - use uploadResume instead
         if (request.getLocation() != null) {
             profile.setLocation(request.getLocation());
         }
@@ -102,8 +114,9 @@ public class CandidateServiceImpl implements CandidateService {
 
 
     @Override
-    public CandidateProfileResponseDTO getCandidateById(Long candidateProfileId) {
+    public CandidateProfileResponseDTO getCandidateById(Long candidateProfileId, String bearerToken) {
         CandidateProfile profile = candidateProfileRepository.findById(candidateProfileId).orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
+        // Token is optional - profile can be viewed publicly, but comments require auth
         return toResponse(profile);
     }
 
@@ -212,6 +225,109 @@ public class CandidateServiceImpl implements CandidateService {
         return skillRepository.findAll().stream()
                 .map(skill -> new SkillResponseDTO(skill.getId(), skill.getName()))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public CandidateProfileResponseDTO uploadResume(String bearerToken, MultipartFile file) {
+        User me = getUserFromToken(bearerToken);
+        if (me.getRole() != UserRole.CANDIDATE) {
+            throw new UnauthorizedAccessException("Only candidates can upload resumes");
+        }
+
+        CandidateProfile profile = candidateProfileRepository.findByUser(me)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate profile not found"));
+
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is required");
+        }
+
+        FileUploadUtil.validateResumeFile(file);
+
+        String fileUrl = null;
+        try {
+            String uploadDir = "uploads/resumes/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String fileName = FileUploadUtil.sanitizeFilename(file.getOriginalFilename());
+            Path filePath = Path.of(uploadDir + fileName);
+
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            fileUrl = "/uploads/resumes/" + fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload resume", e);
+        }
+
+        profile.setResumeUrl(fileUrl);
+        CandidateProfile saved = candidateProfileRepository.save(profile);
+
+        return toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public CandidateCommentResponseDTO addComment(String bearerToken, Long candidateId, CandidateCommentRequestDTO request) {
+        User me = getUserFromToken(bearerToken);
+        if (me.getRole() != UserRole.ADMIN) {
+            throw new UnauthorizedAccessException("Only admins can add comments");
+        }
+
+        CandidateProfile candidate = candidateProfileRepository.findById(candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
+
+        CandidateComment comment = CandidateComment.builder()
+                .candidateProfile(candidate)
+                .adminUser(me)
+                .comment(request.getComment())
+                .build();
+
+        CandidateComment saved = candidateCommentRepository.save(comment);
+
+        return CandidateCommentResponseDTO.builder()
+                .id(saved.getId())
+                .comment(saved.getComment())
+                .adminName(me.getFirstName() + " " + me.getLastName())
+                .adminEmail(me.getEmail())
+                .createdAt(saved.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public List<CandidateCommentResponseDTO> getComments(Long candidateId, String bearerToken) {
+        User me = getUserFromToken(bearerToken);
+        
+        // Only admins and subscribed recruiters can see comments
+        boolean canView = false;
+        if (me.getRole() == UserRole.ADMIN) {
+            canView = true;
+        } else if (me.getRole() == UserRole.RECRUITER) {
+            RecruiterProfile recruiterProfile = recruiterProfileRepository.findByUserId(me.getId())
+                    .orElse(null);
+            if (recruiterProfile != null && recruiterProfile.getStatus() == RecruiterStatus.SUBSCRIBED) {
+                canView = true;
+            }
+        }
+
+        if (!canView) {
+            throw new UnauthorizedAccessException("You don't have permission to view comments");
+        }
+
+        CandidateProfile candidate = candidateProfileRepository.findById(candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
+
+        List<CandidateComment> comments = candidateCommentRepository.findByCandidateProfileOrderByCreatedAtDesc(candidate);
+
+        return comments.stream()
+                .map(comment -> CandidateCommentResponseDTO.builder()
+                        .id(comment.getId())
+                        .comment(comment.getComment())
+                        .adminName(comment.getAdminUser().getFirstName() + " " + comment.getAdminUser().getLastName())
+                        .adminEmail(comment.getAdminUser().getEmail())
+                        .createdAt(comment.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 

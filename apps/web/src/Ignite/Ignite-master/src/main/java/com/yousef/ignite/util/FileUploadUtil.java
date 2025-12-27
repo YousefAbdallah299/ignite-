@@ -15,8 +15,15 @@ public class FileUploadUtil {
             "video/mp4", "video/webm", "video/ogg"
     );
 
+    private static final List<String> ALLOWED_RESUME_TYPES = Arrays.asList(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final long MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+    private static final long MAX_RESUME_SIZE = 5 * 1024 * 1024; // 5MB
 
     public static void validateImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -86,6 +93,30 @@ public class FileUploadUtil {
 
         // Generate safe filename with UUID
         return UUID.randomUUID().toString() + extension;
+    }
+
+    public static void validateResumeFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
+        String contentType = file.getContentType();
+        if (!ALLOWED_RESUME_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Invalid file type. Only PDF, DOC, DOCX allowed");
+        }
+
+        if (file.getSize() > MAX_RESUME_SIZE) {
+            throw new IllegalArgumentException("File too large. Maximum size is 5MB");
+        }
+
+        if (file.getOriginalFilename() != null && file.getOriginalFilename().contains("\0")) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
+
+        if (file.getOriginalFilename() != null &&
+                (file.getOriginalFilename().contains("..") || file.getOriginalFilename().contains("/"))) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
     }
 
     public static String getFileExtension(String filename) {

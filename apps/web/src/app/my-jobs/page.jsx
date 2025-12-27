@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import RevealOnScroll from "@/components/RevealOnScroll";
 import { jobsAPI, offersAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -218,7 +217,7 @@ export default function MyJobsPage() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="mb-8 initial-fade-in">
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">My Jobs</h1>
@@ -237,8 +236,7 @@ export default function MyJobsPage() {
         </div>
 
         {/* Stats */}
-        <RevealOnScroll>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -264,92 +262,83 @@ export default function MyJobsPage() {
               </div>
             </div>
           </div>
-          </div>
-        </RevealOnScroll>
+        </div>
 
         {/* Jobs List */}
-<RevealOnScroll>
-  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <div className="p-6 border-b border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-900">Your Posted Jobs</h2>
-    </div>
-
-    {jobs.length === 0 ? (
-      <div className="p-12 text-center">
-        <Briefcase className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs posted yet</h3>
-        <p className="text-gray-600 mb-6">Start by posting your first job to attract candidates.</p>
-        <a
-          href="/jobs/create"
-          className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Post Your First Job
-        </a>
-      </div>
-    ) : (
-      <div className="divide-y divide-gray-200">
-        {jobs.map((job) => (
-          <div
-            key={job.id}
-            className="p-6 hover:bg-gray-50 transition-colors flex flex-col md:flex-row md:items-start md:justify-between"
-          >
-            {/* Left side (job info) */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full whitespace-nowrap">
-                  {job.employmentType}
-                </span>
-              </div>
-
-              {/* Description now shows full text, not truncated */}
-              <p className="text-gray-600 mb-3 break-words">{job.description}</p>
-
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{job.location}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4" />
-                  <span>{job.salary}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{formatDate(job.createdAt)}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  <span>{job.applicationCount || 0} applications</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right side (button) */}
-            <div className="mt-4 md:mt-0 md:ml-6 flex-shrink-0">
-              <button
-                onClick={() => {
-                  setSelectedJob(job);
-                  fetchJobApplications(job.id);
-                }}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
-              >
-                <Eye className="w-4 h-4" />
-                View Applications
-              </button>
-            </div>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Your Posted Jobs</h2>
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-</RevealOnScroll>
-
+          
+          {jobs.length === 0 ? (
+            <div className="p-12 text-center">
+              <Briefcase className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs posted yet</h3>
+              <p className="text-gray-600 mb-6">Start by posting your first job to attract candidates.</p>
+              <a
+                href="/jobs/create"
+                className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Post Your First Job
+              </a>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {jobs.map((job) => (
+                <div key={job.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                          {job.employmentType}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-600 mb-3 line-clamp-2">{job.description}</p>
+                      
+                      <div className="flex items-center gap-6 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{job.location}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="w-4 h-4" />
+                          <span>{job.salary}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatDate(job.createdAt)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          <span>{job.applicationCount || 0} applications</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={() => {
+                          setSelectedJob(job);
+                          fetchJobApplications(job.id);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Applications
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <RevealOnScroll>
           <div className="mt-8 flex items-center justify-center gap-2">
             <button
               onClick={() => fetchMyJobs(currentPage - 1)}
@@ -371,7 +360,6 @@ export default function MyJobsPage() {
               Next
             </button>
           </div>
-          </RevealOnScroll>
         )}
       </div>
 
@@ -481,9 +469,7 @@ export default function MyJobsPage() {
         </div>
       )}
 
-      <RevealOnScroll>
-        <Footer />
-      </RevealOnScroll>
+      <Footer />
 
       {/* Offer Modal */}
       {showOfferModal && selectedApplication && (

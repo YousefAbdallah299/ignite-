@@ -1,5 +1,6 @@
 package com.yousef.ignite.controller;
 
+import com.yousef.ignite.dto.request.CandidateCommentRequestDTO;
 import com.yousef.ignite.dto.request.CandidateSkillRatingRequestDTO;
 import com.yousef.ignite.dto.request.CandidateSkillsAddRequestDTO;
 import com.yousef.ignite.dto.request.UpdateCandidateProfileDTO;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -50,8 +52,10 @@ public class CandidateController {
 
 
     @GetMapping("/{candidateProfileId}")
-    public ResponseEntity<CandidateProfileResponseDTO> getCandidateById(@PathVariable Long candidateProfileId) {
-        return new ResponseEntity<>(candidateService.getCandidateById(candidateProfileId), HttpStatus.OK);
+    public ResponseEntity<CandidateProfileResponseDTO> getCandidateById(
+            @PathVariable Long candidateProfileId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        return new ResponseEntity<>(candidateService.getCandidateById(candidateProfileId, token), HttpStatus.OK);
     }
 
     @PostMapping("/{candidateId}/skills/rating")
@@ -78,7 +82,30 @@ public class CandidateController {
         return ResponseEntity.ok(candidateService.getAllSkills());
     }
 
+    @PostMapping(value = "/me/resume", consumes = {"multipart/form-data"})
+    public ResponseEntity<CandidateProfileResponseDTO> uploadResume(
+            @RequestHeader("Authorization") String token,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(candidateService.uploadResume(token, file));
+    }
 
+    @PostMapping("/{candidateId}/comments")
+    public ResponseEntity<CandidateCommentResponseDTO> addComment(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long candidateId,
+            @Valid @RequestBody CandidateCommentRequestDTO request
+    ) {
+        return ResponseEntity.ok(candidateService.addComment(token, candidateId, request));
+    }
+
+    @GetMapping("/{candidateId}/comments")
+    public ResponseEntity<List<CandidateCommentResponseDTO>> getComments(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long candidateId
+    ) {
+        return ResponseEntity.ok(candidateService.getComments(candidateId, token));
+    }
 
 }
 

@@ -5,9 +5,8 @@ import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
-import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X } from 'lucide-react';
+import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send } from 'lucide-react';
 import { candidatesAPI, offersAPI } from '@/utils/apiClient';
-import RevealOnScroll from '@/components/RevealOnScroll';
 
 export default function CandidatePage() {
   const { isAuthenticated, isRecruiter, isAdmin } = useAuthAPI();
@@ -21,6 +20,11 @@ export default function CandidatePage() {
     salary: '',
     currency: 'USD'
   });
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [canViewComments, setCanViewComments] = useState(false);
   const id = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
 
   useEffect(() => {
@@ -37,8 +41,62 @@ export default function CandidatePage() {
         setLoading(false);
       }
     };
-    if (id) load();
-  }, [id]);
+    if (id) {
+      load();
+      // Only try to load comments if user is authenticated and is admin or recruiter
+      if (isAuthenticated && (isAdmin || isRecruiter)) {
+        loadComments();
+      }
+    }
+  }, [id, isAuthenticated, isAdmin, isRecruiter]);
+
+  const loadComments = async () => {
+    if (!isAdmin && !isRecruiter) {
+      setCanViewComments(false);
+      return;
+    }
+
+    try {
+      setLoadingComments(true);
+      const commentsData = await candidatesAPI.getComments(id);
+      setComments(commentsData || []);
+      setCanViewComments(true);
+    } catch (error) {
+      console.error('Error loading comments:', error);
+      // If error is about permissions, user can't view comments
+      if (error.message?.includes('permission') || error.message?.includes('Unauthorized')) {
+        setCanViewComments(false);
+      }
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const submitComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) {
+      toast.error('Please enter a comment');
+      return;
+    }
+
+    if (!isAdmin) {
+      toast.error('Only admins can add comments');
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      await candidatesAPI.addComment(id, newComment.trim());
+      toast.success('Comment added successfully');
+      setNewComment('');
+      loadComments();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error(`Failed to add comment: ${error.message}`);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
 
   const sendOffer = async () => {
     if (!data) return;
@@ -167,8 +225,7 @@ export default function CandidatePage() {
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header Section */}
-        <RevealOnScroll>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-6">
               <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
@@ -197,11 +254,9 @@ export default function CandidatePage() {
               </button>
             )}
           </div>
-          </div>
-        </RevealOnScroll>
+        </div>
 
-        <RevealOnScroll>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Profile Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About Section */}
@@ -288,6 +343,61 @@ export default function CandidatePage() {
                 </div>
               </div>
             </div>
+
+            {/* Admin Comments Section - Only visible to admins and subscribed recruiters */}
+            {canViewComments && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <MessageSquare className="w-5 h-5 mr-2 text-red-600" />
+                  Admin Comments
+                </h2>
+                
+                {/* Add Comment Form - Only for admins */}
+                {isAdmin && (
+                  <form onSubmit={submitComment} className="mb-6 pb-6 border-b border-gray-200">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment about this candidate..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent mb-3"
+                      rows={3}
+                    />
+                    <button
+                      type="submit"
+                      disabled={submittingComment || !newComment.trim()}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium"
+                    >
+                      <Send className="w-4 h-4" />
+                      {submittingComment ? 'Submitting...' : 'Add Comment'}
+                    </button>
+                  </form>
+                )}
+
+                {/* Comments List */}
+                {loadingComments ? (
+                  <div className="text-center py-4 text-gray-500">Loading comments...</div>
+                ) : comments.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">No comments yet.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="font-medium text-gray-900">{comment.adminName}</p>
+                            <p className="text-xs text-gray-500">{comment.adminEmail}</p>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-wrap">{comment.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -321,8 +431,7 @@ export default function CandidatePage() {
               </div>
             </div>
           </div>
-          </div>
-        </RevealOnScroll>
+        </div>
       </div>
 
       {/* Offer Modal */}
@@ -422,9 +531,7 @@ export default function CandidatePage() {
         </div>
       )}
 
-      <RevealOnScroll>
-        <Footer />
-      </RevealOnScroll>
+      <Footer />
     </div>
   );
 }

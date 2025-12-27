@@ -246,14 +246,6 @@ export const coursesAPI = {
     });
   },
 
-  // Request a course
-  requestCourse: async (requestData) => {
-    return apiCall('/courses/request', {
-      method: 'POST',
-      body: JSON.stringify(requestData),
-    });
-  },
-
   // Get lessons by section
   getLessonsBySection: async (sectionId) => {
     return apiCall(`/courses/sections/${sectionId}/lessons`, {
@@ -324,20 +316,6 @@ export const coursesAPI = {
   markLessonComplete: async (courseId, lessonId, completed = true) => {
     return apiCall(`/courses/${courseId}/lessons/${lessonId}/complete?completed=${completed}`, {
       method: 'POST',
-    });
-  },
-
-  // Course Requests
-  requestCourse: async (payload) => {
-    return apiCall('/courses/requests', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  },
-
-  getCourseRequests: async () => {
-    return apiCall('/courses/requests', {
-      method: 'GET',
     });
   },
 };
@@ -632,8 +610,7 @@ export const candidatesAPI = {
     
     return apiCall(`/candidates?${params.toString()}`, {
       method: 'GET',
-      // Include auth to allow admins to see all candidates; if no token, header won't be set
-      includeAuth: true,
+      includeAuth: false,
     });
   },
 
@@ -673,6 +650,31 @@ export const candidatesAPI = {
     return apiCall(`/candidates/${candidateId}/skills/rating`, {
       method: 'POST',
       body: JSON.stringify({ skillId, rating }),
+    });
+  },
+
+  // Upload resume file
+  uploadResume: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiCall('/candidates/me/resume', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  // Add comment to candidate (Admin only)
+  addComment: async (candidateId, comment) => {
+    return apiCall(`/candidates/${candidateId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ comment }),
+    });
+  },
+
+  // Get comments for candidate (Admin and subscribed recruiters only)
+  getComments: async (candidateId) => {
+    return apiCall(`/candidates/${candidateId}/comments`, {
+      method: 'GET',
     });
   },
 };
@@ -735,10 +737,73 @@ export const workshopsAPI = {
 export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
-    // Use the same apiCall helper as all other APIs
-    return apiCall('/payments/initiate', {
+    // Note: Payment endpoint uses /api/payments (not /api/v1/payments)
+    const url = import.meta.env.VITE_PAYMENT_API_URL || 'https://ignite-qjis.onrender.com/api/payments/initiate';
+    const token = getAuthToken();
+    
+    const config = {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+      },
       body: JSON.stringify(paymentData),
+    };
+
+    logger.log(`Making payment API call to: ${url}`);
+    logger.log(`Request config:`, config);
+
+    try {
+      const response = await fetch(url, config);
+      
+      logger.log(`Response status: ${response.status}`);
+      
+      if (response.status === 401) {
+        logger.log('Received 401 Unauthorized');
+        TokenValidationService.redirectToSignIn();
+        return;
+      }
+      
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (jsonError) {
+            console.error('Failed to parse error response as JSON:', jsonError);
+          }
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      logger.log(`Payment API response:`, data);
+      return data;
+    } catch (error) {
+      logger.error('Payment API call failed:', error);
+      throw error;
+    }
+  },
+};
+
+// Admin API
+export const adminAPI = {
+  // Create custom admin
+  createCustomAdmin: async (adminData) => {
+    return apiCall('/admin/custom-admin', {
+      method: 'POST',
+      body: JSON.stringify(adminData),
+    });
+  },
+
+  // Get my privileges
+  getMyPrivileges: async () => {
+    return apiCall('/admin/my-privileges', {
+      method: 'GET',
     });
   },
 };
@@ -750,6 +815,7 @@ export default {
   jobs: jobsAPI,
   offers: offersAPI,
   blogs: blogsAPI,
+  admin: adminAPI,
   candidates: candidatesAPI,
   recruiters: recruitersAPI,
   skills: skillsAPI,

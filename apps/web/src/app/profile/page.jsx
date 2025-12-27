@@ -1,14 +1,10 @@
-import React from 'react';
-
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import RevealOnScroll from '@/components/RevealOnScroll';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useCandidatesAPI } from '@/hooks/useCandidatesAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
@@ -22,28 +18,6 @@ function OfferCard({ offer, onRespond }) {
   const formatDate = (dateString) => {
     if (!dateString) return 'Not specified';
     return new Date(dateString).toLocaleDateString();
-  };
-
-  const normalizeSalaryInput = (value) => {
-    if (value === null || value === undefined || value === '') return null;
-    if (typeof value === 'number') return value;
-    const digitsOnly = value.toString().replace(/[^\d.]/g, '');
-    if (!digitsOnly) return null;
-    const parsed = Number(digitsOnly);
-    return Number.isNaN(parsed) ? null : parsed;
-  };
-
-  const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === '') return 'Not specified';
-    const numeric = Number(value);
-    if (Number.isNaN(numeric)) {
-      return value;
-    }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(numeric);
   };
 
   const getStatusColor = (status) => {
@@ -114,7 +88,6 @@ export default function ProfilePage() {
   const { getMyProfile, updateMyProfile, loading: profileLoading } = useCandidatesAPI();
   const { getMyOffers, respondToOffer, loading: offersLoading } = useOffersAPI();
   const { isValid } = usePageTokenValidation(true); // Profile page requires auth
-  const location = useLocation();
   
   const [profile, setProfile] = useState(null);
   const [offers, setOffers] = useState([]);
@@ -128,12 +101,30 @@ export default function ProfilePage() {
   const [addingSkills, setAddingSkills] = useState(false);
   const [newSkillNames, setNewSkillNames] = useState('');
   const [showAddSkillsForm, setShowAddSkillsForm] = useState(false);
-  const salaryDebounceRef = useRef(null);
-  const positionDebounceRef = useRef(null);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [uploadingResume, setUploadingResume] = useState(false);
 
   useEffect(() => {
     console.log('Profile page useEffect - user:', user);
     console.log('User role:', user?.role);
+    
+    // Check authentication token first
+    const token = localStorage.getItem('authToken');
+    console.log('Auth token:', token);
+    console.log('Token length:', token?.length);
+    console.log('Token format check:', token?.split('.').length);
+    
+    // Only redirect if there's absolutely no token (not just malformed)
+    if (!token) {
+      console.log('No auth token found, redirecting to login');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      // Prevent infinite redirects
+      if (window.location.pathname !== '/account/signin') {
+        window.location.href = '/account/signin';
+      }
+      return;
+    }
     
     // Wait for user to be loaded before proceeding
     if (!user) {
@@ -154,21 +145,11 @@ export default function ProfilePage() {
       return;
     }
     
-    console.log('User is a candidate, loading profile');
+    console.log('User is a candidate with token, loading profile');
     loadProfile();
     loadOffers();
     loadAvailableSkills();
   }, [user]);
-
-  // Auto-enable edit mode if coming from registration
-  useEffect(() => {
-    if (location.state?.completeProfile && profile && !isEditing) {
-      setIsEditing(true);
-      toast.message('Complete your profile', {
-        description: 'Please add your resume and current salary to finish registration.',
-      });
-    }
-  }, [location.state, profile, isEditing]);
 
 
   const loadProfile = async () => {
@@ -276,37 +257,30 @@ export default function ProfilePage() {
     setSaving(true);
     setError(null);
     
-    // Validate required fields: resume and current salary
-    const resumeUrl = profile.resumeUrl?.trim() || '';
-    const expectedSalary = profile.expectedSalary !== null && profile.expectedSalary !== undefined 
-      ? (typeof profile.expectedSalary === 'number' 
-          ? profile.expectedSalary 
-          : normalizeSalaryInput(profile.expectedSalary))
-      : null;
-    
-    if (!resumeUrl) {
-      setError('Resume is required. Please add a resume URL or upload a resume.');
-      setSaving(false);
-      toast.error('Resume is required to save your profile.');
-      return;
-    }
-    
-    if (!expectedSalary || expectedSalary <= 0 || Number.isNaN(expectedSalary)) {
-      setError('Current salary is required. Please enter your current salary.');
-      setSaving(false);
-      toast.error('Current salary is required to save your profile.');
-      return;
-    }
-    
     try {
+      // Upload resume if a new file was selected
+      if (resumeFile) {
+        setUploadingResume(true);
+        try {
+          await candidatesAPI.uploadResume(resumeFile);
+          toast.success('Resume uploaded successfully!');
+          setResumeFile(null);
+        } catch (uploadError) {
+          console.error('Error uploading resume:', uploadError);
+          toast.error(`Failed to upload resume: ${uploadError.message}`);
+          setSaving(false);
+          setUploadingResume(false);
+          return;
+        } finally {
+          setUploadingResume(false);
+        }
+      }
+
       // Create the update payload using the exact DTO structure
       const updatePayload = {
         title: profile.title || 'Software Developer', // Required field
         summary: profile.summary || null,
-        resumeUrl: resumeUrl,
-        location: profile.location || null,
-        expectedSalary: expectedSalary,
-        expectedPosition: profile.expectedPosition?.trim() || null
+        location: profile.location || null
       };
       
       console.log('Saving profile with payload:', updatePayload);
@@ -568,7 +542,7 @@ export default function ProfilePage() {
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8 initial-fade-in">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-6">
               <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
@@ -591,20 +565,6 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
-                {(profile.expectedPosition || profile.expectedSalary) && (
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
-                    {profile.expectedPosition && (
-                      <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-700">
-                        Expected Role: {profile.expectedPosition}
-                      </span>
-                    )}
-                    {profile.expectedSalary && (
-                      <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-700">
-                        Target Salary: {formatCurrency(profile.expectedSalary)}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
             <button
@@ -621,8 +581,7 @@ export default function ProfilePage() {
           {/* Main Profile Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About Section */}
-            <RevealOnScroll>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2 text-red-600" />
                 About
@@ -640,12 +599,10 @@ export default function ProfilePage() {
                   {profile.summary || 'No summary provided yet.'}
                 </p>
               )}
-              </div>
-            </RevealOnScroll>
+            </div>
 
             {/* Skills Section */}
-            <RevealOnScroll>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                   <Award className="w-5 h-5 mr-2 text-red-600" />
@@ -784,12 +741,10 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
-              </div>
-            </RevealOnScroll>
+            </div>
 
             {/* Professional Details */}
-            <RevealOnScroll>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Briefcase className="w-5 h-5 mr-2 text-red-600" />
                 Professional Details
@@ -809,41 +764,41 @@ export default function ProfilePage() {
                     <p className="text-gray-900">{profile.title || 'Not specified'}</p>
                   )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Expected Position</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={profile.expectedPosition || ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setProfile({ ...profile, expectedPosition: value });
-                        // Clear previous timeout
-                        if (positionDebounceRef.current) {
-                          clearTimeout(positionDebounceRef.current);
-                        }
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="e.g., Senior Frontend Engineer"
-                    />
-                  ) : (
-                    <p className="text-gray-900">{profile.expectedPosition || 'Not specified'}</p>
-                  )}
-                </div>
+                
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Resume <span className="text-red-600">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
                   {isEditing ? (
-                    <input
-                      type="url"
-                      value={profile.resumeUrl || ''}
-                      onChange={(e) => setProfile({ ...profile, resumeUrl: e.target.value })}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="https://example.com/resume.pdf"
-                      required
-                    />
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // Validate file type
+                            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                            if (!allowedTypes.includes(file.type)) {
+                              toast.error('Please upload a PDF or Word document (.pdf, .doc, .docx)');
+                              return;
+                            }
+                            // Check file size (max 5MB)
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error('File size must be less than 5MB');
+                              return;
+                            }
+                            setResumeFile(file);
+                          }
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                      {resumeFile && (
+                        <p className="text-sm text-gray-600">Selected: {resumeFile.name}</p>
+                      )}
+                      {profile.resumeUrl && (
+                        <p className="text-sm text-gray-500">Current resume: <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline">View current resume</a></p>
+                      )}
+                    </div>
                   ) : (
                     <div>
                       {profile.resumeUrl ? (
@@ -860,58 +815,6 @@ export default function ProfilePage() {
                         <p className="text-gray-500">No resume uploaded</p>
                       )}
                     </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Salary <span className="text-red-600">*</span>
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={profile.expectedSalary !== null && profile.expectedSalary !== undefined ? String(profile.expectedSalary) : ''}
-                      onChange={(e) => {
-                        try {
-                          const value = e.target.value;
-                          // Allow empty string or valid number input
-                          if (value === '') {
-                            setProfile({ ...profile, expectedSalary: null });
-                          } else if (/^\d*\.?\d*$/.test(value)) {
-                            // Keep as string in state for now, convert on save
-                            setProfile({ ...profile, expectedSalary: value });
-                          }
-                        } catch (error) {
-                          console.error('Error updating expected salary:', error);
-                          // Keep previous value on error
-                        }
-                      }}
-                      onBlur={(e) => {
-                        try {
-                          const value = e.target.value;
-                          if (value === '') {
-                            setProfile({ ...profile, expectedSalary: null });
-                          } else {
-                            const numValue = parseFloat(value);
-                            if (!isNaN(numValue) && isFinite(numValue)) {
-                              setProfile({ ...profile, expectedSalary: numValue });
-                            } else {
-                              setProfile({ ...profile, expectedSalary: null });
-                            }
-                          }
-                        } catch (error) {
-                          console.error('Error parsing salary:', error);
-                          setProfile({ ...profile, expectedSalary: null });
-                        }
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="e.g., 85000"
-                      required
-                    />
-                  ) : (
-                    <p className="text-gray-900">
-                      {profile.expectedSalary ? formatCurrency(profile.expectedSalary) : 'Not specified'}
-                    </p>
                   )}
                 </div>
 
@@ -933,13 +836,11 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
-              </div>
-            </RevealOnScroll>
+            </div>
 
             {/* Save/Cancel Buttons */}
             {isEditing && (
-              <RevealOnScroll>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={handleSave}
@@ -963,16 +864,14 @@ export default function ProfilePage() {
                     {error}
                   </div>
                 )}
-                </div>
-              </RevealOnScroll>
+              </div>
             )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-8">
             {/* Quick Stats */}
-            <RevealOnScroll>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-4">
                 <div className="flex justify-between">
@@ -988,12 +887,10 @@ export default function ProfilePage() {
                   <span className="font-semibold">{formatDate(profile?.createdAt)}</span>
                 </div>
               </div>
-              </div>
-            </RevealOnScroll>
+            </div>
 
             {/* My Offers */}
-            <RevealOnScroll>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">My Offers</h3>
               {offersLoading ? (
                 <div className="space-y-3">
@@ -1013,15 +910,14 @@ export default function ProfilePage() {
                   ))}
                 </div>
               )}
-              </div>
-            </RevealOnScroll>
+            </div>
           </div>
         </div>
       </div>
 
-      <RevealOnScroll>
-        <Footer />
-      </RevealOnScroll>
+      <Footer />
     </div>
   );
 }
+
+

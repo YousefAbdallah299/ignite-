@@ -63,6 +63,9 @@ public class User {
     @JsonIgnore
     private CandidateProfile candidateProfile;
 
+    @Column(name = "is_custom_admin")
+    private Boolean isCustomAdmin = false;
+
     public RegisterResponseDTO toRegisterResponseDTO() {
         return RegisterResponseDTO.builder()
                 .id(this.id)

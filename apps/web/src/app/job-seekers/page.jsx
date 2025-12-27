@@ -34,7 +34,7 @@ function SeekerCard({ seeker, onOpenOfferModal, sendingOfferId, hasOfferSent, us
   };
 
   return (
-    <div className="relative h-full bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-red-200 transition-all duration-300 group flex flex-col">
+    <div className="relative bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-red-200 transition-all duration-300 group">
       <div className="flex items-start gap-4 mb-4">
         <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-sm font-bold">
           {seeker.name?.charAt(0) || 'C'}
@@ -104,7 +104,7 @@ function SeekerCard({ seeker, onOpenOfferModal, sendingOfferId, hasOfferSent, us
         </div>
       )}
 
-      <div className="mt-auto pt-4 border-t border-gray-100">
+      <div className="pt-4 border-t border-gray-100">
         <div className="flex gap-2">
           <button
             onClick={() => window.open(`/candidates/${seeker.id}`, '_blank')}
@@ -401,7 +401,7 @@ export default function JobSeekersPage() {
   return (
     <div className="min-h-screen bg-gray-50 page-fade-in">
       <Header />
-      
+
       <section className="bg-gradient-to-br from-red-50 via-white to-pink-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
@@ -655,7 +655,7 @@ export default function JobSeekersPage() {
         </div>
       </div>
 
-        <Footer />
+      <Footer />
 
       {/* Offer Modal */}
       {showOfferModal && selectedCandidate && (
@@ -757,4 +757,5 @@ export default function JobSeekersPage() {
     </div>
   );
 }
+
 
