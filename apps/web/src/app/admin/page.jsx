@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -128,155 +128,108 @@ export default function AdminPage() {
     checkAdminAccess();
   }, [user, isAdmin, authLoading, navigate]);
 
-  const load = async () => {
-    setLoading(true);
+  // Load courses (only once on mount)
+  const loadCourses = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      const coursesResponse = await fetch(`${API_BASE_URL}/courses?page=0&size=100`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json();
+        setCourses(coursesData.content || []);
+      } else {
+        console.error('Failed to load courses from backend');
+        setCourses([]);
+      }
+    } catch (error) {
+      console.error('Error loading courses:', error);
+      setCourses([]);
+    }
+  };
+
+  // Load users separately (called on filter/search changes)
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const token = localStorage.getItem('authToken');
       const headers = {
-        'Authorization': `Bearer ${token}`, // Backend expects "Bearer " prefix
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
 
-      // Test basic connectivity first
-      console.log('Testing backend connectivity...');
-      try {
-        const testResponse = await fetch(`${API_BASE_URL}/users?page=0&size=5`, { 
-          method: 'GET',
-          headers: headers
-        });
-        console.log('Test response status:', testResponse.status);
-        console.log('Test response ok:', testResponse.ok);
-        
-        if (!testResponse.ok) {
-          const errorText = await testResponse.text();
-          console.error('Test error response:', errorText);
-          throw new Error(`Backend error: ${testResponse.status} - ${errorText}`);
-        }
-        
-        const testData = await testResponse.json();
-        console.log('Test response data:', testData);
-        
-        // Load courses from Ignite backend
-        const coursesResponse = await fetch(`${API_BASE_URL}/courses?page=0&size=100`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      // Load users with pagination, search, and role filter
+      let userParams;
+      let usersUrl;
+      
+      if (debouncedEmailQuery.trim()) {
+        userParams = new URLSearchParams({
+          emailPart: debouncedEmailQuery.trim(),
+          page: currentPage.toString(),
+          size: '20'
         });
         
-        if (coursesResponse.ok) {
-          const coursesData = await coursesResponse.json();
-          setCourses(coursesData.content || []);
-        } else {
-          console.error('Failed to load courses from backend');
-          setCourses([]);
+        if (selectedRole) {
+          userParams.append('role', selectedRole);
         }
+        
+        usersUrl = `${API_BASE_URL}/users/search-by-email?${userParams}`;
+      } else {
+        userParams = new URLSearchParams({
+          page: currentPage.toString(),
+          size: '20'
+        });
+        
+        if (debouncedSearchQuery.trim()) {
+          userParams.append('query', debouncedSearchQuery.trim());
+        }
+        
+        if (selectedRole) {
+          userParams.append('role', selectedRole);
+        }
+        
+        usersUrl = `${API_BASE_URL}/users?${userParams}`;
+      }
 
-        // Load users with pagination, search, and role filter
-        let userParams;
-        let usersUrl;
-        
-        if (debouncedEmailQuery.trim()) {
-          // Use email search endpoint with role filtering
-          userParams = new URLSearchParams({
-            emailPart: debouncedEmailQuery.trim(),
-            page: currentPage.toString(),
-            size: '20'
-          });
-          
-          if (selectedRole) {
-            userParams.append('role', selectedRole);
-          }
-          
-          usersUrl = `${API_BASE_URL}/users/search-by-email?${userParams}`;
-        } else {
-          // Use regular search endpoint with role filtering
-          userParams = new URLSearchParams({
-            page: currentPage.toString(),
-            size: '20'
-          });
-          
-          if (debouncedSearchQuery.trim()) {
-            userParams.append('query', debouncedSearchQuery.trim());
-          }
-          
-          if (selectedRole) {
-            userParams.append('role', selectedRole);
-          }
-          
-          usersUrl = `${API_BASE_URL}/users?${userParams}`;
-        }
-
-        console.log('Fetching users from:', usersUrl);
-        console.log('Headers:', headers);
-        
-        const response = await fetch(usersUrl, { headers });
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-        
-        const u = await response.json();
-        console.log('Users response:', u);
-        console.log('Response structure:', {
-          hasContent: 'content' in u,
-          hasData: 'data' in u,
-          hasUsers: 'users' in u,
-          keys: Object.keys(u),
-          contentLength: u.content?.length,
-          dataLength: u.data?.length,
-          usersLength: u.users?.length
-        });
-        
-        // Backend returns: { content: [...], page: 0, size: 20, totalElements: 3, totalPages: 1, last: true }
-        console.log('Backend response structure:', {
-          hasContent: 'content' in u,
-          contentLength: u.content?.length,
-          totalElements: u.totalElements,
-          totalPages: u.totalPages,
-          page: u.page,
-          size: u.size,
-          last: u.last
-        });
-        
-        const usersArray = Array.isArray(u.content) ? u.content : [];
-        console.log('Setting users state:', usersArray);
-        console.log('Setting totalPages:', u.totalPages || 0);
-        console.log('Setting totalElements:', u.totalElements || 0);
-        
-        setUsers(usersArray);
-        setTotalPages(u.totalPages || 0);
-        setTotalElements(u.totalElements || 0);
-        
-        console.log('State updated - users count:', usersArray.length);
-        
-      } catch (testError) {
-        console.error('Backend connectivity test failed:', testError);
-        throw testError;
+      const response = await fetch(usersUrl, { headers });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
       
-    } catch (error) {
-      console.error('Error loading data:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
+      const u = await response.json();
+      const usersArray = Array.isArray(u.content) ? u.content : [];
       
-      // If the API fails, try a fallback or show a message
+      setUsers(usersArray);
+      setTotalPages(u.totalPages || 0);
+      setTotalElements(u.totalElements || 0);
+      
+    } catch (error) {
+      console.error('Error loading users:', error);
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        console.log('Network error - backend might not be running');
         setUsers([]);
         setTotalPages(0);
         setTotalElements(0);
       }
+    } finally { 
+      setLoadingUsers(false); 
+    }
+  };
+
+  // Initial load (only once on mount)
+  const load = async () => {
+    setLoading(true);
+    try {
+      await loadCourses();
+      await loadUsers();
+    } catch (error) {
+      console.error('Error loading data:', error);
     } finally { 
       setLoading(false); 
     }
@@ -300,7 +253,22 @@ export default function AdminPage() {
     return () => clearTimeout(timer);
   }, [emailQuery]);
 
-  useEffect(() => { load(); }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
+  // Initial load only once
+  useEffect(() => {
+    load();
+  }, []);
+
+  // Reload only users when filters change (skip initial mount to avoid double load)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (!loading) {
+      loadUsers();
+    }
+  }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
   
   // Load candidates and skills for skill rating
   useEffect(() => {
@@ -338,7 +306,22 @@ export default function AdminPage() {
 
     setCreatingAdmin(true);
     try {
-      await adminAPI.createCustomAdmin(customAdminForm);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/admin/custom-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customAdminForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}: ${response.statusText}` }));
+        throw new Error(errorData.message || `Failed to create custom admin: ${response.status}`);
+      }
+
+      const result = await response.json();
       alert('Custom admin created successfully!');
       setCustomAdminForm({
         firstName: '',
@@ -348,7 +331,7 @@ export default function AdminPage() {
         privileges: []
       });
       setShowCustomAdminForm(false);
-      load(); // Reload users list
+      loadUsers(); // Reload only the users list
     } catch (error) {
       console.error('Error creating custom admin:', error);
       alert(`Error creating custom admin: ${error.message}`);
@@ -361,7 +344,7 @@ export default function AdminPage() {
     try {
       await coursesAPI.deleteCourse(id);
       console.log('Course deleted successfully');
-      load(); // Reload the courses list
+      loadCourses(); // Reload only the courses list
     } catch (error) {
       console.error('Error deleting course:', error);
       alert(`Error deleting course: ${error.message}`);
@@ -385,7 +368,7 @@ export default function AdminPage() {
       }
       
       console.log('User deleted successfully');
-      load(); // Reload the users list
+      loadUsers(); // Reload only the users list
     } catch (error) {
       console.error('Error deleting user:', error);
       alert(`Error deleting user: ${error.message}`);
@@ -589,7 +572,7 @@ export default function AdminPage() {
       setSections([]);
       
       // Reload courses list
-      load();
+      loadCourses();
       
       // Redirect to courses page
       navigate('/courses');
@@ -1064,7 +1047,7 @@ export default function AdminPage() {
                 
                 <div className="max-h-96 overflow-y-auto space-y-2 mb-4 min-h-[200px]">
                   {console.log('Rendering users list - users.length:', users.length, 'users:', users)}
-                  {loading ? (
+                  {loadingUsers ? (
                     <div className="space-y-2">
                       {[...Array(5)].map((_, i) => (
                         <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">

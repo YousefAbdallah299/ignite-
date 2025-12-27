@@ -12,6 +12,7 @@ import com.yousef.ignite.entity.RecruiterProfile;
 import com.yousef.ignite.entity.User;
 import com.yousef.ignite.exception.custom.*;
 import com.yousef.ignite.repository.CandidateProfileRepository;
+import com.yousef.ignite.repository.OfferRepository;
 import com.yousef.ignite.repository.RecruiterProfileRepository;
 import com.yousef.ignite.repository.UserRepository;
 import com.yousef.ignite.service.EmailService;
@@ -52,6 +53,8 @@ public class AuthServiceImpl implements AuthService {
     private final RecruiterProfileRepository recruiterProfileRepository;
 
     private final CandidateProfileRepository candidateProfileRepository;
+
+    private final OfferRepository offerRepository;
 
     private final Set<String> invalidatedTokens = new HashSet<>();
 
@@ -204,7 +207,13 @@ public class AuthServiceImpl implements AuthService {
         // Clean up related entities before deletion
         candidateProfileRepository.findByUser(targetUser).ifPresent(candidateProfileRepository::delete);
 
-        recruiterProfileRepository.findByUser(targetUser).ifPresent(recruiterProfileRepository::delete);
+        // Handle recruiter profile deletion - need to delete offers first
+        recruiterProfileRepository.findByUser(targetUser).ifPresent(recruiterProfile -> {
+            // Delete all offers associated with this recruiter
+            offerRepository.findAllByRecruiter(recruiterProfile).forEach(offerRepository::delete);
+            // Now safe to delete the recruiter profile
+            recruiterProfileRepository.delete(recruiterProfile);
+        });
 
         // Finally, delete the user
         userRepository.delete(targetUser);
