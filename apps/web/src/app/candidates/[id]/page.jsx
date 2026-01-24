@@ -369,51 +369,100 @@ export default function CandidatePage() {
             {/* Admin Comments Section - Only visible to admins and subscribed recruiters */}
             {canViewComments && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <MessageSquare className="w-5 h-5 mr-2 text-red-600" />
-                  Admin Comments
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <MessageSquare className="w-5 h-5 mr-2 text-red-600" />
+                    Admin Comments
+                  </h2>
+                  {isRecruiter && (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                      Subscribed Recruiter Access
+                    </span>
+                  )}
+                </div>
                 
                 {/* Add Comment Form - Only for admins */}
                 {isAdmin && (
                   <form onSubmit={submitComment} className="mb-6 pb-6 border-b border-gray-200">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Add a comment about this candidate..."
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent mb-3"
-                      rows={3}
-                    />
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Add a comment about this candidate
+                      </label>
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Enter your comment here... (Only visible to admins and subscribed recruiters)"
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                        rows={4}
+                      />
+                    </div>
                     <button
                       type="submit"
                       disabled={submittingComment || !newComment.trim()}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-all shadow-md hover:shadow-lg"
                     >
-                      <Send className="w-4 h-4" />
-                      {submittingComment ? 'Submitting...' : 'Add Comment'}
+                      {submittingComment ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Add Comment</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 )}
 
                 {/* Comments List */}
                 {loadingComments ? (
-                  <div className="text-center py-4 text-gray-500">Loading comments...</div>
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-2"></div>
+                    <p className="text-gray-500">Loading comments...</p>
+                  </div>
                 ) : comments.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500">No comments yet.</div>
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">No comments yet</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {isAdmin ? 'Be the first to add a comment about this candidate.' : 'No admin comments have been added yet.'}
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {comments.map((comment) => (
-                      <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="font-medium text-gray-900">{comment.adminName}</p>
-                            <p className="text-xs text-gray-500">{comment.adminEmail}</p>
+                      <div key={comment.id} className="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl p-5 hover:border-red-300 transition-all duration-200">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              {comment.adminName?.charAt(0) || 'A'}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{comment.adminName}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{comment.adminEmail}</p>
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString()}
-                          </p>
+                          <div className="text-right">
+                            <p className="text-xs font-medium text-gray-600">
+                              {new Date(comment.createdAt).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(comment.createdAt).toLocaleTimeString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-gray-700 whitespace-pre-wrap">{comment.comment}</p>
+                        <div className="pl-13">
+                          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{comment.comment}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
