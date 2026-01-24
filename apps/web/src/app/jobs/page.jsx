@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
+import AdvertisingPopup from "@/components/AdvertisingPopup";
 import { useJobsAPI } from "@/hooks/useJobsAPI";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -593,6 +594,20 @@ export default function JobsPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
+
+      {/* Advertising Popup */}
+      <AdvertisingPopup
+        ad={{
+          image: '/images/ads/recruiters.jpg',
+          title: 'Post Your Job Opening',
+          description: 'Reach qualified candidates and find the perfect fit for your team.',
+          link: '/recruiters/post-job',
+          ctaText: 'Post a Job',
+        }}
+        position="bottom-left"
+        showDelay={4000}
+        storageKey="ad_jobs_dismissed"
+      />
 
       <style jsx global>{`
         .line-clamp-2 {

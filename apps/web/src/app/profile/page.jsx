@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle, DollarSign } from 'lucide-react';
+import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle, DollarSign, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -10,6 +10,7 @@ import { useCandidatesAPI } from '@/hooks/useCandidatesAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
 import { usePageTokenValidation } from '@/components/TokenValidationWrapper';
 import { candidatesAPI, skillsAPI } from '@/utils/apiClient';
+import CareerHistoryModal from '@/components/CareerHistoryModal';
 
 // Get API base URL from environment or use default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
@@ -125,6 +126,10 @@ export default function ProfilePage() {
   const [showAddSkillsForm, setShowAddSkillsForm] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [careerHistory, setCareerHistory] = useState([]);
+  const [loadingCareerHistory, setLoadingCareerHistory] = useState(false);
+  const [isCareerHistoryModalOpen, setIsCareerHistoryModalOpen] = useState(false);
+  const [editingCareerHistory, setEditingCareerHistory] = useState(null);
 
   useEffect(() => {
     console.log('Profile page useEffect - user:', user);
@@ -171,6 +176,7 @@ export default function ProfilePage() {
     loadProfile();
     loadOffers();
     loadAvailableSkills();
+    loadCareerHistory();
   }, [user]);
 
 
@@ -496,6 +502,67 @@ export default function ProfilePage() {
     } finally {
       setAddingSkills(false);
     }
+  };
+
+  // Load career history
+  const loadCareerHistory = async () => {
+    try {
+      setLoadingCareerHistory(true);
+      const history = await candidatesAPI.getMyCareerHistory();
+      // Backend already returns sorted by startDate desc (latest first)
+      setCareerHistory(history || []);
+    } catch (error) {
+      console.error('Error loading career history:', error);
+      toast.error('Failed to load career history');
+    } finally {
+      setLoadingCareerHistory(false);
+    }
+  };
+
+  // Handle save career history (add or update)
+  const handleSaveCareerHistory = async (data) => {
+    try {
+      if (editingCareerHistory) {
+        await candidatesAPI.updateCareerHistory(editingCareerHistory.id, data);
+        toast.success('Career history updated successfully!');
+      } else {
+        await candidatesAPI.addCareerHistory(data);
+        toast.success('Career history added successfully!');
+      }
+      await loadCareerHistory();
+      setIsCareerHistoryModalOpen(false);
+      setEditingCareerHistory(null);
+    } catch (error) {
+      console.error('Error saving career history:', error);
+      toast.error(`Failed to ${editingCareerHistory ? 'update' : 'add'} career history`);
+    }
+  };
+
+  // Handle delete career history
+  const handleDeleteCareerHistory = async (id) => {
+    if (!confirm('Are you sure you want to delete this career history entry?')) {
+      return;
+    }
+    try {
+      await candidatesAPI.deleteCareerHistory(id);
+      toast.success('Career history deleted successfully!');
+      await loadCareerHistory();
+    } catch (error) {
+      console.error('Error deleting career history:', error);
+      toast.error('Failed to delete career history');
+    }
+  };
+
+  // Open modal for adding new career history
+  const handleAddCareerHistory = () => {
+    setEditingCareerHistory(null);
+    setIsCareerHistoryModalOpen(true);
+  };
+
+  // Open modal for editing career history
+  const handleEditCareerHistory = (history) => {
+    setEditingCareerHistory(history);
+    setIsCareerHistoryModalOpen(true);
   };
 
   if (profileLoading) {
@@ -1015,6 +1082,102 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Career History Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <Briefcase className="w-5 h-5 mr-2 text-red-600" />
+                  Career History
+                </h2>
+                <button
+                  onClick={handleAddCareerHistory}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Career History
+                </button>
+              </div>
+
+              {loadingCareerHistory ? (
+                <div className="space-y-4">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : careerHistory.length === 0 ? (
+                <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300">
+                  <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <Briefcase className="w-10 h-10 text-red-500" />
+                  </div>
+                  <h4 className="text-xl font-semibold text-gray-900 mb-2">No Career History Yet</h4>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Add your work experience to showcase your professional background to potential employers.
+                  </p>
+                  <button
+                    onClick={handleAddCareerHistory}
+                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 mx-auto"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add Your First Career History
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {careerHistory.map((history) => (
+                    <div key={history.id} className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-gray-900">{history.position}</h3>
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                              {history.companyName}
+                            </span>
+                          </div>
+                          {history.location && (
+                            <div className="flex items-center text-sm text-gray-600 mb-2">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              {history.location}
+                            </div>
+                          )}
+                          <div className="flex items-center text-sm text-gray-600 mb-3">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {new Date(history.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            {history.endDate ? (
+                              <> - {new Date(history.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
+                            ) : (
+                              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Current</span>
+                            )}
+                          </div>
+                          {history.description && (
+                            <p className="text-gray-700 text-sm leading-relaxed mt-3">{history.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <button
+                            onClick={() => handleEditCareerHistory(history)}
+                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCareerHistory(history.id)}
+                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Save/Cancel Buttons */}
             {isEditing && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -1091,6 +1254,17 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Career History Modal */}
+      <CareerHistoryModal
+        isOpen={isCareerHistoryModalOpen}
+        onClose={() => {
+          setIsCareerHistoryModalOpen(false);
+          setEditingCareerHistory(null);
+        }}
+        onSave={handleSaveCareerHistory}
+        careerHistory={editingCareerHistory}
+      />
 
       <Footer />
     </div>

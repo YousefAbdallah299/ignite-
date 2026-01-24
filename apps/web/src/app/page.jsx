@@ -7,6 +7,7 @@ import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
+import AdvertisingPopup from "@/components/AdvertisingPopup";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { useEffect } from "react";
 
@@ -53,6 +54,20 @@ export default function HomePage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
+
+      {/* Advertising Popup */}
+      <AdvertisingPopup
+        ad={{
+          image: '/images/ads/job-seekers.jpg',
+          title: 'Find Your Dream Job',
+          description: 'Browse thousands of opportunities from top companies.',
+          link: '/jobs',
+          ctaText: 'Explore Jobs',
+        }}
+        position="bottom-right"
+        showDelay={5000}
+        storageKey="ad_home_dismissed"
+      />
 
       {/* Global styles and fonts */}
       <style jsx global>{`

@@ -716,6 +716,37 @@ export const candidatesAPI = {
       method: 'GET',
     });
   },
+
+  // Career History API methods
+  // Get my career history
+  getMyCareerHistory: async () => {
+    return apiCall('/candidates/me/career-history', {
+      method: 'GET',
+    });
+  },
+
+  // Add career history entry
+  addCareerHistory: async (careerHistoryData) => {
+    return apiCall('/candidates/me/career-history', {
+      method: 'POST',
+      body: JSON.stringify(careerHistoryData),
+    });
+  },
+
+  // Update career history entry
+  updateCareerHistory: async (careerHistoryId, careerHistoryData) => {
+    return apiCall(`/candidates/me/career-history/${careerHistoryId}`, {
+      method: 'PUT',
+      body: JSON.stringify(careerHistoryData),
+    });
+  },
+
+  // Delete career history entry
+  deleteCareerHistory: async (careerHistoryId) => {
+    return apiCall(`/candidates/me/career-history/${careerHistoryId}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 // Recruiters API
