@@ -539,12 +539,21 @@ export default function AdminPage() {
 
     setUploadingImage(true);
     try {
+      console.log('Uploading image file:', courseImageFile.name, courseImageFile.size);
       const response = await coursesAPI.uploadCourseImage(courseImageFile);
-      const imageUrl = response.imageUrl;
+      console.log('Upload response:', response);
+      
+      const imageUrl = response?.imageUrl;
+      console.log('Extracted imageUrl from response:', imageUrl);
+      
+      if (!imageUrl) {
+        throw new Error('No imageUrl returned from server');
+      }
       
       // Store the relative path returned by backend (e.g., "/uploads/courses/filename.jpg")
       // This is what we'll send to the backend when creating the course
       setCourseImageUrl(imageUrl);
+      console.log('Set courseImageUrl state to:', imageUrl);
       
       // For preview, construct full URL if needed
       if (imageUrl && !imageUrl.startsWith('http')) {
@@ -553,11 +562,12 @@ export default function AdminPage() {
         const previewUrl = `${baseUrl}${imageUrl}`;
         // Update preview to show the full URL for display
         setCourseImagePreview(previewUrl);
+        console.log('Set preview URL to:', previewUrl);
       } else {
         setCourseImagePreview(imageUrl);
       }
       
-      alert('Image uploaded successfully!');
+      alert('Image uploaded successfully! URL: ' + imageUrl);
     } catch (error) {
       console.error('Error uploading image:', error);
       alert(`Error uploading image: ${error.message}`);
@@ -575,14 +585,35 @@ export default function AdminPage() {
 
   const createCourse = async (e) => {
     e.preventDefault();
+    
+    // Warn if file is selected but not uploaded
+    if (courseImageFile && !courseImageUrl) {
+      const shouldContinue = window.confirm(
+        'You have selected an image file but haven\'t uploaded it yet. ' +
+        'The course will be created without an image. Do you want to continue?'
+      );
+      if (!shouldContinue) {
+        return;
+      }
+    }
+    
     try {
+      // Log current state before creating course
+      console.log('=== Creating Course ===');
+      console.log('Current courseImageUrl state:', courseImageUrl);
+      console.log('Current courseImagePreview state:', courseImagePreview);
+      console.log('Current courseImageFile state:', courseImageFile);
+      
       // Transform the form data to match the Ignite backend DTO structure
+      // Convert empty string to null for imageUrl
+      const imageUrlValue = courseImageUrl && courseImageUrl.trim() !== '' ? courseImageUrl.trim() : null;
+      
       const courseData = {
         title: newCourse.title,
         description: newCourse.description,
         categories: newCourse.categories, // Backend expects array of categories
         skillLevel: newCourse.skillLevel,
-        imageUrl: courseImageUrl || null, // Include uploaded image URL
+        imageUrl: imageUrlValue, // Include uploaded image URL (null if not uploaded)
         sections: sections.map(section => ({
           title: section.title,
           content: '', // Backend expects content field
@@ -597,6 +628,7 @@ export default function AdminPage() {
       };
 
       console.log('Sending course data:', JSON.stringify(courseData, null, 2));
+      console.log('Course imageUrl being sent:', courseData.imageUrl);
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
@@ -896,7 +928,14 @@ export default function AdminPage() {
                     
                     {/* Upload Status */}
                     {courseImageUrl && (
-                      <p className="text-xs text-green-600">✓ Image uploaded successfully</p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-600">✓ Image uploaded successfully</p>
+                        <p className="text-xs text-gray-500 font-mono break-all">URL: {courseImageUrl}</p>
+                      </div>
+                    )}
+                    
+                    {courseImageFile && !courseImageUrl && (
+                      <p className="text-xs text-yellow-600">⚠ Please click "Upload" button to upload the image before creating the course</p>
                     )}
                     
                     {!courseImageFile && !courseImageUrl && (
