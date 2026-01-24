@@ -92,11 +92,11 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <a href="/" className="flex items-center">
+              <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <img
-                  src={getLogoUrl()}
+                  src="/ignite-logo.png"
                   alt="Ignite logo"
-                  className="h-10 w-auto object-contain"
+                  className="h-12 w-auto object-contain"
                   onError={(e) => {
                     // If logo fails to load from public folder, try backend
                     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
@@ -104,7 +104,6 @@ export default function Header() {
                     e.target.src = `${backendBaseUrl}/uploads/ignite-logo.png`;
                   }}
                 />
-                <span className="ml-2 text-2xl font-bold text-gray-900">Ignite</span>
               </a>
             </div>
           </div>
