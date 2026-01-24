@@ -22,18 +22,22 @@ import {
   User,
   Mail,
   Phone,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  Eye
 } from 'lucide-react';
 
 export default function JobDetailPage() {
   const { id } = useParams();
-  const { getJobById, applyForJob, cancelJobApplication, getMyAppliedJobs, loading } = useJobsAPI();
-  const { user, isCandidate, isAuthenticated } = useAuthAPI();
+  const { getJobById, applyForJob, cancelJobApplication, getMyAppliedJobs, deleteJob, loading } = useJobsAPI();
+  const { user, isCandidate, isAuthenticated, isRecruiter, isAdmin } = useAuthAPI();
   const { isValid } = usePageTokenValidation(false); // Job detail page doesn't require auth
   
   const [job, setJob] = useState(null);
   const [isApplied, setIsApplied] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -44,6 +48,15 @@ export default function JobDetailPage() {
       }
     }
   }, [id, isCandidate]);
+
+  useEffect(() => {
+    // Check if user can delete this job (admin or recruiter - backend will verify ownership)
+    if (job && user && (isAdmin || isRecruiter)) {
+      setCanDelete(true);
+    } else {
+      setCanDelete(false);
+    }
+  }, [job, user, isAdmin, isRecruiter]);
 
   const loadJob = async () => {
     try {
@@ -109,6 +122,30 @@ export default function JobDetailPage() {
       toast.error('Failed to cancel application. Please try again.');
     } finally {
       setIsApplying(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!canDelete) {
+      toast.error('You are not authorized to delete this job');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteJob(id);
+      toast.success('Job deleted successfully!');
+      // Redirect to jobs page after deletion
+      window.location.href = '/jobs';
+    } catch (err) {
+      console.error('Error deleting job:', err);
+      toast.error(err.message || 'Failed to delete job. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -240,38 +277,53 @@ export default function JobDetailPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4">
-            {isCandidate ? (
-              isApplied ? (
-                <button
-                  onClick={handleCancel}
-                  disabled={isApplying}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <XCircle className="w-5 h-5" />
-                  {isApplying ? 'Canceling...' : 'Cancel Application'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleApply}
-                  disabled={isApplying}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <CheckCircle className="w-5 h-5" />
-                  {isApplying ? 'Applying...' : 'Apply Now'}
-                </button>
-              )
-            ) : (
-              <div className="text-gray-600 text-sm">
-                {isAuthenticated ? 'Sign in as a candidate to apply for this job' : 'Sign in to apply for this job'}
-              </div>
+          <div className="flex gap-4 flex-wrap">
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Trash2 className="w-5 h-5" />
+                {isDeleting ? 'Deleting...' : 'Delete Job'}
+              </button>
             )}
             
-            {isApplied && (
-              <div className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-800 rounded-lg">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Applied</span>
-              </div>
+            {!canDelete && (
+              <>
+                {isCandidate ? (
+                  isApplied ? (
+                    <button
+                      onClick={handleCancel}
+                      disabled={isApplying}
+                      className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      {isApplying ? 'Canceling...' : 'Cancel Application'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleApply}
+                      disabled={isApplying}
+                      className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      {isApplying ? 'Applying...' : 'Apply Now'}
+                    </button>
+                  )
+                ) : (
+                  <div className="text-gray-600 text-sm">
+                    {isAuthenticated ? 'Sign in as a candidate to apply for this job' : 'Sign in to apply for this job'}
+                  </div>
+                )}
+                
+                {isApplied && (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-800 rounded-lg">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">Applied</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
           </div>

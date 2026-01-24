@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [expectedPosition, setExpectedPosition] = useState('');
   const [expectedSalary, setExpectedSalary] = useState('');
+  const [expectedSalaryCurrency, setExpectedSalaryCurrency] = useState('EGP');
   const [showAgreementModal, setShowAgreementModal] = useState(true);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
@@ -123,7 +124,8 @@ export default function RegisterPage() {
         phoneNumber: phoneNumber.trim(),
         ...(role === 'CANDIDATE' && {
           expectedPosition: expectedPosition.trim(),
-          expectedSalary: parseFloat(expectedSalary)
+          expectedSalary: parseFloat(expectedSalary),
+          expectedSalaryCurrency: expectedSalaryCurrency
         })
       };
       
@@ -288,16 +290,69 @@ export default function RegisterPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Expected Salary <span className="text-red-600">*</span>
                       </label>
-                      <input
-                        type="number"
-                        value={expectedSalary}
-                        onChange={(e) => setExpectedSalary(e.target.value)}
-                        required
-                        min="0"
-                        step="1000"
-                        placeholder="e.g., 50000"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={expectedSalary}
+                          onChange={(e) => setExpectedSalary(e.target.value)}
+                          required
+                          min="0"
+                          step="1000"
+                          placeholder="e.g., 50000"
+                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        />
+                        <select
+                          value={expectedSalaryCurrency}
+                          onChange={(e) => setExpectedSalaryCurrency(e.target.value)}
+                          className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                          required
+                        >
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                          <option value="EGP">EGP</option>
+                          <option value="CAD">CAD</option>
+                          <option value="AUD">AUD</option>
+                          <option value="JPY">JPY</option>
+                          <option value="CHF">CHF</option>
+                          <option value="AED">AED</option>
+                          <option value="SAR">SAR</option>
+                          <option value="KWD">KWD</option>
+                          <option value="QAR">QAR</option>
+                          <option value="BHD">BHD</option>
+                          <option value="OMR">OMR</option>
+                          <option value="JOD">JOD</option>
+                          <option value="LBP">LBP</option>
+                          <option value="MAD">MAD</option>
+                          <option value="TND">TND</option>
+                          <option value="DZD">DZD</option>
+                          <option value="LYD">LYD</option>
+                          <option value="SDG">SDG</option>
+                          <option value="ETB">ETB</option>
+                          <option value="KES">KES</option>
+                          <option value="NGN">NGN</option>
+                          <option value="ZAR">ZAR</option>
+                          <option value="GHS">GHS</option>
+                          <option value="UGX">UGX</option>
+                          <option value="TZS">TZS</option>
+                          <option value="RWF">RWF</option>
+                          <option value="BWP">BWP</option>
+                          <option value="SZL">SZL</option>
+                          <option value="LSL">LSL</option>
+                          <option value="NAD">NAD</option>
+                          <option value="MZN">MZN</option>
+                          <option value="AOA">AOA</option>
+                          <option value="ZMW">ZMW</option>
+                          <option value="MWK">MWK</option>
+                          <option value="BIF">BIF</option>
+                          <option value="DJF">DJF</option>
+                          <option value="KMF">KMF</option>
+                          <option value="MGA">MGA</option>
+                          <option value="MUR">MUR</option>
+                          <option value="SCR">SCR</option>
+                          <option value="SOS">SOS</option>
+                        </select>
+                      </div>
                       <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
                     </div>
                   </>

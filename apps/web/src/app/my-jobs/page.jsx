@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { jobsAPI, offersAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
+import { useJobsAPI } from "@/hooks/useJobsAPI";
 // Get API base URL from environment or use default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
 
@@ -47,13 +48,16 @@ import {
   Phone,
   FileText,
   X,
+  Trash2,
 } from "lucide-react";
 
 export default function MyJobsPage() {
   const { user, isRecruiter, isAdmin } = useAuthAPI();
+  const { deleteJob } = useJobsAPI();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingJobId, setDeletingJobId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [applications, setApplications] = useState([]);
   const [showApplications, setShowApplications] = useState(false);
@@ -169,6 +173,25 @@ export default function MyJobsPage() {
       toast.error('Failed to send offer');
     } finally {
       setSendingOfferId(null);
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingJobId(jobId);
+    try {
+      await deleteJob(jobId);
+      toast.success('Job deleted successfully!');
+      // Refresh the jobs list
+      fetchMyJobs(currentPage);
+    } catch (err) {
+      console.error('Error deleting job:', err);
+      toast.error(err.message || 'Failed to delete job. Please try again.');
+    } finally {
+      setDeletingJobId(null);
     }
   };
 
@@ -341,15 +364,20 @@ export default function MyJobsPage() {
                     </div>
                     
                     <div className="flex items-center gap-2 ml-4">
-                      <button
-                        onClick={() => {
-                          setSelectedJob(job);
-                          fetchJobApplications(job.id);
-                        }}
+                      <a
+                        href={`/jobs/${job.id}`}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                       >
                         <Eye className="w-4 h-4" />
-                        View Applications
+                        View Job
+                      </a>
+                      <button
+                        onClick={() => handleDeleteJob(job.id)}
+                        disabled={deletingJobId === job.id}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {deletingJobId === job.id ? 'Deleting...' : 'Delete'}
                       </button>
                     </div>
                   </div>
