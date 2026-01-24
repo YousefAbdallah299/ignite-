@@ -363,7 +363,7 @@ export default function MyJobsPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2 ml-4 flex-wrap">
                       <a
                         href={`/jobs/${job.id}`}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
@@ -371,6 +371,16 @@ export default function MyJobsPage() {
                         <Eye className="w-4 h-4" />
                         View Job
                       </a>
+                      <button
+                        onClick={() => {
+                          setSelectedJob(job);
+                          fetchJobApplications(job.id);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        <Users className="w-4 h-4" />
+                        View Applications ({job.applicationCount || 0})
+                      </button>
                       <button
                         onClick={() => handleDeleteJob(job.id)}
                         disabled={deletingJobId === job.id}
