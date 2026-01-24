@@ -332,41 +332,41 @@ export default function MyJobsPage() {
             <div className="divide-y divide-gray-200">
               {jobs.map((job) => (
                 <div key={job.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full whitespace-nowrap">
                           {job.employmentType}
                         </span>
                       </div>
                       
-                      <p className="text-gray-600 mb-3 line-clamp-2">{job.description}</p>
+                      <p className="text-gray-600 mb-3 line-clamp-2 break-words">{job.description}</p>
                       
-                      <div className="flex items-center gap-6 text-sm text-gray-500">
+                      <div className="flex items-center gap-6 text-sm text-gray-500 flex-wrap">
                         <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
                           <span>{job.location}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
+                          <DollarSign className="w-4 h-4 flex-shrink-0" />
                           <span>{job.salary}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-4 h-4 flex-shrink-0" />
                           <span>{formatDate(job.createdAt)}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
+                          <Users className="w-4 h-4 flex-shrink-0" />
                           <span>{job.applicationCount || 0} applications</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 ml-4 flex-wrap">
+                    <div className="flex items-center gap-2 flex-shrink-0 lg:ml-4 flex-wrap">
                       <a
                         href={`/jobs/${job.id}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
                       >
                         <Eye className="w-4 h-4" />
                         View Job
@@ -376,7 +376,7 @@ export default function MyJobsPage() {
                           setSelectedJob(job);
                           fetchJobApplications(job.id);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
                       >
                         <Users className="w-4 h-4" />
                         View Applications ({job.applicationCount || 0})
@@ -384,7 +384,7 @@ export default function MyJobsPage() {
                       <button
                         onClick={() => handleDeleteJob(job.id)}
                         disabled={deletingJobId === job.id}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                       >
                         <Trash2 className="w-4 h-4" />
                         {deletingJobId === job.id ? 'Deleting...' : 'Delete'}
