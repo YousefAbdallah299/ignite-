@@ -118,32 +118,38 @@ export default function PaymentPage() {
       return;
     }
 
+    // Validate required billing fields
+    if (!formData.firstName || !formData.lastName || !formData.phoneNumber || !formData.postalCode) {
+      toast.error('Please fill in all required billing fields (First Name, Last Name, Phone Number, Postal Code)');
+      return;
+    }
+
     // Show toast based on selected payment method
     const paymentMethodName = 'Card Payment (Visa/Mastercard)';
     
     try {
       const paymentData = {
-        recruiterId: recruiterProfile.id,
-        amountCents: amount,
+        recruiterId: Number(recruiterProfile.id), // Ensure it's a number
+        amountCents: Number(amount), // Ensure it's a number
         currency: 'EGP',
         billing: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-          apartment: formData.apartment,
-          floor: formData.floor,
-          street: formData.street,
-          building: formData.building,
-          city: formData.city,
-          country: formData.country,
-          postalCode: formData.postalCode,
-          state: formData.state,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
+          phoneNumber: formData.phoneNumber.trim(),
+          apartment: formData.apartment.trim(),
+          floor: formData.floor.trim(),
+          street: formData.street.trim(),
+          building: formData.building.trim(),
+          city: formData.city.trim(),
+          country: formData.country.trim(),
+          postalCode: formData.postalCode.trim(),
+          state: formData.state.trim(),
         }
       };
 
-      // Note: All payment methods currently use the same Paymob integration
-      // In the future, you could add payment method differentiation here
+      // Log the payment data for debugging
+      console.log('Payment data being sent:', paymentData);
       console.log(`Processing payment via ${paymentMethodName}`);
       
       const response = await initiatePayment(paymentData);

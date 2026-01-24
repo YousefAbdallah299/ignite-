@@ -4,7 +4,20 @@
 import { TokenValidationService } from './tokenValidation';
 import { SecureStorage, logger } from './secureStorage';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+// Detect local development - use localhost if running on localhost
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  // Check if we're running on localhost
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:8080/api/v1';
+  }
+  // Default to production
+  return 'https://ignite-qjis.onrender.com/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to get auth token from secure storage
 const getAuthToken = () => {
@@ -767,27 +780,40 @@ export const paymentsAPI = {
     const url = `${API_BASE_URL}/payments/initiate`;
     const token = getAuthToken();
     
+    // Build headers object
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Only add Authorization header if token exists and is not empty
+    if (token && token.trim().length > 0) {
+      headers['Authorization'] = `Bearer ${token.trim()}`;
+    } else {
+      logger.warn('No auth token found for payment request');
+      TokenValidationService.redirectToSignIn();
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
     const config = {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
+      headers,
       body: JSON.stringify(paymentData),
     };
 
     logger.log(`Making payment API call to: ${url}`);
-    logger.log(`Request config:`, config);
+    logger.log(`Payment request data:`, paymentData);
+    logger.log(`Request headers:`, headers);
 
     try {
       const response = await fetch(url, config);
       
       logger.log(`Response status: ${response.status}`);
+      logger.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
       
       if (response.status === 401) {
         logger.log('Received 401 Unauthorized');
         TokenValidationService.redirectToSignIn();
-        return;
+        throw new Error('Authentication failed. Please log in again.');
       }
       
       if (!response.ok) {
@@ -797,9 +823,21 @@ export const paymentsAPI = {
         if (contentType && contentType.includes('application/json')) {
           try {
             const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
+            errorMessage = errorData.message || errorData.error || errorMessage;
+            logger.error('Payment API error response:', errorData);
           } catch (jsonError) {
-            console.error('Failed to parse error response as JSON:', jsonError);
+            logger.error('Failed to parse error response as JSON:', jsonError);
+          }
+        } else {
+          // Try to get error text if not JSON
+          try {
+            const errorText = await response.text();
+            logger.error('Payment API error text:', errorText);
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            logger.error('Failed to read error response:', textError);
           }
         }
         
