@@ -913,9 +913,16 @@ export default function CoursesPage() {
                 <button
                   type="submit"
                   disabled={requestLoading}
-                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
-                  {requestLoading ? 'Submitting...' : 'Submit Request'}
+                  {requestLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    'Submit Request'
+                  )}
                 </button>
               </div>
             </form>

@@ -217,6 +217,14 @@ export const coursesAPI = {
     });
   },
 
+  // Request a course (for candidates)
+  requestCourse: async (requestData) => {
+    return apiCall('/courses/request', {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+    });
+  },
+
   // Create course
   createCourse: async (courseData) => {
     return apiCall('/courses', {

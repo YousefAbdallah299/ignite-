@@ -38,10 +38,19 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">I</span>
-              </div>
-              <span className="ml-2 text-2xl font-bold text-white">Ignite</span>
+              <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
+                <img
+                  src="/ignite-logo.png"
+                  alt="Ignite logo"
+                  className="h-10 w-auto object-contain"
+                  onError={(e) => {
+                    // If logo fails to load from public folder, try backend
+                    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+                    const backendBaseUrl = apiBaseUrl.replace(/\/api\/v1$/, '');
+                    e.target.src = `${backendBaseUrl}/uploads/ignite-logo.png`;
+                  }}
+                />
+              </a>
             </div>
             <p className="text-gray-400 mb-6 max-w-sm">
               The premier platform connecting exceptional talent with leading companies. 
