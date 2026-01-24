@@ -19,6 +19,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [expectedPosition, setExpectedPosition] = useState('');
+  const [expectedSalary, setExpectedSalary] = useState('');
   const [showAgreementModal, setShowAgreementModal] = useState(true);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
@@ -88,6 +90,26 @@ export default function RegisterPage() {
       return;
     }
 
+    // Additional validation for job seekers
+    if (role === 'CANDIDATE') {
+      if (!expectedPosition.trim()) {
+        console.log('Validation failed: Expected position missing');
+        setValidationError('Expected position is required for job seekers.');
+        return;
+      }
+      if (!expectedSalary.trim()) {
+        console.log('Validation failed: Expected salary missing');
+        setValidationError('Expected salary is required for job seekers.');
+        return;
+      }
+      const salaryValue = parseFloat(expectedSalary);
+      if (isNaN(salaryValue) || salaryValue < 0) {
+        console.log('Validation failed: Invalid salary value');
+        setValidationError('Please enter a valid expected salary.');
+        return;
+      }
+    }
+
     console.log('All validations passed, calling register function...');
     
     try {
@@ -98,7 +120,11 @@ export default function RegisterPage() {
         password,
         confirmPassword,
         role,
-        phoneNumber: phoneNumber.trim()
+        phoneNumber: phoneNumber.trim(),
+        ...(role === 'CANDIDATE' && {
+          expectedPosition: expectedPosition.trim(),
+          expectedSalary: parseFloat(expectedSalary)
+        })
       };
       
       console.log('Register data being sent:', { ...registerData, password: '***', confirmPassword: '***' });
@@ -229,6 +255,42 @@ export default function RegisterPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
+                
+                {/* Job Seeker Specific Fields */}
+                {role === 'CANDIDATE' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Expected Position <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={expectedPosition}
+                        onChange={(e) => setExpectedPosition(e.target.value)}
+                        required
+                        placeholder="e.g., Software Engineer, Data Analyst"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Expected Salary <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={expectedSalary}
+                        onChange={(e) => setExpectedSalary(e.target.value)}
+                        required
+                        min="0"
+                        step="1000"
+                        placeholder="e.g., 50000"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
+                    </div>
+                  </>
+                )}
+                
                 <div className="text-xs text-gray-500 text-center">
                   <button
                     type="button"

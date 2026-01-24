@@ -435,16 +435,16 @@ export default function CandidatePage() {
                     {comments.map((comment) => (
                       <div key={comment.id} className="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl p-5 hover:border-red-300 transition-all duration-200">
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                               {comment.adminName?.charAt(0) || 'A'}
                             </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">{comment.adminName}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">{comment.adminEmail}</p>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 break-words">{comment.adminName}</p>
+                              <p className="text-xs text-gray-500 mt-0.5 break-words">{comment.adminEmail}</p>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex-shrink-0 ml-4">
                             <p className="text-xs font-medium text-gray-600">
                               {new Date(comment.createdAt).toLocaleDateString('en-US', { 
                                 year: 'numeric', 
@@ -460,8 +460,8 @@ export default function CandidatePage() {
                             </p>
                           </div>
                         </div>
-                        <div className="pl-13">
-                          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{comment.comment}</p>
+                        <div className="mt-3">
+                          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words overflow-hidden">{comment.comment}</p>
                         </div>
                       </div>
                     ))}
