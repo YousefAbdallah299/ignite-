@@ -26,11 +26,8 @@ export default function AdminPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
-  const [newCourse, setNewCourse] = useState({ title: '', description: '', categories: [], skillLevel: 'BEGINNER', imageUrl: '' });
+  const [newCourse, setNewCourse] = useState({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
   const [sections, setSections] = useState([]);
-  const [courseImageFile, setCourseImageFile] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [courseImagePreview, setCourseImagePreview] = useState(null);
   const [availableCategories, setAvailableCategories] = useState([
     'Web Development', 'Data Science', 'Marketing', 'Design', 'Business', 
     'Programming', 'Photography', 'Writing', 'Finance', 'Personal Development',
@@ -572,66 +569,15 @@ export default function AdminPage() {
       setRatingCandidate(false);
     }
   };
-  const uploadCourseImage = async (file) => {
-    try {
-      setUploadingImage(true);
-      const token = localStorage.getItem('authToken');
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('http://localhost:8080/api/v1/courses/upload-image', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload image');
-      }
-
-      const result = await response.json();
-      return result.imageUrl;
-    } catch (error) {
-      console.error('Error uploading course image:', error);
-      throw error;
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setCourseImageFile(file);
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCourseImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const createCourse = async (e) => {
     e.preventDefault();
     try {
-      let imageUrl = newCourse.imageUrl;
-      
-      // Upload image if a file was selected
-      if (courseImageFile) {
-        imageUrl = await uploadCourseImage(courseImageFile);
-      }
-
       // Transform the form data to match the Ignite backend DTO structure
       const courseData = {
         title: newCourse.title,
         description: newCourse.description,
         categories: newCourse.categories, // Backend expects array of categories
         skillLevel: newCourse.skillLevel,
-        imageUrl: imageUrl, // Include the uploaded image URL
         sections: sections.map(section => ({
           title: section.title,
           content: '', // Backend expects content field
@@ -695,10 +641,8 @@ export default function AdminPage() {
       console.log('Course created successfully:', result);
 
       // Reset form completely
-      setNewCourse({ title: '', description: '', categories: [], skillLevel: 'BEGINNER', imageUrl: '' });
+      setNewCourse({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
       setSections([]);
-      setCourseImageFile(null);
-      setCourseImagePreview(null);
       
       // Reload courses list
       load();
@@ -797,30 +741,6 @@ export default function AdminPage() {
                     placeholder="Description" 
                     className="w-full p-2 border border-gray-300 rounded-lg min-h-16 text-sm" 
                   />
-                  
-                  {/* Course Image Upload */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-medium text-gray-700">Course Image</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                      disabled={uploadingImage}
-                    />
-                    {courseImagePreview && (
-                      <div className="mt-2">
-                        <img 
-                          src={courseImagePreview} 
-                          alt="Course preview" 
-                          className="w-full h-32 object-cover rounded-lg border border-gray-300"
-                        />
-                      </div>
-                    )}
-                    {uploadingImage && (
-                      <p className="text-xs text-gray-500">Uploading image...</p>
-                    )}
-                  </div>
                   
                   {/* Multiple Categories Selection - Compact */}
             <div className="space-y-2">
@@ -1418,6 +1338,7 @@ export default function AdminPage() {
                   </button>
                 </form>
               </section>
+              )}
             </div>
           </div>
         )}
