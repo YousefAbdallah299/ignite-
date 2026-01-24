@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { X } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI, adminAPI } from '@/utils/apiClient';
+
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
@@ -17,6 +18,7 @@ export default function AdminPage() {
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [emailQuery, setEmailQuery] = useState('');
@@ -54,21 +56,24 @@ export default function AdminPage() {
   const [skillRating, setSkillRating] = useState(50);
   const [ratingCandidate, setRatingCandidate] = useState(false);
 
-  // Admin privileges state
-  const [adminPrivileges, setAdminPrivileges] = useState(null);
-  const [loadingPrivileges, setLoadingPrivileges] = useState(true);
-  const [customAdmins, setCustomAdmins] = useState([]);
-  const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
-  const [newAdminForm, setNewAdminForm] = useState({
-    email: '',
-    password: '',
+  // Custom admin creation state
+  const [showCustomAdminForm, setShowCustomAdminForm] = useState(false);
+  const [customAdminForm, setCustomAdminForm] = useState({
     firstName: '',
     lastName: '',
-    canManageCourses: false,
-    canManageUsers: false,
-    canRateSkills: false,
-    canManageWorkshops: false
+    email: '',
+    password: '',
+    privileges: []
   });
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const [myPrivileges, setMyPrivileges] = useState([]);
+  
+  const availablePrivileges = [
+    { name: 'MANAGE_COURSES', label: 'Manage Courses' },
+    { name: 'MANAGE_USERS', label: 'Manage Users' },
+    { name: 'MANAGE_WORKSHOPS', label: 'Manage Workshops' },
+    { name: 'RATE_SKILLS', label: 'Rate Skills' }
+  ];
 
   // Available user roles
   const userRoles = [
@@ -124,155 +129,108 @@ export default function AdminPage() {
     checkAdminAccess();
   }, [user, isAdmin, authLoading, navigate]);
 
-  const load = async () => {
-    setLoading(true);
+  // Load courses (only once on mount)
+  const loadCourses = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      const coursesResponse = await fetch(`${API_BASE_URL}/courses?page=0&size=100`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json();
+        setCourses(coursesData.content || []);
+      } else {
+        console.error('Failed to load courses from backend');
+        setCourses([]);
+      }
+    } catch (error) {
+      console.error('Error loading courses:', error);
+      setCourses([]);
+    }
+  };
+
+  // Load users separately (called on filter/search changes)
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const token = localStorage.getItem('authToken');
       const headers = {
-        'Authorization': `Bearer ${token}`, // Backend expects "Bearer " prefix
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
 
-      // Test basic connectivity first
-      console.log('Testing backend connectivity...');
-      try {
-        const testResponse = await fetch('http://localhost:8080/api/v1/users?page=0&size=5', { 
-          method: 'GET',
-          headers: headers
-        });
-        console.log('Test response status:', testResponse.status);
-        console.log('Test response ok:', testResponse.ok);
-        
-        if (!testResponse.ok) {
-          const errorText = await testResponse.text();
-          console.error('Test error response:', errorText);
-          throw new Error(`Backend error: ${testResponse.status} - ${errorText}`);
-        }
-        
-        const testData = await testResponse.json();
-        console.log('Test response data:', testData);
-        
-        // Load courses from Ignite backend
-        const coursesResponse = await fetch('http://localhost:8080/api/v1/courses?page=0&size=100', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+      // Load users with pagination, search, and role filter
+      let userParams;
+      let usersUrl;
+      
+      if (debouncedEmailQuery.trim()) {
+        userParams = new URLSearchParams({
+          emailPart: debouncedEmailQuery.trim(),
+          page: currentPage.toString(),
+          size: '20'
         });
         
-        if (coursesResponse.ok) {
-          const coursesData = await coursesResponse.json();
-          setCourses(coursesData.content || []);
-        } else {
-          console.error('Failed to load courses from backend');
-          setCourses([]);
+        if (selectedRole) {
+          userParams.append('role', selectedRole);
         }
+        
+        usersUrl = `${API_BASE_URL}/users/search-by-email?${userParams}`;
+      } else {
+        userParams = new URLSearchParams({
+          page: currentPage.toString(),
+          size: '20'
+        });
+        
+        if (debouncedSearchQuery.trim()) {
+          userParams.append('query', debouncedSearchQuery.trim());
+        }
+        
+        if (selectedRole) {
+          userParams.append('role', selectedRole);
+        }
+        
+        usersUrl = `${API_BASE_URL}/users?${userParams}`;
+      }
 
-        // Load users with pagination, search, and role filter
-        let userParams;
-        let usersUrl;
-        
-        if (debouncedEmailQuery.trim()) {
-          // Use email search endpoint with role filtering
-          userParams = new URLSearchParams({
-            emailPart: debouncedEmailQuery.trim(),
-            page: currentPage.toString(),
-            size: '20'
-          });
-          
-          if (selectedRole) {
-            userParams.append('role', selectedRole);
-          }
-          
-          usersUrl = `http://localhost:8080/api/v1/users/search-by-email?${userParams}`;
-        } else {
-          // Use regular search endpoint with role filtering
-          userParams = new URLSearchParams({
-            page: currentPage.toString(),
-            size: '20'
-          });
-          
-          if (debouncedSearchQuery.trim()) {
-            userParams.append('query', debouncedSearchQuery.trim());
-          }
-          
-          if (selectedRole) {
-            userParams.append('role', selectedRole);
-          }
-          
-          usersUrl = `http://localhost:8080/api/v1/users?${userParams}`;
-        }
-
-        console.log('Fetching users from:', usersUrl);
-        console.log('Headers:', headers);
-        
-        const response = await fetch(usersUrl, { headers });
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-        
-        const u = await response.json();
-        console.log('Users response:', u);
-        console.log('Response structure:', {
-          hasContent: 'content' in u,
-          hasData: 'data' in u,
-          hasUsers: 'users' in u,
-          keys: Object.keys(u),
-          contentLength: u.content?.length,
-          dataLength: u.data?.length,
-          usersLength: u.users?.length
-        });
-        
-        // Backend returns: { content: [...], page: 0, size: 20, totalElements: 3, totalPages: 1, last: true }
-        console.log('Backend response structure:', {
-          hasContent: 'content' in u,
-          contentLength: u.content?.length,
-          totalElements: u.totalElements,
-          totalPages: u.totalPages,
-          page: u.page,
-          size: u.size,
-          last: u.last
-        });
-        
-        const usersArray = Array.isArray(u.content) ? u.content : [];
-        console.log('Setting users state:', usersArray);
-        console.log('Setting totalPages:', u.totalPages || 0);
-        console.log('Setting totalElements:', u.totalElements || 0);
-        
-        setUsers(usersArray);
-        setTotalPages(u.totalPages || 0);
-        setTotalElements(u.totalElements || 0);
-        
-        console.log('State updated - users count:', usersArray.length);
-        
-      } catch (testError) {
-        console.error('Backend connectivity test failed:', testError);
-        throw testError;
+      const response = await fetch(usersUrl, { headers });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
       
-    } catch (error) {
-      console.error('Error loading data:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
+      const u = await response.json();
+      const usersArray = Array.isArray(u.content) ? u.content : [];
       
-      // If the API fails, try a fallback or show a message
+      setUsers(usersArray);
+      setTotalPages(u.totalPages || 0);
+      setTotalElements(u.totalElements || 0);
+      
+    } catch (error) {
+      console.error('Error loading users:', error);
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        console.log('Network error - backend might not be running');
         setUsers([]);
         setTotalPages(0);
         setTotalElements(0);
       }
+    } finally { 
+      setLoadingUsers(false); 
+    }
+  };
+
+  // Initial load (only once on mount)
+  const load = async () => {
+    setLoading(true);
+    try {
+      await loadCourses();
+      await loadUsers();
+    } catch (error) {
+      console.error('Error loading data:', error);
     } finally { 
       setLoading(false); 
     }
@@ -296,128 +254,98 @@ export default function AdminPage() {
     return () => clearTimeout(timer);
   }, [emailQuery]);
 
-  useEffect(() => { load(); }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
+  // Initial load only once
+  useEffect(() => {
+    load();
+  }, []);
+
+  // Reload only users when filters change (skip initial mount to avoid double load)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (!loading) {
+      loadUsers();
+    }
+  }, [debouncedSearchQuery, debouncedEmailQuery, selectedRole, currentPage]);
   
   // Load candidates and skills for skill rating
   useEffect(() => {
     if (isAdmin) {
       loadCandidates();
       loadAvailableSkills();
-      loadAdminPrivileges();
-      loadCustomAdmins();
+      loadMyPrivileges();
     }
   }, [isAdmin]);
 
-  // Load admin privileges for current user
-  const loadAdminPrivileges = async () => {
+  const loadMyPrivileges = async () => {
     try {
-      setLoadingPrivileges(true);
-      // Try to get current user's privileges
-      // If user has privileges, they're a custom admin
-      // If not, they're a full admin with all privileges
-      const customAdminsList = await adminPrivilegesAPI.getAllCustomAdmins();
-      const currentUserPrivileges = customAdminsList.find(admin => admin.email === user?.email);
-      
-      if (currentUserPrivileges) {
-        setAdminPrivileges(currentUserPrivileges);
-      } else {
-        // Full admin - has all privileges
-        setAdminPrivileges({
-          canManageCourses: true,
-          canManageUsers: true,
-          canRateSkills: true,
-          canManageWorkshops: true,
-          canManageCustomAdmins: true
-        });
-      }
+      const privileges = await adminAPI.getMyPrivileges();
+      setMyPrivileges(privileges || []);
     } catch (error) {
-      console.error('Error loading admin privileges:', error);
-      // Default to full admin if error
-      setAdminPrivileges({
-        canManageCourses: true,
-        canManageUsers: true,
-        canRateSkills: true,
-        canManageWorkshops: true,
-        canManageCustomAdmins: true
-      });
-    } finally {
-      setLoadingPrivileges(false);
+      console.error('Error loading privileges:', error);
+      setMyPrivileges([]);
     }
   };
 
-  // Load custom admins list
-  const loadCustomAdmins = async () => {
-    try {
-      const admins = await adminPrivilegesAPI.getAllCustomAdmins();
-      setCustomAdmins(admins || []);
-    } catch (error) {
-      console.error('Error loading custom admins:', error);
-    }
-  };
-
-  // Helper function to check if user has a privilege
   const hasPrivilege = (privilegeName) => {
-    if (!adminPrivileges) return false;
-    // Full admins (no privileges object) have all privileges
-    if (adminPrivileges.canManageCustomAdmins) return true;
-    return adminPrivileges[privilegeName] === true;
+    // Full admins have all privileges
+    if (myPrivileges.length === 0 || myPrivileges.some(p => p.privilegeName === privilegeName && p.enabled)) {
+      return true;
+    }
+    return false;
   };
 
-  // Create custom admin
-  const handleCreateCustomAdmin = async (e) => {
+  const createCustomAdmin = async (e) => {
     e.preventDefault();
+    if (customAdminForm.privileges.length === 0) {
+      alert('Please select at least one privilege');
+      return;
+    }
+
+    setCreatingAdmin(true);
     try {
-      await adminPrivilegesAPI.createCustomAdmin(newAdminForm);
-      toast.success('Custom admin created successfully!');
-      setShowCreateAdminModal(false);
-      setNewAdminForm({
-        email: '',
-        password: '',
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/admin/custom-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customAdminForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}: ${response.statusText}` }));
+        throw new Error(errorData.message || `Failed to create custom admin: ${response.status}`);
+      }
+
+      const result = await response.json();
+      alert('Custom admin created successfully!');
+      setCustomAdminForm({
         firstName: '',
         lastName: '',
-        canManageCourses: false,
-        canManageUsers: false,
-        canRateSkills: false,
-        canManageWorkshops: false
+        email: '',
+        password: '',
+        privileges: []
       });
-      loadCustomAdmins();
+      setShowCustomAdminForm(false);
+      loadUsers(); // Reload only the users list
     } catch (error) {
       console.error('Error creating custom admin:', error);
-      alert('Failed to create custom admin: ' + (error.message || 'Unknown error'));
-    }
-  };
-
-  // Delete custom admin
-  const handleDeleteCustomAdmin = async (userId) => {
-    if (!confirm('Are you sure you want to delete this custom admin?')) return;
-    try {
-      await adminPrivilegesAPI.deleteCustomAdmin(userId);
-      toast.success('Custom admin deleted successfully!');
-      loadCustomAdmins();
-    } catch (error) {
-      console.error('Error deleting custom admin:', error);
-      alert('Failed to delete custom admin: ' + (error.message || 'Unknown error'));
+      alert(`Error creating custom admin: ${error.message}`);
+    } finally {
+      setCreatingAdmin(false);
     }
   };
 
   const deleteCourse = async (id) => { 
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:8080/api/v1/courses/${id}`, { 
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete course');
-      }
-      
+      await coursesAPI.deleteCourse(id);
       console.log('Course deleted successfully');
-      load(); // Reload the courses list
+      loadCourses(); // Reload only the courses list
     } catch (error) {
       console.error('Error deleting course:', error);
       alert(`Error deleting course: ${error.message}`);
@@ -427,7 +355,7 @@ export default function AdminPage() {
   const deleteUser = async (id) => { 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:8080/api/v1/auth/users/${id}`, { 
+      const response = await fetch(`${API_BASE_URL}/auth/users/${id}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -441,7 +369,7 @@ export default function AdminPage() {
       }
       
       console.log('User deleted successfully');
-      load(); // Reload the users list
+      loadUsers(); // Reload only the users list
     } catch (error) {
       console.error('Error deleting user:', error);
       alert(`Error deleting user: ${error.message}`);
@@ -595,7 +523,7 @@ export default function AdminPage() {
 
       // Use the Ignite backend API
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:8080/api/v1/courses', {
+      const response = await fetch(`${API_BASE_URL}/courses`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -645,7 +573,7 @@ export default function AdminPage() {
       setSections([]);
       
       // Reload courses list
-      load();
+      loadCourses();
       
       // Redirect to courses page
       navigate('/courses');
@@ -711,9 +639,110 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-8 min-h-[600px]">
+            {/* Custom Admin Creation Section */}
+            {hasPrivilege('MANAGE_USERS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Custom Admin Management</h2>
+                  <button
+                    onClick={() => setShowCustomAdminForm(!showCustomAdminForm)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  >
+                    {showCustomAdminForm ? 'Cancel' : '+ Create Custom Admin'}
+                  </button>
+                </div>
+                
+                {showCustomAdminForm && (
+                  <form onSubmit={createCustomAdmin} className="space-y-4 border-t border-gray-200 pt-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input
+                          type="text"
+                          value={customAdminForm.firstName}
+                          onChange={(e) => setCustomAdminForm({ ...customAdminForm, firstName: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input
+                          type="text"
+                          value={customAdminForm.lastName}
+                          onChange={(e) => setCustomAdminForm({ ...customAdminForm, lastName: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={customAdminForm.email}
+                        onChange={(e) => setCustomAdminForm({ ...customAdminForm, email: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input
+                        type="password"
+                        value={customAdminForm.password}
+                        onChange={(e) => setCustomAdminForm({ ...customAdminForm, password: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Privileges</label>
+                      <div className="space-y-2">
+                        {availablePrivileges.map(priv => (
+                          <label key={priv.name} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={customAdminForm.privileges.includes(priv.name)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setCustomAdminForm({
+                                    ...customAdminForm,
+                                    privileges: [...customAdminForm.privileges, priv.name]
+                                  });
+                                } else {
+                                  setCustomAdminForm({
+                                    ...customAdminForm,
+                                    privileges: customAdminForm.privileges.filter(p => p !== priv.name)
+                                  });
+                                }
+                              }}
+                              className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                            />
+                            <span className="text-sm text-gray-700">{priv.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={creatingAdmin}
+                      className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                    >
+                      {creatingAdmin ? 'Creating...' : 'Create Custom Admin'}
+                    </button>
+                  </form>
+                )}
+              </section>
+            )}
+
             <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8">
-              {/* Courses Section - Only if has privilege */}
-              {hasPrivilege('canManageCourses') && (
+              {hasPrivilege('MANAGE_COURSES') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Courses</h2>
                 <div className="space-y-2 mb-4">
@@ -966,8 +995,7 @@ export default function AdminPage() {
               </section>
               )}
 
-              {/* Users Section - Only if has privilege */}
-              {hasPrivilege('canManageUsers') && (
+              {hasPrivilege('MANAGE_USERS') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
@@ -1020,7 +1048,7 @@ export default function AdminPage() {
                 
                 <div className="max-h-96 overflow-y-auto space-y-2 mb-4 min-h-[200px]">
                   {console.log('Rendering users list - users.length:', users.length, 'users:', users)}
-                  {loading ? (
+                  {loadingUsers ? (
                     <div className="space-y-2">
                       {[...Array(5)].map((_, i) => (
                         <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
@@ -1111,8 +1139,8 @@ export default function AdminPage() {
               </section>
               )}
 
-              {/* Skill Rating Section - Only if has privilege */}
-              {hasPrivilege('canRateSkills') && (
+              {/* Skill Rating Section */}
+              {hasPrivilege('RATE_SKILLS') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Rate Candidate Skills</h2>
                 <div className="space-y-4">
@@ -1221,8 +1249,8 @@ export default function AdminPage() {
               </section>
               )}
 
-              {/* Workshop Invite Section - Only if has privilege */}
-              {hasPrivilege('canManageWorkshops') && (
+              {/* Workshop Invite Section */}
+              {hasPrivilege('MANAGE_WORKSHOPS') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Workshop Invitations</h2>
                 <form onSubmit={sendWorkshopInvite} className="space-y-3">
