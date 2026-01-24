@@ -60,24 +60,53 @@ export default function CareerHistoryModal({
       toast.error('Start date is required');
       return;
     }
+    
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.startDate)) {
+      toast.error('Invalid start date format');
+      return;
+    }
+    
     if (!formData.isCurrent && !formData.endDate) {
       toast.error('End date is required if not current position');
       return;
     }
+    
+    if (formData.endDate && !/^\d{4}-\d{2}-\d{2}$/.test(formData.endDate)) {
+      toast.error('Invalid end date format');
+      return;
+    }
+    
     if (formData.endDate && formData.startDate && new Date(formData.endDate) < new Date(formData.startDate)) {
       toast.error('End date must be after start date');
       return;
     }
 
+    // Ensure endDate is either a valid date string or null (not empty string)
+    let endDateValue = null;
+    if (!formData.isCurrent && formData.endDate) {
+      endDateValue = formData.endDate;
+    }
+
+    // Build data object, only including fields that have values
     const data = {
       companyName: formData.companyName.trim(),
       position: formData.position.trim(),
-      description: formData.description.trim(),
-      startDate: formData.startDate,
-      endDate: formData.isCurrent ? null : formData.endDate,
-      location: formData.location.trim()
+      startDate: formData.startDate
     };
 
+    // Only add optional fields if they have values
+    if (formData.description.trim()) {
+      data.description = formData.description.trim();
+    }
+    if (endDateValue) {
+      data.endDate = endDateValue;
+    }
+    if (formData.location.trim()) {
+      data.location = formData.location.trim();
+    }
+
+    console.log('Sending career history data:', JSON.stringify(data, null, 2));
     onSave(data);
   };
 

@@ -9,40 +9,15 @@ const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
-  // Check if we're running on localhost or 127.0.0.1
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080/api/v1';
-    }
+  // Check if we're running on localhost
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:8080/api/v1';
   }
   // Default to production
   return 'https://ignite-qjis.onrender.com/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();
-
-// Debug: Log API_BASE_URL to help diagnose issues
-if (typeof window !== 'undefined') {
-  console.log('API_BASE_URL:', API_BASE_URL);
-  console.log('Window hostname:', window.location.hostname);
-}
-
-// Dynamic function to get API base URL at runtime (for use inside apiCall)
-const getApiBaseUrlDynamic = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  // Check if we're running on localhost or 127.0.0.1
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8080/api/v1';
-    }
-  }
-  // Default to production
-  return 'https://ignite-qjis.onrender.com/api/v1';
-};
 
 // Helper function to get auth token from secure storage
 const getAuthToken = () => {
@@ -83,16 +58,7 @@ const apiCall = async (endpoint, options = {}) => {
     }
   }
 
-  // Get API base URL dynamically to ensure it's correct at runtime
-  const API_BASE_URL = getApiBaseUrlDynamic();
   const url = `${API_BASE_URL}${endpoint}`;
-  
-  // Ensure URL is absolute
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    logger.error(`Invalid URL constructed: ${url}. API_BASE_URL: ${API_BASE_URL}, endpoint: ${endpoint}`);
-    throw new Error(`Invalid API URL: ${url}. Please check your API_BASE_URL configuration.`);
-  }
-  
   const isFormData = options.body instanceof FormData;
   const defaultHeaders = createHeaders(options.includeAuth !== false, isFormData);
   const config = {
@@ -127,7 +93,13 @@ const apiCall = async (endpoint, options = {}) => {
       if (contentType && contentType.includes('application/json')) {
         try {
           const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
+          // Handle Spring Boot validation errors
+          if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+            errorMessage = errorData.errors.map(e => e.message || `${e.field}: ${e.defaultMessage || 'validation failed'}`).join(', ');
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+          logger.error('API error response:', errorData);
         } catch (jsonError) {
           logger.error('Failed to parse error response as JSON:', jsonError);
         }
@@ -141,7 +113,9 @@ const apiCall = async (endpoint, options = {}) => {
         }
       }
       
-      throw new Error(errorMessage);
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
     }
     
     // Handle empty responses
