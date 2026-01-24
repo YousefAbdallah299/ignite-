@@ -303,7 +303,8 @@ export default function ProfilePage() {
         title: profile.title || 'Software Developer', // Required field
         summary: profile.summary || null,
         location: profile.location || null,
-        expectedSalary: profile.expectedSalary || null
+        expectedSalary: profile.expectedSalary || null,
+        expectedSalaryCurrency: profile.expectedSalaryCurrency || 'EGP'
       };
       
       console.log('Saving profile with payload:', updatePayload);
@@ -939,22 +940,74 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
                   {isEditing ? (
                     <div>
-                      <input
-                        type="number"
-                        value={profile.expectedSalary || ''}
-                        onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value ? parseFloat(e.target.value) : null })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="e.g., 50000"
-                        min="0"
-                        step="1"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={profile.expectedSalary || ''}
+                          onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value ? parseFloat(e.target.value) : null })}
+                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          placeholder="e.g., 50000"
+                          min="0"
+                          step="1"
+                        />
+                        <select
+                          value={profile.expectedSalaryCurrency || 'EGP'}
+                          onChange={(e) => setProfile({ ...profile, expectedSalaryCurrency: e.target.value })}
+                          className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                        >
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                          <option value="EGP">EGP</option>
+                          <option value="CAD">CAD</option>
+                          <option value="AUD">AUD</option>
+                          <option value="JPY">JPY</option>
+                          <option value="CHF">CHF</option>
+                          <option value="AED">AED</option>
+                          <option value="SAR">SAR</option>
+                          <option value="KWD">KWD</option>
+                          <option value="QAR">QAR</option>
+                          <option value="BHD">BHD</option>
+                          <option value="OMR">OMR</option>
+                          <option value="JOD">JOD</option>
+                          <option value="LBP">LBP</option>
+                          <option value="MAD">MAD</option>
+                          <option value="TND">TND</option>
+                          <option value="DZD">DZD</option>
+                          <option value="LYD">LYD</option>
+                          <option value="SDG">SDG</option>
+                          <option value="ETB">ETB</option>
+                          <option value="KES">KES</option>
+                          <option value="NGN">NGN</option>
+                          <option value="ZAR">ZAR</option>
+                          <option value="GHS">GHS</option>
+                          <option value="UGX">UGX</option>
+                          <option value="TZS">TZS</option>
+                          <option value="RWF">RWF</option>
+                          <option value="BWP">BWP</option>
+                          <option value="SZL">SZL</option>
+                          <option value="LSL">LSL</option>
+                          <option value="NAD">NAD</option>
+                          <option value="MZN">MZN</option>
+                          <option value="AOA">AOA</option>
+                          <option value="ZMW">ZMW</option>
+                          <option value="MWK">MWK</option>
+                          <option value="BIF">BIF</option>
+                          <option value="DJF">DJF</option>
+                          <option value="KMF">KMF</option>
+                          <option value="MGA">MGA</option>
+                          <option value="MUR">MUR</option>
+                          <option value="SCR">SCR</option>
+                          <option value="SOS">SOS</option>
+                        </select>
+                      </div>
                       <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
                     </div>
                   ) : (
                     <p className="text-gray-900 flex items-center">
                       <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
                       {profile.expectedSalary 
-                        ? `$${profile.expectedSalary.toLocaleString('en-US')} per year`
+                        ? `${profile.expectedSalaryCurrency || 'EGP'} ${profile.expectedSalary.toLocaleString('en-US')} per year`
                         : 'Not specified'}
                     </p>
                   )}

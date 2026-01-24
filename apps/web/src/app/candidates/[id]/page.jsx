@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
-import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send } from 'lucide-react';
+import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send, DollarSign } from 'lucide-react';
 import { candidatesAPI, offersAPI } from '@/utils/apiClient';
 
 // Get API base URL from environment or use default
@@ -363,6 +363,16 @@ export default function CandidatePage() {
                     {data.location || 'Not specified'}
                   </p>
                 </div>
+
+                {data.expectedSalary && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
+                    <p className="text-gray-900 flex items-center">
+                      <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
+                      {data.expectedSalaryCurrency || 'EGP'} {data.expectedSalary.toLocaleString('en-US')} per year
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
