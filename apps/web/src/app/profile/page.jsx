@@ -522,10 +522,15 @@ export default function ProfilePage() {
   // Handle save career history (add or update)
   const handleSaveCareerHistory = async (data) => {
     try {
+      console.log('Saving career history:', data);
+      console.log('Editing:', editingCareerHistory);
+      
       if (editingCareerHistory) {
+        console.log('Updating career history with ID:', editingCareerHistory.id);
         await candidatesAPI.updateCareerHistory(editingCareerHistory.id, data);
         toast.success('Career history updated successfully!');
       } else {
+        console.log('Adding new career history');
         await candidatesAPI.addCareerHistory(data);
         toast.success('Career history added successfully!');
       }
@@ -534,7 +539,12 @@ export default function ProfilePage() {
       setEditingCareerHistory(null);
     } catch (error) {
       console.error('Error saving career history:', error);
-      toast.error(`Failed to ${editingCareerHistory ? 'update' : 'add'} career history`);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      toast.error(`Failed to ${editingCareerHistory ? 'update' : 'add'} career history: ${error.message || 'Unknown error'}`);
     }
   };
 
