@@ -318,6 +318,16 @@ export const coursesAPI = {
       method: 'POST',
     });
   },
+
+  // Upload course image
+  uploadCourseImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiCall('/courses/upload-image', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };
 
 // Jobs API

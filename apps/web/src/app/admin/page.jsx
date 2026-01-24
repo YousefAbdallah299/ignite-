@@ -36,6 +36,12 @@ export default function AdminPage() {
     'Mobile Development', 'DevOps', 'Machine Learning', 'UI/UX', 'Project Management'
   ]);
   const [newCategory, setNewCategory] = useState('');
+  
+  // Course image upload state
+  const [courseImageFile, setCourseImageFile] = useState(null);
+  const [courseImagePreview, setCourseImagePreview] = useState(null);
+  const [courseImageUrl, setCourseImageUrl] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Workshop invite state
   const [workshopInvite, setWorkshopInvite] = useState({
@@ -497,6 +503,76 @@ export default function AdminPage() {
       setRatingCandidate(false);
     }
   };
+  // Handle course image file selection
+  const handleImageFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      
+      setCourseImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCourseImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload course image
+  const uploadCourseImage = async () => {
+    if (!courseImageFile) {
+      alert('Please select an image file first');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const response = await coursesAPI.uploadCourseImage(courseImageFile);
+      const imageUrl = response.imageUrl;
+      
+      // Store the relative path returned by backend (e.g., "/uploads/courses/filename.jpg")
+      // This is what we'll send to the backend when creating the course
+      setCourseImageUrl(imageUrl);
+      
+      // For preview, construct full URL if needed
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        // Extract base URL from API_BASE_URL (e.g., "https://ignite-qjis.onrender.com")
+        const baseUrl = API_BASE_URL.replace('/api/v1', '');
+        const previewUrl = `${baseUrl}${imageUrl}`;
+        // Update preview to show the full URL for display
+        setCourseImagePreview(previewUrl);
+      } else {
+        setCourseImagePreview(imageUrl);
+      }
+      
+      alert('Image uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert(`Error uploading image: ${error.message}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Clear course image
+  const clearCourseImage = () => {
+    setCourseImageFile(null);
+    setCourseImagePreview(null);
+    setCourseImageUrl('');
+  };
+
   const createCourse = async (e) => {
     e.preventDefault();
     try {
@@ -506,6 +582,7 @@ export default function AdminPage() {
         description: newCourse.description,
         categories: newCourse.categories, // Backend expects array of categories
         skillLevel: newCourse.skillLevel,
+        imageUrl: courseImageUrl || null, // Include uploaded image URL
         sections: sections.map(section => ({
           title: section.title,
           content: '', // Backend expects content field
@@ -571,6 +648,7 @@ export default function AdminPage() {
       // Reset form completely
       setNewCourse({ title: '', description: '', categories: [], skillLevel: 'BEGINNER' });
       setSections([]);
+      clearCourseImage();
       
       // Reload courses list
       loadCourses();
@@ -770,6 +848,61 @@ export default function AdminPage() {
                     placeholder="Description" 
                     className="w-full p-2 border border-gray-300 rounded-lg min-h-16 text-sm" 
                   />
+                  
+                  {/* Course Image Upload Section */}
+                  <div className="space-y-2 border border-gray-200 rounded-lg p-3">
+                    <label className="block text-xs font-medium text-gray-700">Course Image</label>
+                    
+                    {/* Image Preview */}
+                    {(courseImagePreview || courseImageUrl) && (
+                      <div className="relative mb-2">
+                        <img 
+                          src={courseImagePreview || (courseImageUrl 
+                            ? `${API_BASE_URL.replace('/api/v1', '')}${courseImageUrl}` 
+                            : '')} 
+                          alt="Course preview" 
+                          className="w-full h-32 object-cover rounded-lg border border-gray-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={clearCourseImage}
+                          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* File Input and Upload Button */}
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageFileChange}
+                        className="flex-1 text-xs text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                        disabled={uploadingImage}
+                      />
+                      {courseImageFile && !courseImageUrl && (
+                        <button
+                          type="button"
+                          onClick={uploadCourseImage}
+                          disabled={uploadingImage}
+                          className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-xs font-medium"
+                        >
+                          {uploadingImage ? 'Uploading...' : 'Upload'}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Upload Status */}
+                    {courseImageUrl && (
+                      <p className="text-xs text-green-600">✓ Image uploaded successfully</p>
+                    )}
+                    
+                    {!courseImageFile && !courseImageUrl && (
+                      <p className="text-xs text-gray-500">Upload a course image (optional, max 5MB)</p>
+                    )}
+                  </div>
                   
                   {/* Multiple Categories Selection - Compact */}
             <div className="space-y-2">
