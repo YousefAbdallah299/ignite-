@@ -193,7 +193,9 @@ export default function RegisterPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name <span className="text-red-600">*</span>
+                    </label>
                     <input
                       type="text"
                       value={firstName}
@@ -203,7 +205,9 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name <span className="text-red-600">*</span>
+                    </label>
                     <input
                       type="text"
                       value={lastName}
@@ -214,7 +218,9 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-red-600">*</span>
+                  </label>
                   <input
                     type="email"
                     value={email}
@@ -224,7 +230,9 @@ export default function RegisterPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password <span className="text-red-600">*</span>
+                  </label>
                   <input
                     type="password"
                     value={password}
@@ -235,7 +243,9 @@ export default function RegisterPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Retype Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Retype Password <span className="text-red-600">*</span>
+                  </label>
                   <input
                     type="password"
                     value={confirmPassword}
@@ -246,7 +256,9 @@ export default function RegisterPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number <span className="text-red-600">*</span>
+                  </label>
                   <input
                     type="tel"
                     value={phoneNumber}

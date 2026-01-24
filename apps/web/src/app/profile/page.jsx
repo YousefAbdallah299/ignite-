@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle } from 'lucide-react';
+import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -302,7 +302,8 @@ export default function ProfilePage() {
       const updatePayload = {
         title: profile.title || 'Software Developer', // Required field
         summary: profile.summary || null,
-        location: profile.location || null
+        location: profile.location || null,
+        expectedSalary: profile.expectedSalary || null
       };
       
       console.log('Saving profile with payload:', updatePayload);
@@ -930,6 +931,31 @@ export default function ProfilePage() {
                     <p className="text-gray-900 flex items-center">
                       <MapPin className="w-4 h-4 mr-1 text-gray-400" />
                       {profile.location || 'Not specified'}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="number"
+                        value={profile.expectedSalary || ''}
+                        onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value ? parseFloat(e.target.value) : null })}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        placeholder="e.g., 50000"
+                        min="0"
+                        step="1000"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-900 flex items-center">
+                      <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
+                      {profile.expectedSalary 
+                        ? `$${profile.expectedSalary.toLocaleString('en-US')} per year`
+                        : 'Not specified'}
                     </p>
                   )}
                 </div>
