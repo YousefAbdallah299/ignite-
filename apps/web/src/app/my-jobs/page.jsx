@@ -7,6 +7,28 @@ import Footer from "@/components/Footer";
 import { jobsAPI, offersAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+
+// Helper function to construct full resume URL from relative path
+const getResumeUrl = (resumeUrl) => {
+  if (!resumeUrl) return null;
+  
+  // If it's already a full URL, return as is
+  if (resumeUrl.startsWith('http://') || resumeUrl.startsWith('https://')) {
+    return resumeUrl;
+  }
+  
+  // If it's a relative path, construct full URL
+  if (resumeUrl.startsWith('/')) {
+    const baseUrl = API_BASE_URL.replace('/api/v1', '');
+    return `${baseUrl}${resumeUrl}`;
+  }
+  
+  // Otherwise return as is
+  return resumeUrl;
+};
+
 import {
   Search,
   MapPin,
@@ -423,9 +445,18 @@ export default function MyJobsPage() {
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                               <FileText className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">
-                                {application.resumeUrl ? 'Resume Available' : 'No Resume'}
-                              </span>
+                              {application.resumeUrl ? (
+                                <a 
+                                  href={getResumeUrl(application.resumeUrl)} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-red-600 hover:text-red-700 hover:underline"
+                                >
+                                  View Resume
+                                </a>
+                              ) : (
+                                <span className="text-sm text-gray-600">No Resume</span>
+                              )}
                             </div>
                             
                             {application.candidateTitle && (

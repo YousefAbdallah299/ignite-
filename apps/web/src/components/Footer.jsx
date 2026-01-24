@@ -40,14 +40,14 @@ export default function Footer() {
             <div className="flex items-center mb-4">
               <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <img
-                  src="/ignite-logo.png"
+                  src="/ignite-logo-footer.jpeg"
                   alt="Ignite logo"
                   className="h-10 w-auto object-contain"
                   onError={(e) => {
                     // If logo fails to load from public folder, try backend
                     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
                     const backendBaseUrl = apiBaseUrl.replace(/\/api\/v1$/, '');
-                    e.target.src = `${backendBaseUrl}/uploads/ignite-logo.png`;
+                    e.target.src = `${backendBaseUrl}/uploads/ignite-logo-footer.jpeg`;
                   }}
                 />
               </a>

@@ -8,6 +8,28 @@ import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send } from 'lucide-react';
 import { candidatesAPI, offersAPI } from '@/utils/apiClient';
 
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+
+// Helper function to construct full resume URL from relative path
+const getResumeUrl = (resumeUrl) => {
+  if (!resumeUrl) return null;
+  
+  // If it's already a full URL, return as is
+  if (resumeUrl.startsWith('http://') || resumeUrl.startsWith('https://')) {
+    return resumeUrl;
+  }
+  
+  // If it's a relative path, construct full URL
+  if (resumeUrl.startsWith('/')) {
+    const baseUrl = API_BASE_URL.replace('/api/v1', '');
+    return `${baseUrl}${resumeUrl}`;
+  }
+  
+  // Otherwise return as is
+  return resumeUrl;
+};
+
 export default function CandidatePage() {
   const { isAuthenticated, isRecruiter, isAdmin } = useAuthAPI();
   const [data, setData] = useState(null);
@@ -320,7 +342,7 @@ export default function CandidatePage() {
                   <div>
                     {data.resumeUrl ? (
                       <a 
-                        href={data.resumeUrl} 
+                        href={getResumeUrl(data.resumeUrl)} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-red-600 hover:text-red-700 flex items-center"

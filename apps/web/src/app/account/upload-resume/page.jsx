@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCandidatesAPI } from "@/hooks/useCandidatesAPI";
+import { candidatesAPI } from "@/utils/apiClient";
 import PageFadeIn from '@/components/PageFadeIn';
 import { Upload, FileText, X, CheckCircle } from 'lucide-react';
 
@@ -77,36 +78,25 @@ export default function UploadResumePage() {
 
     setUploading(true);
     try {
-      // Convert file to base64 or upload to a service
-      // For now, we'll convert to base64 data URL
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64Data = reader.result;
-          
-          // Update profile with resume URL (using base64 data URL)
-          await updateMyProfile({
-            title: 'New Candidate',
-            summary: '',
-            resumeUrl: base64Data,
-            expectedSalary: parseFloat(currentSalary),
-          });
+      // Upload resume using the proper API endpoint
+      const uploadResult = await candidatesAPI.uploadResume(resumeFile);
+      console.log('Resume uploaded successfully:', uploadResult);
+      
+      // Update profile with expected salary
+      await updateMyProfile({
+        title: 'New Candidate',
+        summary: '',
+        expectedSalary: parseFloat(currentSalary),
+      });
 
-          toast.success('Profile completed successfully!');
-          setTimeout(() => {
-            navigate('/account/signin');
-          }, 1500);
-        } catch (error) {
-          console.error('Error uploading resume:', error);
-          toast.error(error.message || 'Failed to upload resume. Please try again.');
-        } finally {
-          setUploading(false);
-        }
-      };
-      reader.readAsDataURL(resumeFile);
+      toast.success('Profile completed successfully!');
+      setTimeout(() => {
+        navigate('/account/signin');
+      }, 1500);
     } catch (error) {
-      console.error('Error processing file:', error);
-      toast.error('Failed to process file. Please try again.');
+      console.error('Error uploading resume:', error);
+      toast.error(error.message || 'Failed to upload resume. Please try again.');
+    } finally {
       setUploading(false);
     }
   };

@@ -8,6 +8,28 @@ import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { candidatesAPI, offersAPI } from "@/utils/apiClient";
 import { Search, MapPin, Filter, Briefcase, GraduationCap, UserRound, Calendar, FileText, Award, X, DollarSign } from "lucide-react";
 
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+
+// Helper function to construct full resume URL from relative path
+const getResumeUrl = (resumeUrl) => {
+  if (!resumeUrl) return null;
+  
+  // If it's already a full URL, return as is
+  if (resumeUrl.startsWith('http://') || resumeUrl.startsWith('https://')) {
+    return resumeUrl;
+  }
+  
+  // If it's a relative path, construct full URL
+  if (resumeUrl.startsWith('/')) {
+    const baseUrl = API_BASE_URL.replace('/api/v1', '');
+    return `${baseUrl}${resumeUrl}`;
+  }
+  
+  // Otherwise return as is
+  return resumeUrl;
+};
+
 function SeekerCard({ seeker, onOpenOfferModal, sendingOfferId, hasOfferSent, userRole }) {
   const getTopSkills = () => {
     if (!seeker.skills || typeof seeker.skills !== 'object') return [];
@@ -65,7 +87,7 @@ function SeekerCard({ seeker, onOpenOfferModal, sendingOfferId, hasOfferSent, us
           <div className="flex items-center gap-2 text-gray-500">
             <FileText className="w-4 h-4" />
             <a 
-              href={seeker.resumeUrl} 
+              href={getResumeUrl(seeker.resumeUrl)} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-red-600 hover:text-red-700"
