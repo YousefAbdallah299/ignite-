@@ -1,6 +1,28 @@
 import React from 'react';
 import { BookOpen, Users, ArrowRight, CheckCircle, Lock } from 'lucide-react';
 
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+
+// Helper function to construct full image URL from relative path
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  
+  // If it's already a full URL, return as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's a relative path, construct full URL
+  if (imageUrl.startsWith('/')) {
+    const baseUrl = API_BASE_URL.replace('/api/v1', '');
+    return `${baseUrl}${imageUrl}`;
+  }
+  
+  // Otherwise return as is (might be a data URL or other format)
+  return imageUrl;
+};
+
 const CoursePreview = ({ 
   course, 
   isEnrolled, 
@@ -9,6 +31,10 @@ const CoursePreview = ({
   onContinueLearning,
   isCandidate 
 }) => {
+  // Get course image URL (support both imageUrl and thumbnailUrl for backward compatibility)
+  const courseImageUrl = getImageUrl(
+    course?.imageUrl || course?.thumbnailUrl || null
+  );
   // Helper function for consistent skill level colors
   const getSkillLevelStyle = (skillLevel) => {
     const level = skillLevel?.toLowerCase() || 'beginner';
@@ -37,10 +63,10 @@ const CoursePreview = ({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-8">
-      {course.thumbnailUrl && (
+      {courseImageUrl && (
         <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100">
           <img
-            src={course.thumbnailUrl}
+            src={courseImageUrl}
             alt={`${course.title} preview`}
             className="w-full max-h-80 object-cover"
           />

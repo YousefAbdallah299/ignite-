@@ -16,11 +16,34 @@ const courseCategories = [
   'Programming', 'Photography', 'Writing', 'Finance', 'Personal Development'
 ];
 
+// Get API base URL from environment or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+
+// Helper function to construct full image URL from relative path
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  
+  // If it's already a full URL, return as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // If it's a relative path, construct full URL
+  if (imageUrl.startsWith('/')) {
+    const baseUrl = API_BASE_URL.replace('/api/v1', '');
+    return `${baseUrl}${imageUrl}`;
+  }
+  
+  // Otherwise return as is (might be a data URL or other format)
+  return imageUrl;
+};
 
 function CourseCard({ course, onEnrollmentChange, enrolledCourseIds, isCandidate }) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
-  const courseThumbnail = course?.imageUrl || course?.thumbnailUrl || course?.thumbnail_url || course?.thumbnail || null;
+  const courseThumbnail = getImageUrl(
+    course?.imageUrl || course?.thumbnailUrl || course?.thumbnail_url || course?.thumbnail || null
+  );
 
   // Check enrollment status on component mount
   useEffect(() => {
