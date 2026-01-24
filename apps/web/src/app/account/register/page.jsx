@@ -297,7 +297,7 @@ export default function RegisterPage() {
                           onChange={(e) => setExpectedSalary(e.target.value)}
                           required
                           min="0"
-                          step="1000"
+                          step="1"
                           placeholder="e.g., 50000"
                           className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         />

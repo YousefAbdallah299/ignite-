@@ -946,7 +946,7 @@ export default function ProfilePage() {
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="e.g., 50000"
                         min="0"
-                        step="1000"
+                        step="1"
                       />
                       <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
                     </div>
