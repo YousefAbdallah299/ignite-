@@ -663,6 +663,14 @@ export const candidatesAPI = {
     });
   },
 
+  // Remove skills from my profile
+  removeSkillsFromMyProfile: async (skillNames) => {
+    return apiCall('/candidates/me/skills', {
+      method: 'DELETE',
+      body: JSON.stringify({ skillNames }),
+    });
+  },
+
   // Rate candidate skill (Admin only)
   rateCandidateSkill: async (candidateId, skillId, rating) => {
     return apiCall(`/candidates/${candidateId}/skills/rating`, {

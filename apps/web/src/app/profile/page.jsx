@@ -425,6 +425,23 @@ export default function ProfilePage() {
     }
   };
 
+  // Remove skill from profile
+  const removeSkill = async (skillName) => {
+    try {
+      setAddingSkills(true);
+      await candidatesAPI.removeSkillsFromMyProfile([skillName]);
+      
+      // Refresh profile data
+      await loadProfile();
+      toast.success(`Skill "${skillName}" removed successfully!`);
+    } catch (error) {
+      console.error('Error removing skill:', error);
+      toast.error('Failed to remove skill');
+    } finally {
+      setAddingSkills(false);
+    }
+  };
+
   // Add new skills by name
   const addNewSkillsByName = async () => {
     if (!newSkillNames.trim()) {
@@ -643,104 +660,163 @@ export default function ProfilePage() {
               
               {isEditing ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      Current skills: {profile.skills ? Object.keys(profile.skills).length : 0} skills
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">{profile.skills ? Object.keys(profile.skills).length : 0}</span> skill{profile.skills && Object.keys(profile.skills).length !== 1 ? 's' : ''} added
                     </div>
                     <button
                       onClick={() => setShowAddSkillsForm(!showAddSkillsForm)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                      className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg text-sm font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
                     >
-                      Add New Skills
+                      <Award className="w-4 h-4" />
+                      {showAddSkillsForm ? 'Cancel' : 'Add Skills'}
                     </button>
                   </div>
                   
                   {/* Add New Skills Form */}
                   {showAddSkillsForm && (
-                    <div className="border-t pt-4">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">Add New Skills</h3>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Enter skill names (separate multiple skills with commas)
-                          </label>
-                          <input
-                            type="text"
-                            value={newSkillNames}
-                            onChange={(e) => setNewSkillNames(e.target.value)}
-                            placeholder="e.g., JavaScript, React, Node.js, Python"
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Example: JavaScript, React, Node.js, Python, Machine Learning
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={addNewSkillsByName}
-                            disabled={addingSkills || !newSkillNames.trim()}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {addingSkills ? 'Adding...' : 'Add Skills'}
-                          </button>
+                    <div className="border-t pt-4 mt-4">
+                      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <Award className="w-5 h-5 text-red-600" />
+                            Add New Skills
+                          </h3>
                           <button
                             onClick={() => {
                               setShowAddSkillsForm(false);
                               setNewSkillNames('');
                             }}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
                           >
-                            Cancel
+                            <X className="w-5 h-5" />
                           </button>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Enter skill names (separate multiple skills with commas)
+                            </label>
+                            <input
+                              type="text"
+                              value={newSkillNames}
+                              onChange={(e) => setNewSkillNames(e.target.value)}
+                              placeholder="e.g., JavaScript, React, Node.js, Python"
+                              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && newSkillNames.trim() && !addingSkills) {
+                                  addNewSkillsByName();
+                                }
+                              }}
+                            />
+                            <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                              <span>💡</span>
+                              <span>Tip: Separate multiple skills with commas. Press Enter to add quickly.</span>
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={addNewSkillsByName}
+                              disabled={addingSkills || !newSkillNames.trim()}
+                              className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                            >
+                              {addingSkills ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span>Adding...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Award className="w-4 h-4" />
+                                  <span>Add Skills</span>
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowAddSkillsForm(false);
+                                setNewSkillNames('');
+                              }}
+                              className="px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
 
                   {/* Current Skills Display */}
-                  <div className="border-t pt-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-3">My Skills</h3>
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-900">My Skills</h3>
+                      <span className="text-sm text-gray-500">
+                        {profile.skills ? Object.keys(profile.skills).length : 0} skill{profile.skills && Object.keys(profile.skills).length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
                     
                     {profile.skills && Object.keys(profile.skills).length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         {Object.entries(profile.skills).map(([skillName, rating]) => (
-                          <div key={skillName} className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-gray-900">{skillName}</h4>
-                              <span className={`text-sm font-bold ${
-                                rating === 0 ? 'text-gray-500' : 'text-green-600'
-                              }`}>
-                                {rating === 0 ? 'unverified' : `${rating}% verified`}
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className={`h-2 rounded-full transition-all duration-300 ${
-                                  rating === 0 
-                                    ? 'bg-gray-400' 
-                                    : 'bg-gradient-to-r from-green-500 to-green-600'
-                                }`}
-                                style={{ width: `${rating}%` }}
-                              ></div>
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-500 mt-1">
-                              <span>0%</span>
-                              <span>100%</span>
+                          <div 
+                            key={skillName} 
+                            className="group bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-red-300 hover:shadow-md transition-all duration-200"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h4 className="font-semibold text-gray-900 text-lg">{skillName}</h4>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    rating === 0 
+                                      ? 'bg-gray-100 text-gray-600' 
+                                      : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {rating === 0 ? 'Unverified' : `${rating}% Verified`}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                                  <div 
+                                    className={`h-2.5 rounded-full transition-all duration-500 ${
+                                      rating === 0 
+                                        ? 'bg-gray-400' 
+                                        : 'bg-gradient-to-r from-green-500 via-green-500 to-green-600'
+                                    }`}
+                                    style={{ width: `${Math.max(rating, 5)}%` }}
+                                  ></div>
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                  <span>0%</span>
+                                  <span className="font-medium">{rating}%</span>
+                                  <span>100%</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeSkill(skillName)}
+                                disabled={addingSkills}
+                                className="ml-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Remove skill"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Award className="w-8 h-8 text-gray-400" />
+                      <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300">
+                        <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                          <Award className="w-10 h-10 text-red-500" />
                         </div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-2">No Skills Added Yet</h4>
-                        <p className="text-gray-500 mb-4">Add skills to showcase your expertise to potential employers.</p>
+                        <h4 className="text-xl font-semibold text-gray-900 mb-2">No Skills Added Yet</h4>
+                        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                          Add skills to showcase your expertise to potential employers and increase your visibility.
+                        </p>
                         <button
                           onClick={() => setShowAddSkillsForm(true)}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                          className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 mx-auto"
                         >
+                          <Award className="w-5 h-5" />
                           Add Your First Skill
                         </button>
                       </div>
