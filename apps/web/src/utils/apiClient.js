@@ -93,13 +93,7 @@ const apiCall = async (endpoint, options = {}) => {
       if (contentType && contentType.includes('application/json')) {
         try {
           const errorData = await response.json();
-          // Handle Spring Boot validation errors
-          if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
-            errorMessage = errorData.errors.map(e => e.message || `${e.field}: ${e.defaultMessage || 'validation failed'}`).join(', ');
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-          logger.error('API error response:', errorData);
+          errorMessage = errorData.message || errorMessage;
         } catch (jsonError) {
           logger.error('Failed to parse error response as JSON:', jsonError);
         }
@@ -113,9 +107,7 @@ const apiCall = async (endpoint, options = {}) => {
         }
       }
       
-      const error = new Error(errorMessage);
-      error.status = response.status;
-      throw error;
+      throw new Error(errorMessage);
     }
     
     // Handle empty responses

@@ -534,12 +534,7 @@ export default function ProfilePage() {
       setEditingCareerHistory(null);
     } catch (error) {
       console.error('Error saving career history:', error);
-      console.error('Error details:', {
-        message: error.message,
-        data: data
-      });
-      const errorMessage = error.message || 'Unknown error';
-      toast.error(`Failed to ${editingCareerHistory ? 'update' : 'add'} career history: ${errorMessage}`);
+      toast.error(`Failed to ${editingCareerHistory ? 'update' : 'add'} career history`);
     }
   };
 
