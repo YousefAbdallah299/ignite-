@@ -763,8 +763,8 @@ export const workshopsAPI = {
 export const paymentsAPI = {
   // Initiate a payment
   initiatePayment: async (paymentData) => {
-    // Note: Payment endpoint uses /api/payments (not /api/v1/payments)
-    const url = import.meta.env.VITE_PAYMENT_API_URL || 'https://ignite-qjis.onrender.com/api/payments/initiate';
+    // Use the same base URL as other API calls, with /payments/initiate endpoint
+    const url = `${API_BASE_URL}/payments/initiate`;
     const token = getAuthToken();
     
     const config = {
