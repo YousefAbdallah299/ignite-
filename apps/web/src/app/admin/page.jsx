@@ -8,7 +8,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI, adminPrivilegesAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI } from '@/utils/apiClient';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
@@ -1338,6 +1338,7 @@ export default function AdminPage() {
                   </button>
                 </form>
               </section>
+              )}
             </div>
           </div>
         )}
@@ -1346,5 +1347,4 @@ export default function AdminPage() {
     </div>
   );
 }
-
 
