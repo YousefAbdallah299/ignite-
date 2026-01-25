@@ -1128,34 +1128,36 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   {careerHistory.map((history) => (
                     <div key={history.id} className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{history.position}</h3>
-                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-lg font-semibold text-gray-900 break-words">{history.position}</h3>
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium whitespace-nowrap">
                               {history.companyName}
                             </span>
                           </div>
                           {history.location && (
                             <div className="flex items-center text-sm text-gray-600 mb-2">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {history.location}
+                              <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                              <span className="break-words">{history.location}</span>
                             </div>
                           )}
-                          <div className="flex items-center text-sm text-gray-600 mb-3">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(history.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                            {history.endDate ? (
-                              <> - {new Date(history.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
-                            ) : (
-                              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Current</span>
-                            )}
+                          <div className="flex items-center text-sm text-gray-600 mb-3 flex-wrap">
+                            <Calendar className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="break-words">
+                              {new Date(history.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                              {history.endDate ? (
+                                <> - {new Date(history.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
+                              ) : (
+                                <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Current</span>
+                              )}
+                            </span>
                           </div>
                           {history.description && (
-                            <p className="text-gray-700 text-sm leading-relaxed mt-3">{history.description}</p>
+                            <p className="text-gray-700 text-sm leading-relaxed mt-3 break-words whitespace-pre-wrap max-w-full overflow-hidden">{history.description}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <button
                             onClick={() => handleEditCareerHistory(history)}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
