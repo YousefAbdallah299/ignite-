@@ -595,17 +595,22 @@ export default function JobsPage() {
         <Footer />
       </RevealOnScroll>
 
-      {/* Advertising Popup */}
+      {/* Advertising Popup - Slot 1 */}
       <AdvertisingPopup
-        ad={{
-          title: 'Post Your Job Opening',
-          description: 'Reach qualified candidates and find the perfect fit for your team.',
-          link: '/jobs/create',
-          ctaText: 'Post a Job',
-        }}
+        ad={null} // Configure external ad here
         position="bottom-left"
         showDelay={3000}
-        storageKey="ad_jobs_dismissed"
+        storageKey="ad_jobs_slot1"
+        size="medium"
+      />
+      
+      {/* Advertising Popup - Slot 2 */}
+      <AdvertisingPopup
+        ad={null} // Configure external ad here
+        position="top-right"
+        showDelay={5000}
+        storageKey="ad_jobs_slot2"
+        size="small"
       />
 
       <style jsx global>{`

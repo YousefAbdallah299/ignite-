@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdvertisingPopup from '@/components/AdvertisingPopup';
 import RevealOnScroll from '@/components/RevealOnScroll';
 import { useJobsAPI } from '@/hooks/useJobsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
@@ -272,6 +273,15 @@ export default function AppliedJobsPage() {
           </RevealOnScroll>
         )}
       </div>
+
+      {/* Advertising Popup - Slot 1 */}
+      <AdvertisingPopup
+        ad={null} // Configure external ad here
+        position="bottom-left"
+        showDelay={4000}
+        storageKey="ad_applied_jobs_slot1"
+        size="medium"
+      />
 
       <RevealOnScroll>
         <Footer />

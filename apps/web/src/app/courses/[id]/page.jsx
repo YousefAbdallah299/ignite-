@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdvertisingPopup from "@/components/AdvertisingPopup";
 import CoursePreview from "@/components/CoursePreview";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
@@ -168,6 +169,15 @@ export default function CourseDetailsPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
+
+      {/* Advertising Popup - Slot 1 */}
+      <AdvertisingPopup
+        ad={null} // Configure external ad here
+        position="bottom-right"
+        showDelay={4000}
+        storageKey="ad_course_detail_slot1"
+        size="medium"
+      />
     </div>
   );
 }

@@ -539,17 +539,13 @@ export default function MyJobsPage() {
         </div>
       )}
 
-      {/* Advertising Popup */}
+      {/* Advertising Popup - Slot 1 */}
       <AdvertisingPopup
-        ad={{
-          title: 'Find Top Talent',
-          description: 'Browse qualified candidates and connect with the best professionals.',
-          link: '/candidates',
-          ctaText: 'Browse Candidates',
-        }}
+        ad={null} // Configure external ad here
         position="bottom-left"
         showDelay={4000}
-        storageKey="ad_my_jobs_dismissed"
+        storageKey="ad_my_jobs_slot1"
+        size="medium"
       />
 
       <Footer />

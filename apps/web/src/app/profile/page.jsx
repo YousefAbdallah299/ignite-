@@ -1269,17 +1269,13 @@ export default function ProfilePage() {
         careerHistory={editingCareerHistory}
       />
 
-      {/* Advertising Popup */}
+      {/* Advertising Popup - Slot 1 */}
       <AdvertisingPopup
-        ad={{
-          title: 'Complete Your Profile',
-          description: 'Add your career history and skills to stand out to employers.',
-          link: '/profile',
-          ctaText: 'Update Profile',
-        }}
+        ad={null} // Configure external ad here
         position="bottom-right"
         showDelay={4000}
-        storageKey="ad_profile_dismissed"
+        storageKey="ad_profile_slot1"
+        size="medium"
       />
 
       <Footer />

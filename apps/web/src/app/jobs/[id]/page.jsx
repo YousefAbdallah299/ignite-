@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdvertisingPopup from '@/components/AdvertisingPopup';
 import { useJobsAPI } from '@/hooks/useJobsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { usePageTokenValidation } from '@/components/TokenValidationWrapper';
@@ -398,6 +399,15 @@ export default function JobDetailPage() {
           </div>
         </RevealOnScroll>
       </div>
+
+      {/* Advertising Popup - Slot 1 */}
+      <AdvertisingPopup
+        ad={null} // Configure external ad here
+        position="bottom-right"
+        showDelay={4000}
+        storageKey="ad_job_detail_slot1"
+        size="medium"
+      />
 
       <RevealOnScroll>
         <Footer />

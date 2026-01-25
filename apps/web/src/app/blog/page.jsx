@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdvertisingPopup from '@/components/AdvertisingPopup';
 import CreateBlogModal from '@/components/CreateBlogModal';
 import PageFadeIn from '@/components/PageFadeIn';
 import { useBlogsAPI } from '@/hooks/useBlogsAPI';
@@ -443,6 +444,15 @@ export default function PostsFeedPage() {
         document.body
       )}
       
+      {/* Advertising Popup - Slot 1 */}
+      <AdvertisingPopup
+        ad={null} // Configure external ad here
+        position="bottom-right"
+        showDelay={4000}
+        storageKey="ad_blog_slot1"
+        size="medium"
+      />
+
       <Footer />
     </PageFadeIn>
   );

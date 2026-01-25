@@ -55,17 +55,13 @@ export default function HomePage() {
         <Footer />
       </RevealOnScroll>
 
-      {/* Advertising Popup */}
+      {/* Advertising Popup - Slot 1 */}
       <AdvertisingPopup
-        ad={{
-          title: 'Find Your Dream Job',
-          description: 'Browse thousands of opportunities from top companies.',
-          link: '/jobs',
-          ctaText: 'Explore Jobs',
-        }}
+        ad={null} // Configure external ad here: { image, video, title, description, link, ctaText, advertiser, adId }
         position="bottom-right"
         showDelay={3000}
-        storageKey="ad_home_dismissed"
+        storageKey="ad_home_slot1"
+        size="medium"
       />
 
       {/* Global styles and fonts */}

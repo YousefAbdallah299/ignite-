@@ -853,17 +853,22 @@ export default function CoursesPage() {
         <Footer />
       </RevealOnScroll>
 
-      {/* Advertising Popup */}
+      {/* Advertising Popup - Slot 1 */}
       <AdvertisingPopup
-        ad={{
-          title: 'Enhance Your Skills',
-          description: 'Browse our courses and advance your career with expert-led training.',
-          link: '/courses',
-          ctaText: 'Browse Courses',
-        }}
+        ad={null} // Configure external ad here
         position="bottom-right"
         showDelay={3500}
-        storageKey="ad_courses_dismissed"
+        storageKey="ad_courses_slot1"
+        size="medium"
+      />
+      
+      {/* Advertising Popup - Slot 2 */}
+      <AdvertisingPopup
+        ad={null} // Configure external ad here
+        position="top-left"
+        showDelay={6000}
+        storageKey="ad_courses_slot2"
+        size="small"
       />
 
       {/* Course Request Modal */}

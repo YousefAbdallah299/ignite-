@@ -613,17 +613,13 @@ export default function CandidatePage() {
         </div>
       )}
 
-      {/* Advertising Popup */}
+      {/* Advertising Popup - Slot 1 */}
       <AdvertisingPopup
-        ad={{
-          title: 'Looking for Talent?',
-          description: 'Post your job openings and connect with qualified candidates.',
-          link: '/jobs/create',
-          ctaText: 'Post a Job',
-        }}
+        ad={null} // Configure external ad here
         position="bottom-right"
         showDelay={4000}
-        storageKey="ad_candidate_view_dismissed"
+        storageKey="ad_candidate_view_slot1"
+        size="medium"
       />
 
       <Footer />
