@@ -598,14 +598,13 @@ export default function JobsPage() {
       {/* Advertising Popup */}
       <AdvertisingPopup
         ad={{
-          image: '/images/ads/recruiters.jpg',
           title: 'Post Your Job Opening',
           description: 'Reach qualified candidates and find the perfect fit for your team.',
-          link: '/recruiters/post-job',
+          link: '/jobs/create',
           ctaText: 'Post a Job',
         }}
         position="bottom-left"
-        showDelay={4000}
+        showDelay={3000}
         storageKey="ad_jobs_dismissed"
       />
 

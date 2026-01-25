@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdvertisingPopup from "@/components/AdvertisingPopup";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
@@ -851,6 +852,19 @@ export default function CoursesPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
+
+      {/* Advertising Popup */}
+      <AdvertisingPopup
+        ad={{
+          title: 'Enhance Your Skills',
+          description: 'Browse our courses and advance your career with expert-led training.',
+          link: '/courses',
+          ctaText: 'Browse Courses',
+        }}
+        position="bottom-right"
+        showDelay={3500}
+        storageKey="ad_courses_dismissed"
+      />
 
       {/* Course Request Modal */}
       {showRequestModal && (

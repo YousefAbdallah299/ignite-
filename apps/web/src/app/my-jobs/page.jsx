@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdvertisingPopup from "@/components/AdvertisingPopup";
 import { jobsAPI, offersAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -537,6 +538,19 @@ export default function MyJobsPage() {
           </div>
         </div>
       )}
+
+      {/* Advertising Popup */}
+      <AdvertisingPopup
+        ad={{
+          title: 'Find Top Talent',
+          description: 'Browse qualified candidates and connect with the best professionals.',
+          link: '/candidates',
+          ctaText: 'Browse Candidates',
+        }}
+        position="bottom-left"
+        showDelay={4000}
+        storageKey="ad_my_jobs_dismissed"
+      />
 
       <Footer />
 

@@ -12,8 +12,8 @@ export default function AdvertisingPopup({
   ad = null, // { image, title, description, link, ctaText }
   position = 'bottom-right', // 'bottom-right', 'bottom-left', 'top-right', 'top-left', 'center'
   showDelay = 3000, // Delay before showing (ms)
-  minViewportWidth = 768, // Minimum viewport width to show
-  minViewportHeight = 600, // Minimum viewport height to show
+  minViewportWidth = 640, // Minimum viewport width to show
+  minViewportHeight = 500, // Minimum viewport height to show
   storageKey = 'ad_popup_dismissed' // localStorage key for dismissal
 }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -26,37 +26,51 @@ export default function AdvertisingPopup({
       return;
     }
 
+    if (!ad) {
+      return;
+    }
+
     // Check viewport size
     const checkViewport = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
       
-      if (width >= minViewportWidth && height >= minViewportHeight) {
-        setShouldShow(true);
-      } else {
-        setShouldShow(false);
+      const meetsRequirements = width >= minViewportWidth && height >= minViewportHeight;
+      setShouldShow(meetsRequirements);
+      
+      if (!meetsRequirements) {
+        setIsVisible(false);
       }
     };
 
     checkViewport();
     window.addEventListener('resize', checkViewport);
 
-    // Show after delay if conditions are met
-    if (shouldShow && ad) {
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, showDelay);
-
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('resize', checkViewport);
-      };
-    }
-
     return () => {
       window.removeEventListener('resize', checkViewport);
     };
-  }, [shouldShow, ad, showDelay, minViewportWidth, minViewportHeight, storageKey]);
+  }, [ad, minViewportWidth, minViewportHeight, storageKey]);
+
+  // Separate effect to handle the delay timer
+  useEffect(() => {
+    if (!shouldShow || !ad) {
+      setIsVisible(false);
+      return;
+    }
+
+    const dismissed = localStorage.getItem(storageKey);
+    if (dismissed === 'true') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, showDelay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [shouldShow, ad, showDelay, storageKey]);
 
   const handleDismiss = () => {
     setIsVisible(false);
@@ -95,11 +109,15 @@ export default function AdvertisingPopup({
         </button>
         
         {ad.image && (
-          <div className="w-full h-48 overflow-hidden bg-gray-100">
+          <div className="w-full h-48 overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <img
               src={ad.image}
               alt={ad.title || 'Advertisement'}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                // Hide image on error, show gradient background instead
+                e.target.style.display = 'none';
+              }}
             />
           </div>
         )}

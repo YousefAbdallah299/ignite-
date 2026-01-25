@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdvertisingPopup from '@/components/AdvertisingPopup';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send, DollarSign } from 'lucide-react';
 import { candidatesAPI, offersAPI } from '@/utils/apiClient';
@@ -611,6 +612,19 @@ export default function CandidatePage() {
           </div>
         </div>
       )}
+
+      {/* Advertising Popup */}
+      <AdvertisingPopup
+        ad={{
+          title: 'Looking for Talent?',
+          description: 'Post your job openings and connect with qualified candidates.',
+          link: '/jobs/create',
+          ctaText: 'Post a Job',
+        }}
+        position="bottom-right"
+        showDelay={4000}
+        storageKey="ad_candidate_view_dismissed"
+      />
 
       <Footer />
     </div>

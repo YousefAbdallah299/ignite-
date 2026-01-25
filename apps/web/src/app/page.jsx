@@ -58,14 +58,13 @@ export default function HomePage() {
       {/* Advertising Popup */}
       <AdvertisingPopup
         ad={{
-          image: '/images/ads/job-seekers.jpg',
           title: 'Find Your Dream Job',
           description: 'Browse thousands of opportunities from top companies.',
           link: '/jobs',
           ctaText: 'Explore Jobs',
         }}
         position="bottom-right"
-        showDelay={5000}
+        showDelay={3000}
         storageKey="ad_home_dismissed"
       />
 

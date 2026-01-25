@@ -5,6 +5,7 @@ import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcas
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdvertisingPopup from '@/components/AdvertisingPopup';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useCandidatesAPI } from '@/hooks/useCandidatesAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
@@ -1266,6 +1267,19 @@ export default function ProfilePage() {
         }}
         onSave={handleSaveCareerHistory}
         careerHistory={editingCareerHistory}
+      />
+
+      {/* Advertising Popup */}
+      <AdvertisingPopup
+        ad={{
+          title: 'Complete Your Profile',
+          description: 'Add your career history and skills to stand out to employers.',
+          link: '/profile',
+          ctaText: 'Update Profile',
+        }}
+        position="bottom-right"
+        showDelay={4000}
+        storageKey="ad_profile_dismissed"
       />
 
       <Footer />
