@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, MessageCircle, Plus, X, Users } from 'lucide-react';
+import { Heart, MessageCircle, Plus, X, Users, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -51,8 +51,8 @@ const formatRelativeTime = (dateString) => {
 
 
 export default function PostsFeedPage() {
-  const { getAllBlogs, likeBlog, addComment, createBlog, getBlogLikes, loading, error } = useBlogsAPI();
-  const { isAuthenticated, user } = useAuthAPI();
+  const { getAllBlogs, likeBlog, addComment, createBlog, getBlogLikes, deleteBlog, loading, error } = useBlogsAPI();
+  const { isAuthenticated, user, isAdmin } = useAuthAPI();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
@@ -238,6 +238,24 @@ export default function PostsFeedPage() {
     setShowCreateModal(true);
   };
 
+  const handleDeletePost = async (postId) => {
+    if (!requireAuth('delete posts')) return;
+    
+    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteBlog(postId);
+      toast.success('Post deleted successfully');
+      // Remove the post from the local state
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      toast.error(`Failed to delete post: ${err.message || 'Please try again.'}`);
+    }
+  };
+
 
   return (
     <PageFadeIn className="bg-gray-50">
@@ -280,6 +298,17 @@ export default function PostsFeedPage() {
                   </div>
                   <div className="text-xs text-gray-500">{formatRelativeTime(post.createdAt)}</div>
                 </div>
+                {/* Delete Button - Show for post creator or admin */}
+                {isAuthenticated && (post.userId === user?.id || isAdmin) && (
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    className="ml-auto text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                    title="Delete post"
+                    aria-label="Delete post"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               <div className="text-gray-900 whitespace-pre-wrap break-words mb-4">{post.content}</div>
               {post.mediaUrl && post.mediaType === 'IMAGE' && (
