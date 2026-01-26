@@ -55,33 +55,33 @@ export default function HeroSection({ userRole = null, isCandidate = false, isRe
         </div>
 
         {/* Introduction Text - Customizable based on user type */}
-        <div className="mb-8 max-w-4xl mx-auto">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-gray-100">
-            <div className="text-base md:text-lg text-gray-700 leading-relaxed space-y-4 text-left">
+        <div className="mb-10 max-w-5xl mx-auto">
+          <div className="bg-gradient-to-br from-white via-red-50/30 to-white backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-xl border-2 border-red-100/50 hover:border-red-200/70 transition-all duration-300">
+            <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
               {userType === "job_seeker" || isCandidate ? (
-                <>
-                  <p>
-                    Welcome to <strong className="text-red-600">Ignite Academy</strong>, a leading provider of professional computer training designed to empower individuals and organizations with the digital skills needed to succeed in today's technology-driven world. We specialize in delivering high-quality, practical, and industry-relevant training programs that help learners build confidence, enhance productivity, and stay competitive.
+                <div className="space-y-5">
+                  <p className="text-lg md:text-xl font-medium text-gray-800 leading-relaxed">
+                    Welcome to <span className="text-red-600 font-bold text-2xl">Ignite Academy</span>, a leading provider of professional computer training designed to empower individuals and organizations with the digital skills needed to succeed in today's technology-driven world. We specialize in delivering high-quality, practical, and industry-relevant training programs that help learners build confidence, enhance productivity, and stay competitive.
                   </p>
-                  <p>
-                    With a team of experienced instructors, hands-on learning environments, and courses ranging from basic computer literacy to advanced IT and software certifications, we are committed to making technology accessible for everyone. Whether you are a student, professional, or business looking to upskill your workforce, <strong className="text-red-600">Ignite Academy</strong> provides flexible, customized solutions to meet your unique goals.
+                  <p className="text-base md:text-lg text-gray-700 leading-relaxed">
+                    With a team of experienced instructors, hands-on learning environments, and courses ranging from basic computer literacy to advanced IT and software certifications, we are committed to making technology accessible for everyone. Whether you are a student, professional, or business looking to upskill your workforce, <span className="text-red-600 font-semibold">Ignite Academy</span> provides flexible, customized solutions to meet your unique goals.
                   </p>
-                  <p>
+                  <p className="text-base md:text-lg text-gray-700 leading-relaxed font-medium italic text-red-700">
                     Our campaigns customized for hands on training and work experience.
                   </p>
-                </>
+                </div>
               ) : (
-                <>
-                  <p>
-                    <strong className="text-red-600">Ignite</strong> is a specialized training provider dedicated to developing high-performance talent for organizations that hire at scale. We equip candidates with the practical skills, professional readiness, and technical knowledge required to thrive in fast-paced, high-growth environments.
+                <div className="space-y-5">
+                  <p className="text-lg md:text-xl font-medium text-gray-800 leading-relaxed">
+                    <span className="text-red-600 font-bold text-2xl">Ignite</span> is a specialized training provider dedicated to developing high-performance talent for organizations that hire at scale. We equip candidates with the practical skills, professional readiness, and technical knowledge required to thrive in fast-paced, high-growth environments.
                   </p>
-                  <p>
+                  <p className="text-base md:text-lg text-gray-700 leading-relaxed">
                     Our programs are designed to support companies that need large, well-prepared talent pools—offering structured training in communication, computer skills, productivity, customer service, and job-specific competencies. Through hands-on learning, expert instructors, and industry-aligned curriculum, we ensure that every candidate is job-ready and capable of meeting the demands of scaled hiring operations.
                   </p>
-                  <p>
-                    Whether you are a business expanding rapidly or an organization that regularly recruits in volume, <strong className="text-red-600">Ignite</strong> provides customized training solutions that help you onboard skilled, reliable, and confident candidates—quickly and efficiently.
+                  <p className="text-base md:text-lg text-gray-700 leading-relaxed">
+                    Whether you are a business expanding rapidly or an organization that regularly recruits in volume, <span className="text-red-600 font-semibold">Ignite</span> provides customized training solutions that help you onboard skilled, reliable, and confident candidates—quickly and efficiently.
                   </p>
-                </>
+                </div>
               )}
             </div>
           </div>

@@ -43,24 +43,35 @@ export default function AdvertisingPopup({
       return;
     }
 
-    // Check viewport size
+    // Check viewport size and scroll position
     const checkViewport = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
       
+      // Check if viewport meets minimum requirements
       const meetsRequirements = width >= minViewportWidth && height >= minViewportHeight;
-      setShouldShow(meetsRequirements);
       
-      if (!meetsRequirements) {
+      // Check scroll position - hide if scrolled too far down (more than 80% of page)
+      const scrollPercentage = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+      const isNearBottom = scrollPercentage > 0.8;
+      
+      // Only show if requirements are met AND not near bottom of page
+      const shouldDisplay = meetsRequirements && !isNearBottom;
+      
+      setShouldShow(shouldDisplay);
+      
+      if (!shouldDisplay) {
         setIsVisible(false);
       }
     };
 
     checkViewport();
     window.addEventListener('resize', checkViewport);
+    window.addEventListener('scroll', checkViewport, { passive: true });
 
     return () => {
       window.removeEventListener('resize', checkViewport);
+      window.removeEventListener('scroll', checkViewport);
     };
   }, [ad, minViewportWidth, minViewportHeight, storageKey]);
 
