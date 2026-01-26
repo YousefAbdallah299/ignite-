@@ -25,7 +25,11 @@ export default function HomePage() {
       <Header />
 
       {/* Hero Section with Search */}
-      <HeroSection />
+      <HeroSection 
+        userRole={user?.role} 
+        isCandidate={isCandidate} 
+        isRecruiter={isRecruiter} 
+      />
 
       {/* Statistics Section - fades in when scrolling */}
       <RevealOnScroll>
@@ -55,12 +59,37 @@ export default function HomePage() {
         <Footer />
       </RevealOnScroll>
 
-      {/* Advertising Popup - Slot 1 */}
+      {/* Advertising Popup - Right Side */}
       <AdvertisingPopup
-        ad={null} // Configure external ad here: { image, video, title, description, link, ctaText, advertiser, adId }
+        ad={{
+          image: '/ignite-logo.png',
+          title: 'Find Your Dream Job',
+          description: 'Browse thousands of opportunities from top companies.',
+          link: '/jobs',
+          ctaText: 'Explore Jobs',
+          advertiser: 'Ignite',
+          adId: 'home_right_ad'
+        }}
         position="bottom-right"
         showDelay={3000}
-        storageKey="ad_home_slot1"
+        storageKey="ad_home_right"
+        size="medium"
+      />
+
+      {/* Advertising Popup - Left Side */}
+      <AdvertisingPopup
+        ad={{
+          image: '/ignite-logo-footer.jpeg',
+          title: 'Hire Top Talent',
+          description: 'Post your job openings and reach qualified candidates.',
+          link: '/job-seekers',
+          ctaText: 'Post a Job',
+          advertiser: 'Ignite',
+          adId: 'home_left_ad'
+        }}
+        position="bottom-left"
+        showDelay={4000}
+        storageKey="ad_home_left"
         size="medium"
       />
 

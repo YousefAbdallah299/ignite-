@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Briefcase, Users } from "lucide-react";
 
-export default function HeroSection() {
+export default function HeroSection({ userRole = null, isCandidate = false, isRecruiter = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [userType, setUserType] = useState("job_seeker");
+
+  // Determine initial user type based on logged-in user role
+  useEffect(() => {
+    if (isRecruiter) {
+      setUserType("recruiter");
+    } else if (isCandidate) {
+      setUserType("job_seeker");
+    }
+  }, [isRecruiter, isCandidate]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -43,11 +52,39 @@ export default function HeroSection() {
               Opportunity
             </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            The premier platform connecting exceptional talent with leading companies. 
-            Whether you're seeking your next career opportunity or searching for top talent, 
-            we've got you covered.
-          </p>
+        </div>
+
+        {/* Introduction Text - Customizable based on user type */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-gray-100">
+            <div className="text-base md:text-lg text-gray-700 leading-relaxed space-y-4 text-left">
+              {userType === "job_seeker" || isCandidate ? (
+                <>
+                  <p>
+                    Welcome to <strong className="text-red-600">Ignite Academy</strong>, a leading provider of professional computer training designed to empower individuals and organizations with the digital skills needed to succeed in today's technology-driven world. We specialize in delivering high-quality, practical, and industry-relevant training programs that help learners build confidence, enhance productivity, and stay competitive.
+                  </p>
+                  <p>
+                    With a team of experienced instructors, hands-on learning environments, and courses ranging from basic computer literacy to advanced IT and software certifications, we are committed to making technology accessible for everyone. Whether you are a student, professional, or business looking to upskill your workforce, <strong className="text-red-600">Ignite Academy</strong> provides flexible, customized solutions to meet your unique goals.
+                  </p>
+                  <p>
+                    Our campaigns customized for hands on training and work experience.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    <strong className="text-red-600">Ignite</strong> is a specialized training provider dedicated to developing high-performance talent for organizations that hire at scale. We equip candidates with the practical skills, professional readiness, and technical knowledge required to thrive in fast-paced, high-growth environments.
+                  </p>
+                  <p>
+                    Our programs are designed to support companies that need large, well-prepared talent pools—offering structured training in communication, computer skills, productivity, customer service, and job-specific competencies. Through hands-on learning, expert instructors, and industry-aligned curriculum, we ensure that every candidate is job-ready and capable of meeting the demands of scaled hiring operations.
+                  </p>
+                  <p>
+                    Whether you are a business expanding rapidly or an organization that regularly recruits in volume, <strong className="text-red-600">Ignite</strong> provides customized training solutions that help you onboard skilled, reliable, and confident candidates—quickly and efficiently.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* User Type Toggle */}
