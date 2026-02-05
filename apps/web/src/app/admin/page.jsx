@@ -4,9 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import PasswordInput from '@/components/PasswordInput';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
 import { coursesAPI, candidatesAPI, skillsAPI, adminAPI } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 // Get API base URL from environment or use default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
@@ -73,6 +75,15 @@ export default function AdminPage() {
   });
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [myPrivileges, setMyPrivileges] = useState([]);
+  
+  // Admin password change state
+  const [showPasswordChangeForm, setShowPasswordChangeForm] = useState(false);
+  const [passwordChangeForm, setPasswordChangeForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
   
   const availablePrivileges = [
     { name: 'MANAGE_COURSES', label: 'Manage Courses' },
@@ -379,6 +390,80 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error deleting user:', error);
       alert(`Error deleting user: ${error.message}`);
+    }
+  };
+
+  const suspendUser = async (id, suspend = true) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/admin/users/${id}/suspend`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ suspended: suspend })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to ${suspend ? 'suspend' : 'unsuspend'} user`);
+      }
+      
+      toast.success(`User ${suspend ? 'suspended' : 'unsuspended'} successfully`);
+      loadUsers();
+    } catch (error) {
+      console.error(`Error ${suspend ? 'suspending' : 'unsuspending'} user:`, error);
+      toast.error(`Error ${suspend ? 'suspending' : 'unsuspending'} user: ${error.message}`);
+    }
+  };
+
+  const changeAdminPassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordChangeForm.newPassword !== passwordChangeForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    
+    if (passwordChangeForm.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currentPassword: passwordChangeForm.currentPassword,
+          newPassword: passwordChangeForm.newPassword,
+          confirmPassword: passwordChangeForm.confirmPassword
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to change password');
+      }
+      
+      toast.success('Password changed successfully!');
+      setPasswordChangeForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setShowPasswordChangeForm(false);
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast.error(`Error changing password: ${error.message}`);
+    } finally {
+      setChangingPassword(false);
     }
   };
   
@@ -749,6 +834,66 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-8 min-h-[600px]">
+            {/* Admin Password Change Section */}
+            <section className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Change Admin Password</h2>
+                <button
+                  onClick={() => setShowPasswordChangeForm(!showPasswordChangeForm)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                >
+                  {showPasswordChangeForm ? 'Cancel' : 'Change Password'}
+                </button>
+              </div>
+              
+              {showPasswordChangeForm && (
+                <form onSubmit={changeAdminPassword} className="space-y-4 border-t border-gray-200 pt-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                    <PasswordInput
+                      value={passwordChangeForm.currentPassword}
+                      onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, currentPassword: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      required
+                      placeholder="Current Password"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <PasswordInput
+                      value={passwordChangeForm.newPassword}
+                      onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, newPassword: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      required
+                      minLength={8}
+                      placeholder="New Password"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <PasswordInput
+                      value={passwordChangeForm.confirmPassword}
+                      onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, confirmPassword: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      required
+                      minLength={8}
+                      placeholder="Confirm New Password"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                  >
+                    {changingPassword ? 'Changing...' : 'Change Password'}
+                  </button>
+                </form>
+              )}
+            </section>
+
             {/* Custom Admin Creation Section */}
             {hasPrivilege('MANAGE_USERS') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
@@ -800,13 +945,13 @@ export default function AdminPage() {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                      <input
-                        type="password"
+                      <PasswordInput
                         value={customAdminForm.password}
                         onChange={(e) => setCustomAdminForm({ ...customAdminForm, password: e.target.value })}
                         className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                         required
                         minLength={6}
+                        placeholder="Password"
                       />
                     </div>
                     
@@ -1270,13 +1415,42 @@ export default function AdminPage() {
                           {u.phoneNumber && (
                             <p className="text-sm text-gray-500">{u.phoneNumber}</p>
                           )}
+                          {u.suspended && (
+                            <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium mt-1">
+                              Suspended
+                            </span>
+                          )}
                         </div>
-                        <button 
-                          onClick={() => deleteUser(u.id)} 
-                          className="text-red-600 hover:text-red-800 font-medium text-sm ml-2"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {u.suspended ? (
+                            <button 
+                              onClick={() => suspendUser(u.id, false)} 
+                              className="text-green-600 hover:text-green-800 font-medium text-sm"
+                              title="Unsuspend user"
+                            >
+                              Unsuspend
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => suspendUser(u.id, true)} 
+                              className="text-yellow-600 hover:text-yellow-800 font-medium text-sm"
+                              title="Suspend user"
+                            >
+                              Suspend
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete user ${u.first_name} ${u.last_name}?`)) {
+                                deleteUser(u.id);
+                              }
+                            }} 
+                            className="text-red-600 hover:text-red-800 font-medium text-sm"
+                            title="Delete user"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                       );

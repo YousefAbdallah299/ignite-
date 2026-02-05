@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, XCircle, Clock, User, DollarSign, Calendar, Eye, Trash2, Building2, CreditCard, ExternalLink, Edit3, Save, X, RefreshCw } from 'lucide-react';
+import { Check, XCircle, Clock, User, DollarSign, Calendar, Eye, Trash2, Building2, CreditCard, ExternalLink, Edit3, Save, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -142,6 +142,28 @@ export default function MyOffersPage() {
       loadOffers();
     }
   }, [isRecruiter]);
+
+  // Check for subscription expiration and show alerts
+  useEffect(() => {
+    if (recruiterProfile?.subscriptionEndDate && recruiterProfile?.status === 'SUBSCRIBED') {
+      const endDate = new Date(recruiterProfile.subscriptionEndDate);
+      const now = new Date();
+      const daysUntilExpiration = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+      
+      // Show alert if subscription expires in 7 days or less
+      if (daysUntilExpiration <= 7 && daysUntilExpiration > 0) {
+        toast.warning(
+          `Your subscription expires in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? 's' : ''}. Please renew to continue using all features.`,
+          { duration: 10000 }
+        );
+      } else if (daysUntilExpiration <= 0) {
+        toast.error(
+          'Your subscription has expired. Please renew to continue using all features.',
+          { duration: 10000 }
+        );
+      }
+    }
+  }, [recruiterProfile]);
 
   const loadRecruiterProfile = async () => {
     try {
@@ -338,6 +360,58 @@ export default function MyOffersPage() {
           <p className="text-gray-600">Manage your company profile and track offers sent to candidates</p>
         </div>
 
+        {/* Subscription Expiration Alert */}
+        {recruiterProfile?.subscriptionEndDate && recruiterProfile?.status === 'SUBSCRIBED' && (() => {
+          const endDate = new Date(recruiterProfile.subscriptionEndDate);
+          const now = new Date();
+          const daysUntilExpiration = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+          const isExpired = daysUntilExpiration <= 0;
+          const isExpiringSoon = daysUntilExpiration <= 7 && daysUntilExpiration > 0;
+          
+          if (isExpired || isExpiringSoon) {
+            return (
+              <div className={`mb-6 p-4 rounded-xl border-2 ${
+                isExpired 
+                  ? 'bg-red-50 border-red-200' 
+                  : 'bg-yellow-50 border-yellow-200'
+              }`}>
+                <div className="flex items-start">
+                  <AlertTriangle className={`w-6 h-6 mr-3 flex-shrink-0 ${
+                    isExpired ? 'text-red-600' : 'text-yellow-600'
+                  }`} />
+                  <div className="flex-1">
+                    <h3 className={`font-semibold mb-1 ${
+                      isExpired ? 'text-red-900' : 'text-yellow-900'
+                    }`}>
+                      {isExpired ? 'Subscription Expired' : 'Subscription Expiring Soon'}
+                    </h3>
+                    <p className={`text-sm mb-3 ${
+                      isExpired ? 'text-red-700' : 'text-yellow-700'
+                    }`}>
+                      {isExpired 
+                        ? 'Your subscription has expired. Please renew to continue using all features.'
+                        : `Your subscription expires in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? 's' : ''}. Please renew to avoid service interruption.`
+                      }
+                    </p>
+                    <a
+                      href="/payment"
+                      className={`inline-flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isExpired
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Renew Subscription
+                    </a>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         {/* Company & Subscription Card */}
         <RevealOnScroll>
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
@@ -398,11 +472,33 @@ export default function MyOffersPage() {
                     <CreditCard className="w-4 h-4 mr-1" />
                     {recruiterProfile?.status === 'SUBSCRIBED' ? 'Subscribed' : 'Guest'}
                   </span>
-                  {recruiterProfile?.subscriptionEndDate && recruiterProfile?.status === 'SUBSCRIBED' && (
-                    <span className="text-sm text-gray-600">
-                      Valid until: {new Date(recruiterProfile.subscriptionEndDate).toLocaleDateString()}
-                    </span>
-                  )}
+                  {recruiterProfile?.subscriptionEndDate && recruiterProfile?.status === 'SUBSCRIBED' && (() => {
+                    const endDate = new Date(recruiterProfile.subscriptionEndDate);
+                    const now = new Date();
+                    const daysUntilExpiration = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                    const isExpired = daysUntilExpiration <= 0;
+                    const isExpiringSoon = daysUntilExpiration <= 7 && daysUntilExpiration > 0;
+                    
+                    return (
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-sm ${isExpired ? 'text-red-600 font-semibold' : isExpiringSoon ? 'text-yellow-600 font-semibold' : 'text-gray-600'}`}>
+                          Valid until: {endDate.toLocaleDateString()}
+                        </span>
+                        {isExpired && (
+                          <span className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Expired
+                          </span>
+                        )}
+                        {isExpiringSoon && !isExpired && (
+                          <span className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Expires in {daysUntilExpiration} day{daysUntilExpiration !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

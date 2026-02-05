@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PasswordInput from "@/components/PasswordInput";
+import OTPVerification from "@/components/OTPVerification";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import RevealOnScroll from '@/components/RevealOnScroll';
 import PageFadeIn from '@/components/PageFadeIn';
@@ -26,6 +28,8 @@ export default function RegisterPage() {
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,6 +80,26 @@ export default function RegisterPage() {
     if (!phoneNumber.trim()) {
       console.log('Validation failed: Phone number missing');
       setValidationError('Phone number is required.');
+      return;
+    }
+
+    // Validate phone number format
+    const cleanPhone = phoneNumber.trim().replace(/[\s-]/g, '');
+    if (!/^(0|\+)/.test(cleanPhone)) {
+      console.log('Validation failed: Phone number must start with 0 or +');
+      setValidationError('Phone number must start with 0 or +');
+      return;
+    }
+    if (cleanPhone.length < 8) {
+      console.log('Validation failed: Phone number too short');
+      setValidationError('Phone number must be at least 8 characters');
+      return;
+    }
+
+    // Check if phone is verified
+    if (!phoneVerified) {
+      setValidationError('Please verify your phone number first');
+      setShowOTPModal(true);
       return;
     }
 
@@ -235,8 +259,7 @@ export default function RegisterPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Password <span className="text-red-600">*</span>
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -248,26 +271,85 @@ export default function RegisterPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Retype Password <span className="text-red-600">*</span>
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={8}
+                    placeholder="Retype Password"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number <span className="text-red-600">*</span>
+                    {phoneVerified && (
+                      <span className="ml-2 text-green-600 text-xs">✓ Verified</span>
+                    )}
                   </label>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    required
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Only allow digits, +, and spaces
+                        if (value === '' || /^[0-9+\s-]*$/.test(value)) {
+                          setPhoneNumber(value);
+                          setPhoneVerified(false); // Reset verification if phone changes
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = e.target.value.trim();
+                        if (value && !/^(0|\+)/.test(value)) {
+                          setValidationError('Phone number must start with 0 or +');
+                        } else if (value && value.replace(/[\s-]/g, '').length < 8) {
+                          setValidationError('Phone number must be at least 8 characters');
+                        } else {
+                          setValidationError('');
+                        }
+                      }}
+                      required
+                      pattern="^(0|\+)[0-9+\s-]{7,}"
+                      title="Phone number must start with 0 or + and be at least 8 characters"
+                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="+1234567890 or 01234567890"
+                      disabled={phoneVerified}
+                    />
+                    {!phoneVerified && phoneNumber.trim() && phoneNumber.trim().replace(/[\s-]/g, '').length >= 8 && /^(0|\+)/.test(phoneNumber.trim().replace(/[\s-]/g, '')) && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            // Clean phone number (remove spaces and hyphens)
+                            const cleanPhone = phoneNumber.trim().replace(/[\s-]/g, '');
+                            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+                            const response = await fetch(`${API_BASE_URL}/auth/send-phone-otp`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json'
+                              },
+                              body: JSON.stringify({ phoneNumber: cleanPhone })
+                            });
+                            
+                            if (!response.ok) {
+                              const errorData = await response.json();
+                              throw new Error(errorData.message || 'Failed to send OTP');
+                            }
+                            
+                            toast.success('OTP sent to your phone number');
+                            setShowOTPModal(true);
+                          } catch (err) {
+                            toast.error(err.message || 'Failed to send OTP');
+                          }
+                        }}
+                        className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
+                      >
+                        Send OTP
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Must start with 0 or + and be at least 8 characters. Click "Send OTP" to verify.</p>
                 </div>
                 
                 {/* Job Seeker Specific Fields */}
@@ -459,6 +541,35 @@ export default function RegisterPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* OTP Verification Modal */}
+      {showOTPModal && (
+        <OTPVerification
+          phoneNumber={phoneNumber.trim()}
+          onVerified={() => {
+            setPhoneVerified(true);
+            setShowOTPModal(false);
+            toast.success('Phone number verified successfully!');
+          }}
+          onCancel={() => setShowOTPModal(false)}
+          onResendOTP={async (phone) => {
+            // Phone is already cleaned in the component
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
+            const response = await fetch(`${API_BASE_URL}/auth/send-phone-otp`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ phoneNumber: phone })
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Failed to resend OTP');
+            }
+          }}
+        />
       )}
     </PageFadeIn>
   );

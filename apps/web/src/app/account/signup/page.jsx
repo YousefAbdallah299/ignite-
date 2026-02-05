@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
+import PasswordInput from "@/components/PasswordInput";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 
 export default function SignupPage() {
@@ -45,6 +46,17 @@ export default function SignupPage() {
 
     if (!phoneNumber.trim()) {
       toast.error('Mobile number is required.');
+      return;
+    }
+
+    // Validate phone number format
+    const cleanPhone = phoneNumber.trim().replace(/[\s-]/g, '');
+    if (!/^(0|\+)/.test(cleanPhone)) {
+      toast.error('Phone number must start with 0 or +');
+      return;
+    }
+    if (cleanPhone.length < 8) {
+      toast.error('Phone number must be at least 8 characters');
       return;
     }
 
@@ -148,8 +160,7 @@ export default function SignupPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -159,12 +170,12 @@ export default function SignupPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={8}
+                placeholder="Confirm Password"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
@@ -173,10 +184,28 @@ export default function SignupPage() {
               <input
                 type="tel"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow digits, +, and spaces
+                  if (value === '' || /^[0-9+\s-]*$/.test(value)) {
+                    setPhoneNumber(value);
+                  }
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  if (value && !/^(0|\+)/.test(value)) {
+                    toast.error('Phone number must start with 0 or +');
+                  } else if (value && value.replace(/[\s-]/g, '').length < 8) {
+                    toast.error('Phone number must be at least 8 characters');
+                  }
+                }}
                 required
+                pattern="^(0|\+)[0-9+\s-]{7,}"
+                title="Phone number must start with 0 or + and be at least 8 characters"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="+1234567890 or 01234567890"
               />
+              <p className="text-xs text-gray-500 mt-1">Must start with 0 or + and be at least 8 characters</p>
             </div>
             <button
               type="submit"
