@@ -311,7 +311,8 @@ export default function ProfilePage() {
         summary: profile.summary || null,
         location: profile.location || null,
         expectedSalary: profile.expectedSalary || null,
-        expectedSalaryCurrency: profile.expectedSalaryCurrency || 'EGP'
+        expectedSalaryCurrency: profile.expectedSalaryCurrency || 'EGP',
+        currentPosition: profile.currentPosition || null
       };
       
       console.log('Saving profile with payload:', updatePayload);
@@ -918,6 +919,21 @@ export default function ProfilePage() {
                 Professional Details
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Position</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profile.currentPosition || ''}
+                      onChange={(e) => setProfile({ ...profile, currentPosition: e.target.value })}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="e.g., Junior Developer"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{profile.currentPosition || 'Not specified'}</p>
+                  )}
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Current Title</label>
                   {isEditing ? (

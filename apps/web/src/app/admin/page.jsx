@@ -448,10 +448,24 @@ export default function AdminPage() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to change password');
+        let errorMessage = 'Failed to change password';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (jsonError) {
+          // If response is not JSON, try to get text
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          } catch (textError) {
+            // Use default error message
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
       
+      const result = await response.text();
       toast.success('Password changed successfully!');
       setPasswordChangeForm({
         currentPassword: '',
@@ -461,7 +475,8 @@ export default function AdminPage() {
       setShowPasswordChangeForm(false);
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.error(`Error changing password: ${error.message}`);
+      const errorMessage = error.message || 'Failed to change password. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setChangingPassword(false);
     }

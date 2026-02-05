@@ -24,6 +24,8 @@ export default function RegisterPage() {
   const [expectedPosition, setExpectedPosition] = useState('');
   const [expectedSalary, setExpectedSalary] = useState('');
   const [expectedSalaryCurrency, setExpectedSalaryCurrency] = useState('EGP');
+  const [currentPosition, setCurrentPosition] = useState(''); // Optional current position for job seekers
+  const [businessEmail, setBusinessEmail] = useState(''); // Business email for recruiters
   const [showAgreementModal, setShowAgreementModal] = useState(true);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
@@ -135,6 +137,22 @@ export default function RegisterPage() {
       }
     }
 
+    // Additional validation for recruiters
+    if (role === 'RECRUITER') {
+      if (!businessEmail.trim()) {
+        console.log('Validation failed: Business email missing');
+        setValidationError('Business email is required for recruiters.');
+        return;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(businessEmail.trim())) {
+        console.log('Validation failed: Invalid business email format');
+        setValidationError('Please enter a valid business email address.');
+        return;
+      }
+    }
+
     console.log('All validations passed, calling register function...');
     
     try {
@@ -149,7 +167,11 @@ export default function RegisterPage() {
         ...(role === 'CANDIDATE' && {
           expectedPosition: expectedPosition.trim(),
           expectedSalary: parseFloat(expectedSalary),
-          expectedSalaryCurrency: expectedSalaryCurrency
+          expectedSalaryCurrency: expectedSalaryCurrency,
+          currentPosition: currentPosition.trim() || null // Optional field
+        }),
+        ...(role === 'RECRUITER' && {
+          businessEmail: businessEmail.trim()
         })
       };
       
@@ -357,6 +379,18 @@ export default function RegisterPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Current Position <span className="text-gray-500 text-xs">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={currentPosition}
+                        onChange={(e) => setCurrentPosition(e.target.value)}
+                        placeholder="e.g., Junior Developer, Marketing Assistant"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Expected Position <span className="text-red-600">*</span>
                       </label>
                       <input
@@ -438,6 +472,24 @@ export default function RegisterPage() {
                       <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
                     </div>
                   </>
+                )}
+
+                {/* Recruiter Specific Fields */}
+                {role === 'RECRUITER' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Business Email <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={businessEmail}
+                      onChange={(e) => setBusinessEmail(e.target.value)}
+                      required
+                      placeholder="business@company.com"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Your company or business email address</p>
+                  </div>
                 )}
                 
                 <div className="text-xs text-gray-500 text-center">

@@ -32,7 +32,7 @@ const getResumeUrl = (resumeUrl) => {
 };
 
 export default function CandidatePage() {
-  const { isAuthenticated, isRecruiter, isAdmin } = useAuthAPI();
+  const { isAuthenticated, isRecruiter, isAdmin, user } = useAuthAPI();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -341,19 +341,30 @@ export default function CandidatePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
                   <div>
-                    {data.resumeUrl ? (
-                      <a 
-                        href={getResumeUrl(data.resumeUrl)} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-red-600 hover:text-red-700 flex items-center"
-                      >
-                        <FileText className="w-4 h-4 mr-1" />
-                        View Resume
-                      </a>
-                    ) : (
-                      <p className="text-gray-500">No resume uploaded</p>
-                    )}
+                    {(() => {
+                      // Check if resume should be visible
+                      // Resume is visible to: admins and the candidate themselves
+                      // Resume is NOT visible to: recruiters (backend handles this)
+                      // If data.resumeUrl is null/empty, backend already hid it for recruiters
+                      
+                      if (!data.resumeUrl) {
+                        // Backend already hid the resume for recruiters, or no resume uploaded
+                        return <p className="text-gray-500">No resume uploaded</p>;
+                      }
+                      
+                      // Resume URL exists - show it (backend already filtered for recruiters)
+                      return (
+                        <a 
+                          href={getResumeUrl(data.resumeUrl)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-red-600 hover:text-red-700 flex items-center"
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          View Resume
+                        </a>
+                      );
+                    })()}
                   </div>
                 </div>
 

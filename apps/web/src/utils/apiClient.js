@@ -639,9 +639,11 @@ export const candidatesAPI = {
       skills.forEach(skill => params.append('skills', skill.toLowerCase()));
     }
     
+    // Include auth token if available (for resume visibility control)
+    const token = localStorage.getItem('authToken');
     return apiCall(`/candidates?${params.toString()}`, {
       method: 'GET',
-      includeAuth: false,
+      includeAuth: !!token, // Include auth if token exists
     });
   },
 
@@ -662,9 +664,11 @@ export const candidatesAPI = {
 
   // Get candidate by ID
   getCandidateById: async (candidateId) => {
+    // Include auth token if available (for resume visibility control)
+    const token = localStorage.getItem('authToken');
     return apiCall(`/candidates/${candidateId}`, {
       method: 'GET',
-      includeAuth: false,
+      includeAuth: !!token, // Include auth if token exists
     });
   },
 
