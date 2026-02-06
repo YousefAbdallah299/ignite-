@@ -103,7 +103,8 @@ export default function AdminPage() {
     { name: 'MANAGE_COURSES', label: 'Manage Courses' },
     { name: 'MANAGE_USERS', label: 'Manage Users' },
     { name: 'MANAGE_WORKSHOPS', label: 'Manage Workshops' },
-    { name: 'RATE_SKILLS', label: 'Rate Skills' }
+    { name: 'RATE_SKILLS', label: 'Rate Skills' },
+    { name: 'MANAGE_ADS', label: 'Manage Ads' }
   ];
 
   // Available user roles
@@ -1499,12 +1500,46 @@ export default function AdminPage() {
                   ) : (
                     users.map((u) => {
                       console.log('Rendering user:', u);
+                      const isAdmin = u.role === 'ADMIN';
+                      const handleUserClick = async () => {
+                        if (isAdmin) return; // Admins are not clickable
+                        if (u.role === 'CANDIDATE') {
+                          // For candidates, get the candidate profile ID from user ID
+                          try {
+                            const token = localStorage.getItem('authToken');
+                            const response = await fetch(`${API_BASE_URL}/candidates/user/${u.id}`, {
+                              headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                              }
+                            });
+                            if (response.ok) {
+                              const candidateData = await response.json();
+                              navigate(`/candidates/${candidateData.id}`);
+                            } else {
+                              toast.error('Failed to load candidate profile');
+                            }
+                          } catch (error) {
+                            console.error('Error fetching candidate profile:', error);
+                            toast.error('Failed to load candidate profile');
+                          }
+                        } else if (u.role === 'RECRUITER') {
+                          // For recruiters, navigate to job seekers page (they can see candidates)
+                          navigate(`/job-seekers`);
+                        }
+                      };
                       return (
-                    <div key={u.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div 
+                      key={u.id} 
+                      className={`border border-gray-200 rounded-lg p-4 transition-colors ${
+                        isAdmin ? 'cursor-default' : 'cursor-pointer hover:bg-gray-50'
+                      }`}
+                      onClick={handleUserClick}
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-gray-900">
+                            <h3 className={`font-semibold ${isAdmin ? 'text-gray-900' : 'text-gray-900'}`}>
                               {u.first_name} {u.last_name}
                             </h3>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -1526,7 +1561,7 @@ export default function AdminPage() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           {u.suspended ? (
                             <button 
                               onClick={() => suspendUser(u.id, false)} 
@@ -1701,6 +1736,7 @@ export default function AdminPage() {
               )}
 
               {/* Ads Management Section */}
+              {hasPrivilege('MANAGE_ADS') && (
               <section className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">Ads Management</h2>
@@ -1867,6 +1903,7 @@ export default function AdminPage() {
                   )}
                 </div>
               </section>
+              )}
 
               {/* Workshop Invite Section */}
               {hasPrivilege('MANAGE_WORKSHOPS') && (

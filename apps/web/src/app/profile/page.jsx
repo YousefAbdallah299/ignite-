@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle, DollarSign, Plus, Trash2 } from 'lucide-react';
+import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcase, GraduationCap, Award, Link, Eye, EyeOff, Check, XCircle, DollarSign, Plus, Trash2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -12,6 +12,7 @@ import { useOffersAPI } from '@/hooks/useOffersAPI';
 import { usePageTokenValidation } from '@/components/TokenValidationWrapper';
 import { candidatesAPI, skillsAPI } from '@/utils/apiClient';
 import CareerHistoryModal from '@/components/CareerHistoryModal';
+import PasswordInput from '@/components/PasswordInput';
 
 // Get API base URL from environment or use default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1';
@@ -131,6 +132,15 @@ export default function ProfilePage() {
   const [loadingCareerHistory, setLoadingCareerHistory] = useState(false);
   const [isCareerHistoryModalOpen, setIsCareerHistoryModalOpen] = useState(false);
   const [editingCareerHistory, setEditingCareerHistory] = useState(null);
+  
+  // Password change state
+  const [showPasswordChangeForm, setShowPasswordChangeForm] = useState(false);
+  const [passwordChangeForm, setPasswordChangeForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     console.log('Profile page useEffect - user:', user);
@@ -350,6 +360,80 @@ export default function ProfilePage() {
 
   const handleCancel = () => {
     setIsEditing(false);
+    loadProfile(); // Reload to reset changes
+  };
+
+  const changePassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordChangeForm.newPassword !== passwordChangeForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    
+    if (passwordChangeForm.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currentPassword: passwordChangeForm.currentPassword,
+          newPassword: passwordChangeForm.newPassword,
+          confirmPassword: passwordChangeForm.confirmPassword
+        })
+      });
+      
+      if (!response.ok) {
+        let errorMessage = 'Failed to change password';
+        const contentType = response.headers.get('content-type');
+        
+        try {
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+          } else {
+            const errorText = await response.text();
+            if (errorText && errorText.trim()) {
+              errorMessage = errorText;
+            } else {
+              errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
+          }
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText || 'Unknown error'}`;
+        }
+        
+        toast.error(`Error: ${errorMessage}`);
+        throw new Error(errorMessage);
+      }
+      
+      toast.success('Password changed successfully!');
+      setPasswordChangeForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setShowPasswordChangeForm(false);
+    } catch (error) {
+      console.error('Error changing password:', error);
+      if (error.message && !error.message.includes('Failed to change password')) {
+        // Error was already shown in toast
+        return;
+      }
+      toast.error(error.message || 'Failed to change password. Please check your connection and try again.');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
     loadProfile(); // Reset to original data
     setError(null);
   };
@@ -1246,6 +1330,69 @@ export default function ProfilePage() {
                   <span className="font-semibold">{formatDate(profile?.createdAt)}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Change Password Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Lock className="w-5 h-5 mr-2 text-red-600" />
+                  Change Password
+                </h3>
+                <button
+                  onClick={() => setShowPasswordChangeForm(!showPasswordChangeForm)}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                >
+                  {showPasswordChangeForm ? 'Cancel' : 'Change'}
+                </button>
+              </div>
+              
+              {showPasswordChangeForm && (
+                <form onSubmit={changePassword} className="space-y-4 border-t border-gray-200 pt-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                    <PasswordInput
+                      value={passwordChangeForm.currentPassword}
+                      onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, currentPassword: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      required
+                      placeholder="Current Password"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <PasswordInput
+                      value={passwordChangeForm.newPassword}
+                      onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, newPassword: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      required
+                      minLength={8}
+                      placeholder="New Password"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <PasswordInput
+                      value={passwordChangeForm.confirmPassword}
+                      onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, confirmPassword: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      required
+                      minLength={8}
+                      placeholder="Confirm New Password"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                  >
+                    {changingPassword ? 'Changing...' : 'Change Password'}
+                  </button>
+                </form>
+              )}
             </div>
 
             {/* My Offers */}
