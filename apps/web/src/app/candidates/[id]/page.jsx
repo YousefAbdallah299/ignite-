@@ -50,6 +50,13 @@ export default function CandidatePage() {
   const [canViewComments, setCanViewComments] = useState(false);
   const id = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
 
+  // Resume visibility:
+  // - Visible to: the candidate themselves and admins
+  // - Hidden (no section at all) for everyone else
+  const canViewResume =
+    !!data &&
+    ((isAuthenticated && user && user.id === data.userId) || isAdmin);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -338,22 +345,11 @@ export default function CandidatePage() {
                   <p className="text-gray-900">{data.title || 'Not specified'}</p>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
+                {canViewResume && (
                   <div>
-                    {(() => {
-                      // Check if resume should be visible
-                      // Resume is visible to: admins and the candidate themselves
-                      // Resume is NOT visible to: recruiters (backend handles this)
-                      // If data.resumeUrl is null/empty, backend already hid it for recruiters
-                      
-                      if (!data.resumeUrl) {
-                        // Backend already hid the resume for recruiters, or no resume uploaded
-                        return <p className="text-gray-500">No resume uploaded</p>;
-                      }
-                      
-                      // Resume URL exists - show it (backend already filtered for recruiters)
-                      return (
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Resume</label>
+                    <div>
+                      {data.resumeUrl ? (
                         <a 
                           href={getResumeUrl(data.resumeUrl)} 
                           target="_blank" 
@@ -363,10 +359,12 @@ export default function CandidatePage() {
                           <FileText className="w-4 h-4 mr-1" />
                           View Resume
                         </a>
-                      );
-                    })()}
+                      ) : (
+                        <p className="text-gray-500">No resume uploaded</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
