@@ -14,69 +14,74 @@ export default function AdPopup() {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState('bottom-right');
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Debug: log when the client component mounts/rendered
+  // Ensure component only runs on client
   useEffect(() => {
-    try {
+    if (typeof window !== 'undefined') {
+      setIsMounted(true);
       console.log('AdPopup: component mounted on client');
-      console.log('AdPopup: window.location:', typeof window !== 'undefined' ? window.location.href : 'no-window');
-    } catch (e) {
-      console.error('AdPopup debug log failed:', e);
+      console.log('AdPopup: window.location:', window.location.href);
     }
   }, []);
 
-  // Debug: wrap window.fetch in dev to trace outgoing requests
+  // Load ads on mount (only after component is confirmed to be on client)
   useEffect(() => {
-    try {
-      const isDevEnv = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_APP_ENVIRONMENT !== 'production';
-      if (isDevEnv && typeof window !== 'undefined' && window.fetch) {
-        if (!window.__fetchPatchedForAdDebug) {
-          const originalFetch = window.fetch.bind(window);
-          window.fetch = async (...args) => {
-            try {
-              console.log('fetch called with args:', args);
-              // show a stacktrace so dev can see who triggered the fetch
-              console.trace('fetch trace');
-            } catch (e) {
-              /* ignore */
-            }
-            return originalFetch(...args);
-          };
-          window.__fetchPatchedForAdDebug = true;
-          console.log('AdPopup: fetch patched for debug');
-        }
-      }
-    } catch (e) {
-      console.error('AdPopup fetch patch failed:', e);
+    if (!isMounted || typeof window === 'undefined') {
+      console.log('AdPopup: Skipping loadAds - not mounted or no window');
+      return;
     }
-  }, []);
 
-  // Load ads on mount
-  useEffect(() => {
+    console.log('AdPopup: useEffect for loadAds triggered, isMounted:', isMounted);
+
     const loadAds = async () => {
       try {
-        console.trace('AdPopup.loadAds called');
-        console.log('Loading ads...');
+        console.log('AdPopup: Starting to load ads...');
+        console.log('AdPopup: Calling adsAPI.getActiveAds()');
+        console.log('AdPopup: adsAPI object:', adsAPI);
+        console.log('AdPopup: adsAPI.getActiveAds function:', typeof adsAPI?.getActiveAds);
+        
+        if (!adsAPI || typeof adsAPI.getActiveAds !== 'function') {
+          console.error('AdPopup: adsAPI.getActiveAds is not a function!');
+          return;
+        }
+        
         const activeAds = await adsAPI.getActiveAds();
-        console.log('Active ads received:', activeAds);
+        console.log('AdPopup: Active ads received:', activeAds);
+        console.log('AdPopup: Active ads type:', typeof activeAds);
+        console.log('AdPopup: Active ads is array?', Array.isArray(activeAds));
         
         if (activeAds && Array.isArray(activeAds) && activeAds.length > 0) {
+          console.log('AdPopup: Setting ads state with', activeAds.length, 'ads');
           setAds(activeAds);
           // Show ad after 2 seconds
           setTimeout(() => {
-            console.log('Showing ad after delay');
+            console.log('AdPopup: Showing ad after delay');
             setIsVisible(true);
           }, 2000);
         } else {
-          console.log('No active ads found');
+          console.log('AdPopup: No active ads found or empty array');
+          console.log('AdPopup: activeAds value:', activeAds);
         }
       } catch (error) {
-        console.error('Error loading ads:', error);
+        console.error('AdPopup: Error loading ads:', error);
+        console.error('AdPopup: Error stack:', error?.stack);
+        console.error('AdPopup: Error message:', error?.message);
+        console.error('AdPopup: Full error object:', error);
       }
     };
 
-    loadAds();
-  }, []);
+    // Small delay to ensure everything is ready
+    const timer = setTimeout(() => {
+      console.log('AdPopup: Timer fired, calling loadAds');
+      loadAds();
+    }, 100);
+
+    return () => {
+      console.log('AdPopup: Cleaning up timer');
+      clearTimeout(timer);
+    };
+  }, [isMounted]);
 
   // Update position based on scroll
   useEffect(() => {
@@ -116,14 +121,46 @@ export default function AdPopup() {
     handleDismiss();
   };
 
+  // Don't render if not mounted (SSR safety)
+  if (!isMounted || typeof window === 'undefined') {
+    return null;
+  }
+
+  // Dev mode: Always show debug info
+  const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_APP_ENVIRONMENT !== 'production';
+
   // Don't render if no ads or not visible
   if (!ads.length || !isVisible) {
     // Helpful runtime log so we can see render decision in the console
     try {
-      console.log('AdPopup: not rendering. ads.length=', ads.length, 'isVisible=', isVisible);
+      console.log('AdPopup: not rendering. ads.length=', ads.length, 'isVisible=', isVisible, 'isMounted=', isMounted);
     } catch (e) {
       /* ignore */
     }
+    
+    // In dev mode, show a small indicator that the component is mounted
+    if (isDev) {
+      return (
+        <div style={{ 
+          position: 'fixed', 
+          left: 8, 
+          top: 8, 
+          zIndex: 99999, 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '8px 12px', 
+          borderRadius: 6, 
+          fontSize: 12,
+          fontFamily: 'monospace'
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>AdPopup Status</div>
+          <div>Mounted: {String(isMounted)}</div>
+          <div>Ads: {ads.length}</div>
+          <div>Visible: {String(isVisible)}</div>
+        </div>
+      );
+    }
+    
     return null;
   }
 
@@ -143,9 +180,6 @@ export default function AdPopup() {
     'top-right': 'top-6 right-6',
     'top-left': 'top-6 left-6',
   };
-
-  // Dev-only debug overlay flag
-  const isDev = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_APP_ENVIRONMENT !== 'production';
 
   return (
     <>
