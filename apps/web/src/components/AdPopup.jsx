@@ -14,6 +14,7 @@ export default function AdPopup() {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [dismissedAds, setDismissedAds] = useState(new Set());
+  const [showDelay, setShowDelay] = useState(false);
 
   useEffect(() => {
     const loadAds = async () => {
@@ -21,7 +22,8 @@ export default function AdPopup() {
         const activeAds = await adsAPI.getActiveAds();
         if (activeAds && activeAds.length > 0) {
           setAds(activeAds);
-          setIsVisible(true);
+          // Set showDelay to true, then after 2 seconds show the ad
+          setShowDelay(true);
         }
       } catch (error) {
         console.error('Error loading ads:', error);
@@ -30,6 +32,17 @@ export default function AdPopup() {
 
     loadAds();
   }, []);
+
+  // Show ad after 2 seconds delay
+  useEffect(() => {
+    if (!showDelay || ads.length === 0) return;
+    
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 2000); // 2 second delay
+
+    return () => clearTimeout(timer);
+  }, [showDelay, ads.length]);
 
   const handleDismiss = () => {
     if (ads.length > 0) {

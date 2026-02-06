@@ -525,19 +525,30 @@ export default function AdminPage() {
       
       if (!response.ok) {
         let errorMessage = 'Failed to change password';
+        const contentType = response.headers.get('content-type');
+        
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch (jsonError) {
-          // If response is not JSON, try to get text
-          try {
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+          } else {
+            // Try to get text response
             const errorText = await response.text();
-            errorMessage = errorText || errorMessage;
-          } catch (textError) {
-            // Use default error message
-            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            if (errorText && errorText.trim()) {
+              errorMessage = errorText;
+            } else {
+              errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
           }
+        } catch (parseError) {
+          // If parsing fails, use status-based message
+          errorMessage = `HTTP ${response.status}: ${response.statusText || 'Unknown error'}`;
         }
+        
+        // Display error in UI immediately
+        toast.error(errorMessage, {
+          duration: 6000,
+        });
         throw new Error(errorMessage);
       }
       
@@ -551,8 +562,13 @@ export default function AdminPage() {
       setShowPasswordChangeForm(false);
     } catch (error) {
       console.error('Error changing password:', error);
-      const errorMessage = error.message || 'Failed to change password. Please try again.';
-      toast.error(errorMessage);
+      // Only show error if it wasn't already shown (i.e., if it's a network error)
+      if (!error.message || error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+        const errorMessage = error.message || 'Failed to change password. Please check your connection and try again.';
+        toast.error(errorMessage, {
+          duration: 6000,
+        });
+      }
     } finally {
       setChangingPassword(false);
     }
@@ -1796,19 +1812,41 @@ export default function AdminPage() {
                   ) : (
                     ads.map((ad) => (
                       <div key={ad.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 mb-1">{ad.title}</h3>
                             <div className="space-y-1 text-xs text-gray-600">
-                              <p><strong>Image:</strong> <a href={ad.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block max-w-md">{ad.imageUrl}</a></p>
-                              <p><strong>Redirect:</strong> <a href={ad.redirectUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block max-w-md">{ad.redirectUrl}</a></p>
+                              <p className="break-words">
+                                <strong>Image:</strong>{' '}
+                                <a 
+                                  href={ad.imageUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-blue-600 hover:underline break-all"
+                                  title={ad.imageUrl}
+                                >
+                                  {ad.imageUrl}
+                                </a>
+                              </p>
+                              <p className="break-words">
+                                <strong>Redirect:</strong>{' '}
+                                <a 
+                                  href={ad.redirectUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-blue-600 hover:underline break-all"
+                                  title={ad.redirectUrl}
+                                >
+                                  {ad.redirectUrl}
+                                </a>
+                              </p>
                               <p><strong>Period:</strong> {new Date(ad.startDate).toLocaleDateString()} - {new Date(ad.endDate).toLocaleDateString()}</p>
                               <p><strong>Status:</strong> <span className={ad.enabled ? 'text-green-600' : 'text-gray-500'}>{ad.enabled ? 'Enabled' : 'Disabled'}</span></p>
                             </div>
                           </div>
                           <button
                             onClick={() => deleteAd(ad.id)}
-                            className="text-red-600 hover:text-red-800 font-medium text-sm ml-4"
+                            className="text-red-600 hover:text-red-800 font-medium text-sm flex-shrink-0"
                             title="Delete ad"
                           >
                             Delete
