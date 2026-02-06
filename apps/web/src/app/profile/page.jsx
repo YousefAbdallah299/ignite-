@@ -434,9 +434,6 @@ export default function ProfilePage() {
       setChangingPassword(false);
     }
   };
-    loadProfile(); // Reset to original data
-    setError(null);
-  };
 
   const handleOfferResponse = async (offerId, status) => {
     try {
