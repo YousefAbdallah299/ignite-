@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import PasswordInput from '@/components/PasswordInput';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI, adminAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI, adminAPI, adsAPI } from '@/utils/apiClient';
 import { toast } from 'sonner';
 
 // Get API base URL from environment or use default
@@ -84,6 +84,20 @@ export default function AdminPage() {
     confirmPassword: ''
   });
   const [changingPassword, setChangingPassword] = useState(false);
+  
+  // Ads management state
+  const [ads, setAds] = useState([]);
+  const [loadingAds, setLoadingAds] = useState(false);
+  const [showAdForm, setShowAdForm] = useState(false);
+  const [newAd, setNewAd] = useState({
+    title: '',
+    imageUrl: '',
+    redirectUrl: '',
+    startDate: '',
+    endDate: '',
+    enabled: true
+  });
+  const [creatingAd, setCreatingAd] = useState(false);
   
   const availablePrivileges = [
     { name: 'MANAGE_COURSES', label: 'Manage Courses' },
@@ -294,8 +308,70 @@ export default function AdminPage() {
       loadCandidates();
       loadAvailableSkills();
       loadMyPrivileges();
+      loadAds();
     }
   }, [isAdmin]);
+  
+  // Load ads
+  const loadAds = async () => {
+    setLoadingAds(true);
+    try {
+      const activeAds = await adsAPI.getActiveAds();
+      // Note: getActiveAds only returns active ads, but for admin we might want all ads
+      // For now, we'll use this endpoint. You can add a GET /admin/ads endpoint later if needed
+      setAds(activeAds || []);
+    } catch (error) {
+      console.error('Error loading ads:', error);
+      setAds([]);
+    } finally {
+      setLoadingAds(false);
+    }
+  };
+  
+  // Create ad
+  const createAd = async (e) => {
+    e.preventDefault();
+    setCreatingAd(true);
+    try {
+      const adData = {
+        ...newAd,
+        startDate: newAd.startDate || new Date().toISOString().split('T')[0],
+        endDate: newAd.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+      await adsAPI.createAd(adData);
+      toast.success('Ad created successfully!');
+      setNewAd({
+        title: '',
+        imageUrl: '',
+        redirectUrl: '',
+        startDate: '',
+        endDate: '',
+        enabled: true
+      });
+      setShowAdForm(false);
+      loadAds();
+    } catch (error) {
+      console.error('Error creating ad:', error);
+      toast.error(`Error creating ad: ${error.message}`);
+    } finally {
+      setCreatingAd(false);
+    }
+  };
+  
+  // Delete ad
+  const deleteAd = async (id) => {
+    if (!confirm('Are you sure you want to delete this ad?')) {
+      return;
+    }
+    try {
+      await adsAPI.deleteAd(id);
+      toast.success('Ad deleted successfully!');
+      loadAds();
+    } catch (error) {
+      console.error('Error deleting ad:', error);
+      toast.error(`Error deleting ad: ${error.message}`);
+    }
+  };
 
   const loadMyPrivileges = async () => {
     try {
@@ -1609,6 +1685,152 @@ export default function AdminPage() {
                 </div>
               </section>
               )}
+
+              {/* Ads Management Section */}
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Ads Management</h2>
+                  <button
+                    onClick={() => setShowAdForm(!showAdForm)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  >
+                    {showAdForm ? 'Cancel' : '+ Create Ad'}
+                  </button>
+                </div>
+                
+                {showAdForm && (
+                  <form onSubmit={createAd} className="space-y-4 border-t border-gray-200 pt-4 mt-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={newAd.title}
+                        onChange={(e) => setNewAd({ ...newAd, title: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                        placeholder="Ad title"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                      <input
+                        type="url"
+                        value={newAd.imageUrl}
+                        onChange={(e) => setNewAd({ ...newAd, imageUrl: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                        placeholder="https://cdn.site.com/ads/sale.png"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Redirect URL</label>
+                      <input
+                        type="url"
+                        value={newAd.redirectUrl}
+                        onChange={(e) => setNewAd({ ...newAd, redirectUrl: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                        placeholder="https://example.com/sale"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          value={newAd.startDate}
+                          onChange={(e) => setNewAd({ ...newAd, startDate: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input
+                          type="date"
+                          value={newAd.endDate}
+                          onChange={(e) => setNewAd({ ...newAd, endDate: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newAd.enabled}
+                          onChange={(e) => setNewAd({ ...newAd, enabled: e.target.checked })}
+                          className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-sm text-gray-700">Enabled</span>
+                      </label>
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={creatingAd}
+                      className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                    >
+                      {creatingAd ? 'Creating...' : 'Create Ad'}
+                    </button>
+                  </form>
+                )}
+                
+                {/* Ads List */}
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {loadingAds ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-2"></div>
+                      <p className="text-sm">Loading ads...</p>
+                    </div>
+                  ) : ads.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="text-4xl mb-2">📢</div>
+                      <p className="text-sm">No active ads found</p>
+                    </div>
+                  ) : (
+                    ads.map((ad) => (
+                      <div key={ad.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">{ad.title}</h3>
+                            <div className="space-y-1 text-xs text-gray-600">
+                              <p><strong>Image:</strong> <a href={ad.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block max-w-md">{ad.imageUrl}</a></p>
+                              <p><strong>Redirect:</strong> <a href={ad.redirectUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block max-w-md">{ad.redirectUrl}</a></p>
+                              <p><strong>Period:</strong> {new Date(ad.startDate).toLocaleDateString()} - {new Date(ad.endDate).toLocaleDateString()}</p>
+                              <p><strong>Status:</strong> <span className={ad.enabled ? 'text-green-600' : 'text-gray-500'}>{ad.enabled ? 'Enabled' : 'Disabled'}</span></p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => deleteAd(ad.id)}
+                            className="text-red-600 hover:text-red-800 font-medium text-sm ml-4"
+                            title="Delete ad"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        {ad.imageUrl && (
+                          <div className="mt-3">
+                            <img
+                              src={ad.imageUrl}
+                              alt={ad.title}
+                              className="w-full h-32 object-cover rounded border border-gray-200"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
 
               {/* Workshop Invite Section */}
               {hasPrivilege('MANAGE_WORKSHOPS') && (

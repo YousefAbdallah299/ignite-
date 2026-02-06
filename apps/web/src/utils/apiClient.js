@@ -907,6 +907,32 @@ export const adminAPI = {
   },
 };
 
+// Ads API
+export const adsAPI = {
+  // Get active ads (public)
+  getActiveAds: async () => {
+    return apiCall('/ads/active', {
+      method: 'GET',
+      includeAuth: false,
+    });
+  },
+
+  // Create ad (admin only)
+  createAd: async (adData) => {
+    return apiCall('/admin/ads', {
+      method: 'POST',
+      body: JSON.stringify(adData),
+    });
+  },
+
+  // Delete ad (admin only)
+  deleteAd: async (id) => {
+    return apiCall(`/admin/ads/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 // Export all APIs
 export default {
   auth: authAPI,
@@ -920,4 +946,5 @@ export default {
   skills: skillsAPI,
   workshops: workshopsAPI,
   payments: paymentsAPI,
+  ads: adsAPI,
 };
