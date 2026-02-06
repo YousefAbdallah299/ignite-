@@ -7,23 +7,31 @@ import { adsAPI } from '@/utils/apiClient';
 /**
  * AdPopup Component
  * Displays active ads from the backend API
- * Shows popup in empty space on pages, can be dismissed with X button
+ * Shows popup after 2 seconds on all pages
  */
 export default function AdPopup() {
   const [ads, setAds] = useState([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [dismissedAds, setDismissedAds] = useState(new Set());
-  const [showDelay, setShowDelay] = useState(false);
+  const [position, setPosition] = useState('bottom-right');
 
+  // Load ads on mount
   useEffect(() => {
     const loadAds = async () => {
       try {
+        console.log('Loading ads...');
         const activeAds = await adsAPI.getActiveAds();
-        if (activeAds && activeAds.length > 0) {
+        console.log('Active ads received:', activeAds);
+        
+        if (activeAds && Array.isArray(activeAds) && activeAds.length > 0) {
           setAds(activeAds);
-          // Set showDelay to true, then after 2 seconds show the ad
-          setShowDelay(true);
+          // Show ad after 2 seconds
+          setTimeout(() => {
+            console.log('Showing ad after delay');
+            setIsVisible(true);
+          }, 2000);
+        } else {
+          console.log('No active ads found');
         }
       } catch (error) {
         console.error('Error loading ads:', error);
@@ -33,64 +41,12 @@ export default function AdPopup() {
     loadAds();
   }, []);
 
-  // Show ad after 2 seconds delay
+  // Update position based on scroll
   useEffect(() => {
-    if (!showDelay || ads.length === 0) return;
-    
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 2000); // 2 second delay
-
-    return () => clearTimeout(timer);
-  }, [showDelay, ads.length]);
-
-  const handleDismiss = () => {
-    if (ads.length > 0) {
-      const currentAdId = ads[currentAdIndex]?.id;
-      if (currentAdId) {
-        setDismissedAds(prev => new Set([...prev, currentAdId]));
-      }
-      
-      // Move to next ad if available
-      if (currentAdIndex < ads.length - 1) {
-        setCurrentAdIndex(prev => prev + 1);
-      } else {
-        setIsVisible(false);
-      }
-    }
-  };
-
-  const handleAdClick = (redirectUrl) => {
-    if (redirectUrl) {
-      window.open(redirectUrl, '_blank', 'noopener,noreferrer');
-    }
-    handleDismiss();
-  };
-
-  // Don't show if no ads, not visible, or current ad is dismissed
-  if (!ads.length || !isVisible) {
-    return null;
-  }
-
-  const currentAd = ads[currentAdIndex];
-  if (!currentAd || dismissedAds.has(currentAd.id)) {
-    // Move to next ad
-    if (currentAdIndex < ads.length - 1) {
-      setCurrentAdIndex(prev => prev + 1);
-      return null;
-    }
-    return null;
-  }
-
-  // Determine position based on viewport - try to fit in empty space
-  const [position, setPosition] = useState('bottom-right');
-  
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !isVisible) return;
     
     const updatePosition = () => {
       const scrollY = window.scrollY;
-      // If scrolled down significantly, show at top
       if (scrollY > 200) {
         setPosition('top-right');
       } else {
@@ -105,7 +61,34 @@ export default function AdPopup() {
       window.removeEventListener('scroll', updatePosition);
     };
   }, [isVisible]);
-  
+
+  const handleDismiss = () => {
+    if (currentAdIndex < ads.length - 1) {
+      // Move to next ad
+      setCurrentAdIndex(prev => prev + 1);
+    } else {
+      // No more ads, hide popup
+      setIsVisible(false);
+    }
+  };
+
+  const handleAdClick = (redirectUrl) => {
+    if (redirectUrl) {
+      window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+    }
+    handleDismiss();
+  };
+
+  // Don't render if no ads or not visible
+  if (!ads.length || !isVisible) {
+    return null;
+  }
+
+  const currentAd = ads[currentAdIndex];
+  if (!currentAd) {
+    return null;
+  }
+
   const positionClasses = {
     'bottom-right': 'bottom-6 right-6',
     'bottom-left': 'bottom-6 left-6',
@@ -115,11 +98,11 @@ export default function AdPopup() {
 
   return (
     <div 
-      className={`fixed ${positionClasses[position]} z-50 max-w-sm w-full animate-in fade-in slide-in-from-bottom-4 duration-300`}
-      style={{ maxWidth: '400px' }}
+      className={`fixed ${positionClasses[position]} z-50 max-w-sm w-full`}
+      style={{ maxWidth: '400px', zIndex: 9999 }}
     >
       <div 
-        className="relative bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden cursor-pointer hover:shadow-3xl transition-shadow"
+        className="relative bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden cursor-pointer hover:shadow-3xl transition-shadow animate-in fade-in slide-in-from-bottom-4 duration-300"
         onClick={() => handleAdClick(currentAd.redirectUrl)}
       >
         {/* Close Button */}
@@ -144,7 +127,10 @@ export default function AdPopup() {
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.style.display = 'none';
-                e.target.nextSibling?.classList.remove('hidden');
+                const errorDiv = e.target.nextElementSibling;
+                if (errorDiv) {
+                  errorDiv.classList.remove('hidden');
+                }
               }}
             />
             <div className="hidden w-full h-full flex items-center justify-center text-gray-400">
@@ -163,4 +149,3 @@ export default function AdPopup() {
     </div>
   );
 }
-

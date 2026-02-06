@@ -545,10 +545,8 @@ export default function AdminPage() {
           errorMessage = `HTTP ${response.status}: ${response.statusText || 'Unknown error'}`;
         }
         
-        // Display error in UI immediately
-        toast.error(errorMessage, {
-          duration: 6000,
-        });
+        // Display error in alert
+        alert(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       }
       
@@ -562,13 +560,13 @@ export default function AdminPage() {
       setShowPasswordChangeForm(false);
     } catch (error) {
       console.error('Error changing password:', error);
-      // Only show error if it wasn't already shown (i.e., if it's a network error)
-      if (!error.message || error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
-        const errorMessage = error.message || 'Failed to change password. Please check your connection and try again.';
-        toast.error(errorMessage, {
-          duration: 6000,
-        });
+      // Show error in alert if it's a network error or other error
+      if (error.message && error.message !== 'Failed to change password') {
+        // Error was already shown in the if block above
+        return;
       }
+      const errorMessage = error.message || 'Failed to change password. Please check your connection and try again.';
+      alert(`Error: ${errorMessage}`);
     } finally {
       setChangingPassword(false);
     }
