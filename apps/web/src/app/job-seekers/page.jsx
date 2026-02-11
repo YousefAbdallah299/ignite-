@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { candidatesAPI, offersAPI } from "@/utils/apiClient";
 import { Search, MapPin, Filter, Briefcase, GraduationCap, UserRound, Calendar, FileText, Award, X, DollarSign } from "lucide-react";
@@ -676,6 +678,9 @@ export default function JobSeekersPage() {
           </div>
         </div>
       </div>
+
+      <AdPopup slot="job-seekers" />
+      <AdPopupLeft slot="job-seekers-slot2" />
 
       <Footer />
 
