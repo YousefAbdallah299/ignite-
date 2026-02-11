@@ -271,8 +271,8 @@ export default function JobsPage() {
   return (
     <>
       {/* Ad Popups - Fixed position */}
-      <AdPopup />
-      <AdPopupLeft />
+      <AdPopup slot="jobs" />
+      <AdPopupLeft slot="jobs-slot2" />
 
       <PageFadeIn className="bg-gray-50">
         <Header />

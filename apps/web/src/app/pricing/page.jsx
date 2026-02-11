@@ -211,8 +211,8 @@ export default function PricingPage() {
       </section>
 
       {/* Ad Popups - Fixed position */}
-      <AdPopup />
-      <AdPopupLeft />
+      <AdPopup slot="pricing" />
+      <AdPopupLeft slot="pricing-slot2" />
 
       <RevealOnScroll>
         <Footer />

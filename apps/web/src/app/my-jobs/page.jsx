@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { toast } from 'sonner';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import AdvertisingPopup from "@/components/AdvertisingPopup";
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { jobsAPI, offersAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -540,12 +541,8 @@ export default function MyJobsPage() {
       )}
 
       {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-left"
-        showDelay={4000}
-        storageKey="ad_my_jobs_slot1"
-        size="medium"
+      <AdPopupLeft
+        slot="my-jobs"
       />
 
       <Footer />

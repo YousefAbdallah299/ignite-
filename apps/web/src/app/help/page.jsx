@@ -8,8 +8,8 @@ export default function HelpCenterPage() {
   return (
     <>
       {/* Ad Popups - Fixed position */}
-      <AdPopup />
-      <AdPopupLeft />
+      <AdPopup slot="help" />
+      <AdPopupLeft slot="help-slot2" />
 
       <div className="min-h-screen bg-gray-50 page-fade-in">
       <Header />

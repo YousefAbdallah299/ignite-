@@ -5,7 +5,8 @@ import { Edit3, Save, X, User, Mail, Phone, MapPin, Calendar, FileText, Briefcas
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AdvertisingPopup from '@/components/AdvertisingPopup';
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useCandidatesAPI } from '@/hooks/useCandidatesAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
@@ -1430,12 +1431,8 @@ export default function ProfilePage() {
       />
 
       {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-right"
-        showDelay={4000}
-        storageKey="ad_profile_slot1"
-        size="medium"
+      <AdPopup
+        slot="profile"
       />
 
       <Footer />

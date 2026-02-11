@@ -260,13 +260,9 @@ export default function PostsFeedPage() {
 
   return (
     <>
-      {/* Floating Ads - outside PageFadeIn for proper positioning */}
-      <FloatingAd position="left" size="medium" />
-      <FloatingAd position="right" size="medium" />
-      
       {/* Ad Popups */}
-      <AdPopup />
-      <AdPopupLeft />
+      <AdPopup slot="blog" />
+      <AdPopupLeft slot="blog-slot2" />
 
       <PageFadeIn className="bg-gray-50">
         <Header />

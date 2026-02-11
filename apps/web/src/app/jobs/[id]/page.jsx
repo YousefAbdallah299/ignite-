@@ -402,8 +402,8 @@ export default function JobDetailPage() {
       </div>
 
       {/* Ad Popups - Fixed position */}
-      <AdPopup />
-      <AdPopupLeft />
+      <AdPopup slot="job-detail" />
+      <AdPopupLeft slot="job-detail-slot2" />
 
       <RevealOnScroll>
         <Footer />

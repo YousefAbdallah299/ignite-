@@ -860,21 +860,13 @@ export default function CoursesPage() {
       </RevealOnScroll>
 
       {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-right"
-        showDelay={3500}
-        storageKey="ad_courses_slot1"
-        size="medium"
+      <AdPopup
+        slot="courses"
       />
       
       {/* Advertising Popup - Slot 2 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="top-left"
-        showDelay={6000}
-        storageKey="ad_courses_slot2"
-        size="small"
+      <AdPopupLeft
+        slot="courses-slot2"
       />
 
       {/* Course Request Modal */}

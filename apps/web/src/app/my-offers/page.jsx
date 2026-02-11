@@ -5,7 +5,8 @@ import { Check, XCircle, Clock, User, DollarSign, Calendar, Eye, Trash2, Buildin
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AdvertisingPopup from '@/components/AdvertisingPopup';
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from '@/components/RevealOnScroll';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
@@ -638,12 +639,8 @@ export default function MyOffersPage() {
       </div>
 
       {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-right"
-        showDelay={4000}
-        storageKey="ad_my_offers_slot1"
-        size="medium"
+      <AdPopup
+        slot="my-offers"
       />
 
       <RevealOnScroll>

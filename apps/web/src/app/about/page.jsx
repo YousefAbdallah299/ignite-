@@ -9,8 +9,8 @@ export default function AboutPage() {
   return (
     <>
       {/* Ad Popups - Fixed position */}
-      <AdPopup />
-      <AdPopupLeft />
+      <AdPopup slot="about" />
+      <AdPopupLeft slot="about-slot2" />
 
       <PageFadeIn className="bg-gray-50">
       <Header />

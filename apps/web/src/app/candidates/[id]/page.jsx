@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AdvertisingPopup from '@/components/AdvertisingPopup';
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { MapPin, Briefcase, GraduationCap, Calendar, FileText, Award, User, Mail, Phone, X, MessageSquare, Send, DollarSign } from 'lucide-react';
 import { candidatesAPI, offersAPI } from '@/utils/apiClient';
@@ -623,12 +624,8 @@ export default function CandidatePage() {
       )}
 
       {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-right"
-        showDelay={4000}
-        storageKey="ad_candidate_view_slot1"
-        size="medium"
+      <AdPopup
+        slot="candidate-view"
       />
 
       <Footer />
