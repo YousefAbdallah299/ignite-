@@ -129,33 +129,54 @@ footer,
   @apply bg-white;
 }
 
-/* Floating Ad Styles */
+/* Floating Ad Styles - Use regular CSS for proper positioning */
 .floating-ad {
-  @apply fixed z-50 hidden;
+  display: none;
+  position: fixed !important;
+  z-index: 9999 !important;
 }
 
 .floating-ad--visible {
-  @apply block;
+  display: block !important;
 }
 
 .floating-ad--left {
-  @apply left-4 top-1/2 transform -translate-y-1/2;
+  left: 20px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
 }
 
 .floating-ad--right {
-  @apply right-4 top-1/2 transform -translate-y-1/2;
+  right: 20px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
 }
 
 .floating-ad--small {
-  @apply w-40 h-56;
+  width: 160px !important;
+  height: 224px !important;
 }
 
 .floating-ad--medium {
-  @apply w-48 h-64 md:w-56 md:h-72;
+  width: 192px !important;
+  height: 256px !important;
 }
 
 .floating-ad--large {
-  @apply w-56 h-72 md:w-64 md:h-80;
+  width: 224px !important;
+  height: 288px !important;
+}
+
+@media (min-width: 768px) {
+  .floating-ad--medium {
+    width: 224px !important;
+    height: 288px !important;
+  }
+  
+  .floating-ad--large {
+    width: 256px !important;
+    height: 320px !important;
+  }
 }
 
 .floating-ad__close {
@@ -208,15 +229,20 @@ footer,
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .floating-ad--left,
   .floating-ad--right {
-    @apply left-4 right-4 top-auto bottom-4 transform-none;
+    left: 20px !important;
+    right: 20px !important;
+    top: auto !important;
+    bottom: 20px !important;
+    transform: none !important;
   }
   
   .floating-ad--small,
   .floating-ad--medium,
   .floating-ad--large {
-    @apply w-full h-48;
+    width: calc(100% - 40px) !important;
+    height: 180px !important;
   }
 }
