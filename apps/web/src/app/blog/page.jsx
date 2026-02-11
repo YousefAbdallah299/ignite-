@@ -473,13 +473,7 @@ export default function PostsFeedPage() {
         document.body
       )}
       
-      {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-right"
-        showDelay={4000}
-        storageKey="ad_blog_slot1"
-        size="medium"
+      {/* Floating Ads */}
       <FloatingAd position="left" size="medium" />
       <FloatingAd position="right" size="medium" />
 
