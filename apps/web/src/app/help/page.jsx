@@ -1,10 +1,17 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from "@/components/RevealOnScroll";
 
 export default function HelpCenterPage() {
   return (
-    <div className="min-h-screen bg-gray-50 page-fade-in">
+    <>
+      {/* Ad Popups - Fixed position */}
+      <AdPopup />
+      <AdPopupLeft />
+
+      <div className="min-h-screen bg-gray-50 page-fade-in">
       <Header />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="initial-fade-in">

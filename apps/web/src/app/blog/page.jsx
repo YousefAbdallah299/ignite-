@@ -7,7 +7,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CreateBlogModal from '@/components/CreateBlogModal';
 import PageFadeIn from '@/components/PageFadeIn';
-import { FloatingAd } from '@/components/AdBanner';
 import AdPopup from "@/components/AdPopup";
 import AdPopupLeft from "@/components/AdPopupLeft";
 import { useBlogsAPI } from '@/hooks/useBlogsAPI';
@@ -484,10 +483,6 @@ export default function PostsFeedPage() {
         document.body
       )}
       
-      {/* Floating Ads */}
-      <FloatingAd position="left" size="medium" />
-      <FloatingAd position="right" size="medium" />
-
       <Footer />
       </PageFadeIn>
     </>

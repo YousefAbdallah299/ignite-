@@ -4,7 +4,8 @@ import { Check, Star, Users, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AdvertisingPopup from '@/components/AdvertisingPopup';
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from '@/components/RevealOnScroll';
 import PageFadeIn from '@/components/PageFadeIn';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
@@ -209,14 +210,9 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Advertising Popup - Slot 1 */}
-      <AdvertisingPopup
-        ad={null} // Configure external ad here
-        position="bottom-left"
-        showDelay={3500}
-        storageKey="ad_pricing_slot1"
-        size="medium"
-      />
+      {/* Ad Popups - Fixed position */}
+      <AdPopup />
+      <AdPopupLeft />
 
       <RevealOnScroll>
         <Footer />

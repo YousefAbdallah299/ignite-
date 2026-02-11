@@ -1,11 +1,18 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 
 export default function AboutPage() {
   return (
-    <PageFadeIn className="bg-gray-50">
+    <>
+      {/* Ad Popups - Fixed position */}
+      <AdPopup />
+      <AdPopupLeft />
+
+      <PageFadeIn className="bg-gray-50">
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">About Us</h1>

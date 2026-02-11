@@ -7,8 +7,8 @@ import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 import AdPopup from "@/components/AdPopup";
-import { useJobsAPI } from "@/hooks/useJobsAPI";
 import AdPopupLeft from "@/components/AdPopupLeft";
+import { useJobsAPI } from "@/hooks/useJobsAPI";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
 import {
@@ -29,583 +29,524 @@ import {
 const jobCategories = [
   "Technology",
   "Marketing",
-  "Design",
   "Sales",
-  "Data Science",
-  "Engineering",
   "Finance",
-  "HR",
-  "Operations",
-  "Customer Service",
+  "Healthcare",
+  "Education",
+  "Engineering",
+  "Design",
 ];
 
-const jobTypes = [
-  "full-time",
-  "part-time",
-  "contract",
-  "freelance",
-  "internship",
-];
-
-function JobCard({ job, onApply, onCancel, isApplied, isApplying, userRole }) {
+// Job Card Component
+function JobCard({ job, onApply, onCancel, isApplied }) {
   const formatDate = (dateString) => {
-    if (!dateString) return 'Unknown';
-    
     const date = new Date(dateString);
-    const now = new Date();
-    
-    // Check if date is valid
-    if (isNaN(date.getTime())) return 'Invalid date';
-    
-    const diffTime = now - date;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-    return `${Math.ceil(diffDays / 30)} months ago`;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatSalary = (min, max) => {
+    const formatNumber = (num) =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(num);
+    return `${formatNumber(min)} - ${formatNumber(max)}`;
+  };
+
+  const getJobTypeColor = (type) => {
+    switch (type) {
+      case "FULL_TIME":
+        return "bg-green-100 text-green-700";
+      case "PART_TIME":
+        return "bg-blue-100 text-blue-700";
+      case "INTERNSHIP":
+        return "bg-yellow-100 text-yellow-700";
+      case "CONTRACT":
+        return "bg-purple-100 text-purple-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-red-200 transition-all duration-300 group relative overflow-hidden">
-      {/* Job Header */}
+    <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 group">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-          Job
+        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center text-red-600 font-bold text-lg">
+          {job.company?.charAt(0) || "C"}
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-lg text-gray-900 group-hover:text-red-600 transition-colors">
+          <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-red-600 transition-colors">
             {job.title}
           </h3>
+          <p className="text-gray-600 text-sm">{job.company}</p>
         </div>
+        <button
+          className={`p-2 rounded-lg transition-all ${
+            isApplied
+              ? "bg-red-100 text-red-600"
+              : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+          }`}
+          onClick={() => (isApplied ? onCancel(job.id) : onApply(job.id))}
+          disabled={isApplied}
+        >
+          <Heart
+            className={`w-5 h-5 ${isApplied ? "fill-current" : ""}`}
+          />
+        </button>
       </div>
 
-      {/* Job Details */}
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center gap-2 text-gray-500 text-sm">
+      <div className="space-y-2 mb-4 text-sm">
+        <div className="flex items-center gap-2 text-gray-600">
           <MapPin className="w-4 h-4" />
-          {job.location}
+          <span>{job.location}</span>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          {job.employmentType && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Briefcase className="w-4 h-4" />
-              {job.employmentType}
-            </div>
-          )}
-          {job.salary && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <DollarSign className="w-4 h-4" />
-              {job.salary}
-            </div>
-          )}
+        <div className="flex items-center gap-2 text-gray-600">
+          <Clock className="w-4 h-4" />
+          <span>{formatDate(job.postedAt)}</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600">
+          <DollarSign className="w-4 h-4" />
+          <span>{formatSalary(job.minSalary, job.maxSalary)}</span>
         </div>
       </div>
 
-      {/* Description */}
-      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-        {job.description}
-      </p>
+      <div className="flex items-center gap-2 mb-4">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${getJobTypeColor(
+            job.jobType
+          )}`}
+        >
+          {job.jobType?.replace("_", " ")}
+        </span>
+        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+          {job.category}
+        </span>
+      </div>
 
-      {/* Categories */}
-      {job.categories && job.categories.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {job.categories.map((category, index) => (
-            <span key={index} className="bg-red-50 text-red-600 px-2 py-1 rounded-full text-xs font-medium">
-              {category}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="text-gray-400 text-sm">
-          {formatDate(job.createdAt)}
-        </div>
+        <span className="text-gray-500 text-sm">
+          {job.applicationsCount || 0} applications
+        </span>
+        <a
+          href={`/jobs/${job.id}`}
+          className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 font-medium text-sm group-hover:gap-2 transition-all"
+        >
+          View Details <ArrowRight className="w-4 h-4" />
+        </a>
       </div>
-
-      {/* Actions */}
-      <div className="pt-4 border-t border-gray-100">
-        <div className="flex gap-2">
-          {userRole === 'CANDIDATE' ? (
-            isApplied ? (
-              <button 
-                onClick={() => onCancel(job.id)}
-                disabled={isApplying}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2.5 rounded-lg font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isApplying ? 'Canceling...' : 'Cancel Application'}
-              </button>
-            ) : (
-              <button 
-                onClick={() => onApply(job.id)}
-                disabled={isApplying}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isApplying ? 'Applying...' : 'Apply Now'}
-              </button>
-            )
-          ) : null}
-          <a 
-            href={`/jobs/${job.id}`} 
-            className="flex-1 border border-red-600 text-red-700 hover:bg-red-50 py-2.5 rounded-lg font-semibold text-sm text-center"
-          >
-            View Job
-          </a>
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute inset-0 bg-red-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
     </div>
   );
 }
 
 export default function JobsPage() {
-  const { getAllJobs, applyForJob, cancelJobApplication, getMyAppliedJobs, loading, error } = useJobsAPI();
-  const { user, isCandidate } = useAuthAPI();
-  const { isValid } = usePageTokenValidation(false); // Jobs page doesn't require auth
   const [jobs, setJobs] = useState([]);
-  const [pagination, setPagination] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState(new Set());
-  const [applyingJobId, setApplyingJobId] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
     category: "",
     page: 0,
   });
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 0,
+    limit: 10,
+    pages: 0,
+  });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    // Get URL parameters on component mount
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialFilters = {
-      search: urlParams.get("search") || "",
-      category: urlParams.get("category") || "",
-      page: 0,
-    };
-    setFilters(initialFilters);
-  }, []);
+  const { fetchJobs, applyToJob, cancelApplication } = useJobsAPI();
+  const { user } = useAuthAPI();
+  const { validateToken } = usePageTokenValidation();
 
   useEffect(() => {
-    fetchJobs();
+    validateToken();
+    fetchJobsData();
+    fetchAppliedJobs();
   }, [filters]);
 
-  useEffect(() => {
-    // Clear applied jobs state when user changes or logs out
-    if (!isCandidate || !isValid) {
-      setAppliedJobs(new Set());
-      return;
-    }
-    
-    // Load applied jobs for the current user
-    loadAppliedJobs();
-  }, [isCandidate, isValid, user?.id]);
+  const fetchAppliedJobs = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  const loadAppliedJobs = async () => {
     try {
-      console.log('Loading applied jobs for jobs page...');
-      console.log('Current user:', user?.id, user?.email);
-      console.log('isCandidate:', isCandidate);
-      console.log('isValid:', isValid);
-      
-      const response = await getMyAppliedJobs(0, 100); // Get more applied jobs for checking
-      console.log('Applied jobs response:', response);
-      console.log('Response content:', response?.content);
-      console.log('Response length:', response?.content?.length);
-      
-      if (response && response.content) {
-        const appliedJobIds = response.content.map(job => job.id);
-        console.log('Applied job IDs:', appliedJobIds);
-        console.log('Setting applied jobs to state...');
-        setAppliedJobs(new Set(appliedJobIds));
-      } else {
-        console.log('No applied jobs found or empty response');
-        setAppliedJobs(new Set());
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/candidates/my/applications`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const appliedJobIds = new Set(data.map((app) => app.jobId));
+        setAppliedJobs(appliedJobIds);
       }
     } catch (error) {
-      console.error('Error loading applied jobs:', error);
-      console.error('Error details:', error.message);
-      setAppliedJobs(new Set());
+      console.error("Error fetching applied jobs:", error);
     }
   };
 
-  const fetchJobs = async () => {
+  const fetchJobsData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      console.log('Fetching jobs with filters:', filters);
-      const categories = filters.category ? [filters.category.toLowerCase()] : null;
-      
-      console.log('Calling getAllJobs with params:', {
-        page: filters.page,
-        size: 20,
-        query: filters.search || null,
-        categories: categories
-      });
-      
-      const response = await getAllJobs(
-        filters.page,
-        20,
-        filters.search || null,
-        categories
-      );
+      const response = await fetchJobs(filters);
 
-      console.log('Jobs response:', response);
-      console.log('Response type:', typeof response);
-      console.log('Response content:', response?.content);
-      console.log('Response length:', response?.content?.length);
-
-      if (response) {
-        setJobs(response.content || []);
+      if (response && response.data) {
+        setJobs(response.data);
         setPagination({
-          page: response.page + 1,
-          pages: response.totalPages,
-          total: response.totalElements,
-          limit: response.size,
+          total: response.total || 0,
+          page: response.page || 0,
+          limit: response.limit || 10,
+          pages: response.totalPages || 0,
         });
-        console.log('Jobs set to state:', response.content || []);
       } else {
-        console.log('No response received');
         setJobs([]);
+        setPagination({
+          total: 0,
+          page: 0,
+          limit: 10,
+          pages: 0,
+        });
       }
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
+    } catch (err) {
+      setError("Failed to load jobs. Please try again.");
       setJobs([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: 0 }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      page: key === "page" ? value : 0,
+    }));
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchJobs();
+    fetchJobsData();
   };
 
   const handleApply = async (jobId) => {
-    if (!isCandidate) {
-      toast.error('Only candidates can apply for jobs');
+    if (!user) {
+      toast.error("Please login to apply for jobs");
       return;
     }
 
-    setApplyingJobId(jobId);
     try {
-      await applyForJob(jobId);
-      // Update local state immediately for instant UI feedback
-      setAppliedJobs(prev => new Set([...prev, jobId]));
-      toast.success('Application submitted successfully!');
-      // Reload applied jobs from backend to ensure consistency
-      await loadAppliedJobs();
-    } catch (err) {
-      console.error('Error applying for job:', err);
-      if (err.message?.includes('already applied')) {
-        toast.error('You have already applied for this job');
-        // Reload applied jobs to sync state
-        await loadAppliedJobs();
-      } else {
-        toast.error('Failed to apply for job. Please try again.');
-      }
-    } finally {
-      setApplyingJobId(null);
+      await applyToJob(jobId);
+      setAppliedJobs((prev) => new Set([...prev, jobId]));
+      toast.success("Application submitted successfully!");
+    } catch (error) {
+      toast.error(error.message || "Failed to submit application");
     }
   };
 
   const handleCancel = async (jobId) => {
-    if (!isCandidate) {
-      toast.error('Only candidates can cancel applications');
-      return;
-    }
-
-    setApplyingJobId(jobId);
     try {
-      await cancelJobApplication(jobId);
-      // Update local state immediately for instant UI feedback
-      setAppliedJobs(prev => {
+      await cancelApplication(jobId);
+      setAppliedJobs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
         return newSet;
       });
-      toast.success('Application cancelled successfully!');
-      // Reload applied jobs from backend to ensure consistency
-      await loadAppliedJobs();
-    } catch (err) {
-      console.error('Error cancelling application:', err);
-      toast.error('Failed to cancel application. Please try again.');
-    } finally {
-      setApplyingJobId(null);
+      toast.success("Application cancelled");
+    } catch (error) {
+      toast.error(error.message || "Failed to cancel application");
     }
   };
 
   return (
     <>
+      {/* Ad Popups - Fixed position */}
       <AdPopup />
+      <AdPopupLeft />
+
       <PageFadeIn className="bg-gray-50">
         <Header />
 
         {/* Hero Section */}
         <div className="initial-fade-in">
-        <section className="bg-gradient-to-br from-red-50 via-white to-pink-50 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Find Your Dream Job
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Discover thousands of opportunities from leading companies
-                worldwide
-              </p>
-            </div>
-
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
-              <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Job title or keywords"
-                      value={filters.search}
-                      onChange={(e) =>
-                        handleFilterChange("search", e.target.value)
-                      }
-                      className="w-full pl-12 pr-4 py-3 border-0 outline-none text-gray-700 placeholder-gray-400 bg-gray-50 rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 transition-all"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-semibold transition-all hover:shadow-lg"
-                  >
-                    Search Jobs
-                  </button>
-                </div>
+          <section className="bg-gradient-to-br from-red-50 via-white to-pink-50 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                  Find Your Dream Job
+                </h1>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                  Discover thousands of opportunities from leading companies
+                  worldwide
+                </p>
               </div>
-            </form>
-          </div>
-        </section>
+
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
+                <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        placeholder="Job title or keywords"
+                        value={filters.search}
+                        onChange={(e) =>
+                          handleFilterChange("search", e.target.value)
+                        }
+                        className="w-full pl-12 pr-4 py-3 border-0 outline-none text-gray-700 placeholder-gray-400 bg-gray-50 rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 transition-all"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-semibold transition-all hover:shadow-lg"
+                    >
+                      Search Jobs
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </section>
         </div>
 
         {/* Main Content */}
         <RevealOnScroll>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar Filters */}
-            <div className="lg:w-80">
-              <div className="bg-white rounded-xl p-6 sticky top-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-semibold text-lg text-gray-900">Filters</h3>
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden text-red-600"
-                  >
-                    <Filter className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div
-                  className={`space-y-6 ${showFilters ? "block" : "hidden lg:block"}`}
-                >
-                  {/* Category Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Category
-                    </label>
-                    <select
-                      value={filters.category}
-                      onChange={(e) =>
-                        handleFilterChange("category", e.target.value)
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Sidebar Filters */}
+              <div className="lg:w-80">
+                <div className="bg-white rounded-xl p-6 sticky top-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-semibold text-lg text-gray-900">
+                      Filters
+                    </h3>
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="lg:hidden text-red-600"
                     >
-                      <option value="">All categories</option>
-                      {jobCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
+                      <Filter className="w-5 h-5" />
+                    </button>
                   </div>
 
-                  {/* Clear Filters */}
-                  <button
-                    onClick={() =>
-                      setFilters({
-                        search: "",
-                        category: "",
-                        page: 0,
-                      })
-                    }
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors"
+                  <div
+                    className={`space-y-6 ${
+                      showFilters ? "block" : "hidden lg:block"
+                    }`}
                   >
-                    Clear All Filters
-                  </button>
-                </div>
-              </div>
-            </div>
+                    {/* Category Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Category
+                      </label>
+                      <select
+                        value={filters.category}
+                        onChange={(e) =>
+                          handleFilterChange("category", e.target.value)
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      >
+                        <option value="">All categories</option>
+                        {jobCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-            {/* Job Listings */}
-            <div className="flex-1">
-              {/* Results Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {loading
-                      ? "Loading..."
-                      : `${pagination.total || 0} jobs found`}
-                  </h2>
-                  <p className="text-gray-600 text-sm">
-                    Showing{" "}
-                    {Math.min(
-                      (pagination.page - 1) * pagination.limit + 1,
-                      pagination.total || 0,
-                    )}{" "}
-                    -{" "}
-                    {Math.min(
-                      pagination.page * pagination.limit,
-                      pagination.total || 0,
-                    )}{" "}
-                    of {pagination.total || 0} results
-                  </p>
-                </div>
-                
-                {/* Post Job Button for Recruiters */}
-                {user?.role === 'RECRUITER' && (
-                  <a
-                    href="/jobs/create"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors shadow-sm hover:shadow-md"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Post a Job
-                  </a>
-                )}
-                
-                {user?.role === 'CANDIDATE' && (
-                  <a
-                    href="/applied-jobs"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors shadow-sm hover:shadow-md"
-                  >
-                    <Briefcase className="w-5 h-5" />
-                    My Applications ({appliedJobs.size})
-                  </a>
-                )}
-              </div>
-
-              {/* Job Cards Grid */}
-              {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse"
+                    {/* Clear Filters */}
+                    <button
+                      onClick={() =>
+                        setFilters({
+                          search: "",
+                          category: "",
+                          page: 0,
+                        })
+                      }
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors"
                     >
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-lg bg-gray-200" />
-                        <div className="flex-1">
-                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                          <div className="h-3 bg-gray-200 rounded w-1/2" />
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Listings */}
+              <div className="flex-1">
+                {/* Results Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {loading
+                        ? "Loading..."
+                        : `${pagination.total || 0} jobs found`}
+                    </h2>
+                    <p className="text-gray-600 text-sm">
+                      Showing{" "}
+                      {Math.min(
+                        (pagination.page - 1) * pagination.limit + 1,
+                        pagination.total || 0,
+                      )}{" "}
+                      -{" "}
+                      {Math.min(
+                        pagination.page * pagination.limit,
+                        pagination.total || 0,
+                      )}{" "}
+                      of {pagination.total || 0} results
+                    </p>
+                  </div>
+
+                  {/* Post Job Button for Recruiters */}
+                  {user?.role === "RECRUITER" && (
+                    <a
+                      href="/jobs/create"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors shadow-sm hover:shadow-md"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Post a Job
+                    </a>
+                  )}
+
+                  {user?.role === "CANDIDATE" && (
+                    <a
+                      href="/applied-jobs"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors shadow-sm hover:shadow-md"
+                    >
+                      <Briefcase className="w-5 h-5" />
+                      My Applications ({appliedJobs.size})
+                    </a>
+                  )}
+                </div>
+
+                {/* Job Cards Grid */}
+                {loading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse"
+                      >
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="w-12 h-12 rounded-lg bg-gray-200" />
+                          <div className="flex-1">
+                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                            <div className="h-3 bg-gray-200 rounded w-1/2" />
+                          </div>
+                        </div>
+                        <div className="space-y-2 mb-4">
+                          <div className="h-3 bg-gray-200 rounded w-full" />
+                          <div className="h-3 bg-gray-200 rounded w-5/6" />
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="h-8 bg-gray-200 rounded w-20" />
+                          <div className="h-8 bg-gray-200 rounded w-20" />
                         </div>
                       </div>
-                      <div className="space-y-2 mb-4">
-                        <div className="h-3 bg-gray-200 rounded w-full" />
-                        <div className="h-3 bg-gray-200 rounded w-5/6" />
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="h-8 bg-gray-200 rounded w-20" />
-                        <div className="h-8 bg-gray-200 rounded w-20" />
-                      </div>
+                    ))}
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-12">
+                    <div className="text-red-500 mb-4">
+                      <Users className="w-16 h-16 mx-auto" />
                     </div>
-                  ))}
-                </div>
-              ) : error ? (
-                <div className="text-center py-12">
-                  <div className="text-red-500 mb-4">
-                    <Users className="w-16 h-16 mx-auto" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Failed to load jobs
+                    </h3>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <button
+                      onClick={() => fetchJobs()}
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+                    >
+                      Try Again
+                    </button>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Failed to load jobs
-                  </h3>
-                  <p className="text-gray-600 mb-4">{error}</p>
-                  <button
-                    onClick={() => fetchJobs()}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              ) : jobs.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 mb-4">
-                    <Briefcase className="w-16 h-16 mx-auto" />
+                ) : jobs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <Briefcase className="w-16 h-16 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No jobs found
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Try adjusting your search or filters to find more results.
+                    </p>
+                    <button
+                      onClick={() =>
+                        setFilters({
+                          search: "",
+                          category: "",
+                          page: 0,
+                        })
+                      }
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+                    >
+                      Clear Filters
+                    </button>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No jobs found
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Try adjusting your search or filters to find more results.
-                  </p>
-                  <button
-                    onClick={() =>
-                      setFilters({
-                        search: "",
-                        category: "",
-                        page: 0,
-                      })
-                    }
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {jobs.map((job) => (
-                    <JobCard
-                      key={job.id}
-                      job={job}
-                      onApply={handleApply}
-                      onCancel={handleCancel}
-                      isApplied={appliedJobs.has(job.id)}
-                      isApplying={applyingJobId === job.id}
-                      userRole={user?.role}
-                    />
-                  ))}
-                </div>
-              )}
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {jobs.map((job) => (
+                        <JobCard
+                          key={job.id}
+                          job={job}
+                          onApply={handleApply}
+                          onCancel={handleCancel}
+                          isApplied={appliedJobs.has(job.id)}
+                        />
+                      ))}
+                    </div>
 
-              {/* Pagination */}
-              {pagination.pages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <button
-                    onClick={() =>
-                      handleFilterChange("page", Math.max(0, filters.page - 1))
-                    }
-                    disabled={filters.page === 0}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-gray-600">
-                    Page {pagination.page} of {pagination.pages}
-                  </span>
-                  <button
-                    onClick={() =>
-                      handleFilterChange(
-                        "page",
-                        Math.min(pagination.pages - 1, filters.page + 1)
-                      )
-                    }
-                    disabled={filters.page >= pagination.pages - 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+                    {/* Pagination */}
+                    {pagination.pages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-8">
+                        <button
+                          onClick={() =>
+                            handleFilterChange(
+                              "page",
+                              Math.max(0, filters.page - 1)
+                            )
+                          }
+                          disabled={filters.page === 0}
+                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-gray-600">
+                          Page {pagination.page} of {pagination.pages}
+                        </span>
+                        <button
+                          onClick={() =>
+                            handleFilterChange(
+                              "page",
+                              Math.min(pagination.pages - 1, filters.page + 1)
+                            )
+                          }
+                          disabled={filters.page >= pagination.pages - 1}
+                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
         </RevealOnScroll>
 
         <Footer />
