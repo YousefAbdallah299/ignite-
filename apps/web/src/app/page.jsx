@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 import AdvertisingPopup from "@/components/AdvertisingPopup";
+import { AdBanner } from "@/components/AdBanner";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { useEffect } from "react";
 
@@ -30,6 +31,11 @@ export default function HomePage() {
         isCandidate={isCandidate} 
         isRecruiter={isRecruiter} 
       />
+
+      {/* Banner Ad */}
+      <div className="container mx-auto px-4 py-8">
+        <AdBanner variant="banner" className="w-full" />
+      </div>
 
       {/* Statistics Section - fades in when scrolling */}
       <RevealOnScroll>

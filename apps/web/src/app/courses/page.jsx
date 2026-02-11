@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import AdvertisingPopup from "@/components/AdvertisingPopup";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
+import { AdBanner } from "@/components/AdBanner";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
@@ -536,6 +537,11 @@ export default function CoursesPage() {
           </form>
         </div>
       </section>
+
+      {/* Banner Ad */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <AdBanner variant="banner" className="w-full rounded-xl" />
+      </div>
 
       {/* Main Content */}
       <RevealOnScroll>

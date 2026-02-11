@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import AdvertisingPopup from '@/components/AdvertisingPopup';
 import CreateBlogModal from '@/components/CreateBlogModal';
 import PageFadeIn from '@/components/PageFadeIn';
+import { AdBanner } from '@/components/AdBanner';
 import { useBlogsAPI } from '@/hooks/useBlogsAPI';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 
@@ -261,6 +262,10 @@ export default function PostsFeedPage() {
     <PageFadeIn className="bg-gray-50">
       <Header />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Banner Ad */}
+        <div className="mb-6">
+          <AdBanner variant="card" className="w-full rounded-xl" />
+        </div>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
           <button

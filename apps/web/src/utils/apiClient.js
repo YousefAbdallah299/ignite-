@@ -9,13 +9,9 @@ const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
-  // Check if we're running on localhost or common loopback addresses
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-    if (isLocalhost) {
-      return 'http://localhost:8080/api/v1';
-    }
+  // Check if we're running on localhost
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:8080/api/v1';
   }
   // Default to production
   return 'https://ignite-qjis.onrender.com/api/v1';
@@ -915,21 +911,10 @@ export const adminAPI = {
 export const adsAPI = {
   // Get active ads (public)
   getActiveAds: async () => {
-    // Debug: always log when trying to fetch active ads so we can trace why no request is sent
-    try {
-      // Use console.log intentionally so it appears regardless of the dev flag while debugging
-      console.log('adsAPI.getActiveAds: called. Will call apiCall with endpoint /ads/active and includeAuth=false');
-      const result = await apiCall('/ads/active', {
-        method: 'GET',
-        includeAuth: false,
-      });
-      console.log('adsAPI.getActiveAds: apiCall returned:', result);
-      return result;
-    } catch (err) {
-      console.error('adsAPI.getActiveAds: error calling apiCall:', err);
-      // Return empty array on error to avoid breaking callers
-      return [];
-    }
+    return apiCall('/ads/active', {
+      method: 'GET',
+      includeAuth: false,
+    });
   },
 
   // Create ad (admin only)

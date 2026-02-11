@@ -74,3 +74,65 @@ footer,
   animation: none !important;
   transform: none !important;
 }
+
+/* Ad Banner Styles */
+.ad-banner {
+  @apply block relative overflow-hidden rounded-lg bg-gray-100;
+}
+
+.ad-banner--banner {
+  @apply w-full h-48 md:h-64;
+}
+
+.ad-banner--sidebar {
+  @apply w-full h-64 md:h-80;
+}
+
+.ad-banner--card {
+  @apply w-full h-40 md:h-48;
+}
+
+.ad-banner__image {
+  @apply w-full h-full object-cover;
+}
+
+.ad-banner__title {
+  @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3 text-white font-medium truncate;
+}
+
+.ad-banner__skeleton {
+  @apply w-full h-full bg-gray-200 animate-pulse;
+}
+
+/* Ad Banner List Styles */
+.ad-banner-list {
+  @apply grid gap-4;
+}
+
+.ad-banner-list--grid {
+  @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+}
+
+.ad-banner-list--horizontal {
+  @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-4;
+}
+
+.ad-banner-list--stacked {
+  @apply grid-cols-1;
+}
+
+.ad-banner-list__item {
+  @apply block relative overflow-hidden rounded-lg bg-gray-100;
+}
+
+.ad-banner-list__image {
+  @apply w-full h-40 object-cover;
+}
+
+.ad-banner-list__title {
+  @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-white text-sm font-medium truncate;
+}
+
+.ad-banner-list__skeleton {
+  @apply w-full h-40 bg-gray-200 animate-pulse rounded-lg;
+}
