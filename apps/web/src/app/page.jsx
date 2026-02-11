@@ -7,13 +7,12 @@ import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
-import AdvertisingPopup from "@/components/AdvertisingPopup";
-import { AdBanner } from "@/components/AdBanner";
+import { AdBanner, FloatingAd } from "@/components/AdBanner";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { useEffect } from "react";
 
 export default function HomePage() {
-  const { user, isAuthenticated, isAdmin, isRecruiter, isCandidate } = useAuthAPI();
+  const { user, isAdmin, isRecruiter, isCandidate } = useAuthAPI();
 
   // Scroll to top on mount
   useEffect(() => {
@@ -31,11 +30,6 @@ export default function HomePage() {
         isCandidate={isCandidate} 
         isRecruiter={isRecruiter} 
       />
-
-      {/* Banner Ad */}
-      <div className="container mx-auto px-4 py-8">
-        <AdBanner variant="banner" className="w-full" />
-      </div>
 
       {/* Statistics Section - fades in when scrolling */}
       <RevealOnScroll>
@@ -65,39 +59,9 @@ export default function HomePage() {
         <Footer />
       </RevealOnScroll>
 
-      {/* Advertising Popup - Right Side */}
-      <AdvertisingPopup
-        ad={{
-          image: '/ignite-logo.png',
-          title: 'Find Your Dream Job',
-          description: 'Browse thousands of opportunities from top companies.',
-          link: '/jobs',
-          ctaText: 'Explore Jobs',
-          advertiser: 'Ignite',
-          adId: 'home_right_ad'
-        }}
-        position="bottom-right"
-        showDelay={3000}
-        storageKey="ad_home_right"
-        size="medium"
-      />
-
-      {/* Advertising Popup - Left Side */}
-      <AdvertisingPopup
-        ad={{
-          image: '/ignite-logo-footer.jpeg',
-          title: 'Hire Top Talent',
-          description: 'Post your job openings and reach qualified candidates.',
-          link: '/job-seekers',
-          ctaText: 'Post a Job',
-          advertiser: 'Ignite',
-          adId: 'home_left_ad'
-        }}
-        position="bottom-left"
-        showDelay={4000}
-        storageKey="ad_home_left"
-        size="medium"
-      />
+      {/* Floating Ads on Left and Right sides */}
+      <FloatingAd position="left" size="medium" />
+      <FloatingAd position="right" size="medium" />
 
       {/* Global styles and fonts */}
       <style jsx global>{`

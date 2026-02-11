@@ -6,8 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
-import AdvertisingPopup from "@/components/AdvertisingPopup";
-import { AdBanner } from "@/components/AdBanner";
+import { FloatingAd } from "@/components/AdBanner";
 import { useJobsAPI } from "@/hooks/useJobsAPI";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
@@ -385,10 +384,9 @@ export default function JobsPage() {
       </section>
       </div>
 
-      {/* Banner Ad */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <AdBanner variant="banner" className="w-full rounded-xl" />
-      </div>
+      {/* Floating Ads */}
+      <FloatingAd position="left" size="medium" />
+      <FloatingAd position="right" size="medium" />
 
       {/* Main Content */}
       <RevealOnScroll>
