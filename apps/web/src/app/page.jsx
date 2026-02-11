@@ -7,7 +7,7 @@ import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
-import { AdBanner, FloatingAd } from "@/components/AdBanner";
+import AdPopup from "@/components/AdPopup";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { useEffect } from "react";
 
@@ -21,10 +21,6 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Floating Ads on Left and Right sides - outside PageFadeIn for proper positioning */}
-      <FloatingAd position="left" size="medium" />
-      <FloatingAd position="right" size="medium" />
-
       <PageFadeIn className="bg-white">
         {/* Header Navigation */}
         <Header />
@@ -92,6 +88,9 @@ export default function HomePage() {
           overflow: hidden;
         }
       `}</style>
+
+      {/* Ad Popup - Bottom Left */}
+      <AdPopup />
     </>
   );
 }
