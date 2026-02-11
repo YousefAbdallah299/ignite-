@@ -40,6 +40,7 @@ export default function AboutPage() {
         <Footer />
       </RevealOnScroll>
     </PageFadeIn>
+    </>
   );
 }
 

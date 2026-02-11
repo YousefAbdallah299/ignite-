@@ -62,6 +62,7 @@ export default function HelpCenterPage() {
         <Footer />
       </RevealOnScroll>
     </div>
+    </>
   );
 }
 
