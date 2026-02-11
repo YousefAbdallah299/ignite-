@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { useEffect } from "react";
 
@@ -90,6 +91,9 @@ export default function HomePage() {
       `}</style>
 
       {/* Ad Popup - Bottom Left */}
+      <AdPopupLeft />
+      
+      {/* Ad Popup - Bottom Right */}
       <AdPopup />
     </>
   );

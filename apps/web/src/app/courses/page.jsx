@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 import { AdBanner, FloatingAd } from "@/components/AdBanner";
+import AdPopup from "@/components/AdPopup";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { useCoursesAPI } from "@/hooks/useCoursesAPI";
 import { coursesAPI } from "@/utils/apiClient";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
@@ -499,6 +501,10 @@ export default function CoursesPage() {
       {/* Floating Ads - outside PageFadeIn for proper positioning */}
       <FloatingAd position="left" size="medium" />
       <FloatingAd position="right" size="medium" />
+      
+      {/* Ad Popups */}
+      <AdPopup />
+      <AdPopupLeft />
 
       <PageFadeIn className="bg-gray-50">
         <Header />

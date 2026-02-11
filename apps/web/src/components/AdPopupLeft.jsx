@@ -5,11 +5,11 @@ import { X } from 'lucide-react';
 import { adsAPI } from '@/utils/apiClient';
 
 /**
- * AdPopup Component
+ * AdPopupLeft Component
  * Displays active ads from the backend API
- * Shows popup after 2 seconds - fixed position that stays on scroll
+ * Shows popup after 2 seconds - fixed position in bottom-left that stays on scroll
  */
-export default function AdPopup() {
+export default function AdPopupLeft() {
   const [ads, setAds] = useState([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -79,7 +79,7 @@ export default function AdPopup() {
       style={{
         position: 'fixed',
         bottom: '24px',
-        right: '24px',
+        left: '24px',
         zIndex: 9999,
         maxWidth: '320px',
         width: '100%',

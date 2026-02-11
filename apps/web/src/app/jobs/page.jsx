@@ -8,6 +8,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
 import AdPopup from "@/components/AdPopup";
 import { useJobsAPI } from "@/hooks/useJobsAPI";
+import AdPopupLeft from "@/components/AdPopupLeft";
 import { useAuthAPI } from "@/hooks/useAuthAPI";
 import { usePageTokenValidation } from "@/components/TokenValidationWrapper";
 import {
