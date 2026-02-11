@@ -495,8 +495,13 @@ export default function CoursesPage() {
   };
 
   return (
-    <PageFadeIn className="bg-gray-50">
-      <Header />
+    <>
+      {/* Floating Ads - outside PageFadeIn for proper positioning */}
+      <FloatingAd position="left" size="medium" />
+      <FloatingAd position="right" size="medium" />
+
+      <PageFadeIn className="bg-gray-50">
+        <Header />
       
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-red-50 via-white to-pink-50 py-12 initial-fade-in">
@@ -536,10 +541,6 @@ export default function CoursesPage() {
           </form>
         </div>
       </section>
-
-      {/* Floating Ads */}
-      <FloatingAd position="left" size="medium" />
-      <FloatingAd position="right" size="medium" />
 
       {/* Main Content */}
       <RevealOnScroll>
@@ -1000,6 +1001,7 @@ export default function CoursesPage() {
           overflow: hidden;
         }
       `}</style>
-    </PageFadeIn>
+      </PageFadeIn>
+    </>
   );
 }

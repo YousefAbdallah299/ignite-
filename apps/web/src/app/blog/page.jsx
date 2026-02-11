@@ -258,9 +258,14 @@ export default function PostsFeedPage() {
 
 
   return (
-    <PageFadeIn className="bg-gray-50">
-      <Header />
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      {/* Floating Ads - outside PageFadeIn for proper positioning */}
+      <FloatingAd position="left" size="medium" />
+      <FloatingAd position="right" size="medium" />
+
+      <PageFadeIn className="bg-gray-50">
+        <Header />
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
           <button
@@ -478,7 +483,8 @@ export default function PostsFeedPage() {
       <FloatingAd position="right" size="medium" />
 
       <Footer />
-    </PageFadeIn>
+      </PageFadeIn>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { adsAPI } from '../utils/apiClient';
+import './FloatingAd.css';
 
 /**
  * Storage key for dismissed ads

@@ -337,12 +337,17 @@ export default function JobsPage() {
   };
 
   return (
-    <PageFadeIn className="bg-gray-50">
-      <Header />
+    <>
+      {/* Floating Ads - outside PageFadeIn for proper positioning */}
+      <FloatingAd position="left" size="medium" />
+      <FloatingAd position="right" size="medium" />
 
-      {/* Hero Section */}
-      <div className="initial-fade-in">
-      <section className="bg-gradient-to-br from-red-50 via-white to-pink-50 py-12">
+      <PageFadeIn className="bg-gray-50">
+        <Header />
+
+        {/* Hero Section */}
+        <div className="initial-fade-in">
+        <section className="bg-gradient-to-br from-red-50 via-white to-pink-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -617,14 +622,8 @@ export default function JobsPage() {
         size="small"
       />
 
-      <style jsx global>{`
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
-    </PageFadeIn>
+      {/* Remove AdvertisingPopup - not a valid component */}
+      </PageFadeIn>
+    </>
   );
 }

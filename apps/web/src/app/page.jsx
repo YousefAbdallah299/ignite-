@@ -20,48 +20,50 @@ export default function HomePage() {
   }, []);
 
   return (
-    <PageFadeIn className="bg-white">
-      {/* Header Navigation */}
-      <Header />
-
-      {/* Hero Section with Search */}
-      <HeroSection 
-        userRole={user?.role} 
-        isCandidate={isCandidate} 
-        isRecruiter={isRecruiter} 
-      />
-
-      {/* Statistics Section - fades in when scrolling */}
-      <RevealOnScroll>
-        <StatsSection />
-      </RevealOnScroll>
-
-      {/* Pricing Section - fades in when scrolling */}
-      <RevealOnScroll>
-        <PricingSection />
-      </RevealOnScroll>
-
-      {/* Talented Professionals - Role-based visibility */}
-      {/* Show for recruiters and admins only */}
-      {(isRecruiter || isAdmin) && (
-        <RevealOnScroll>
-          <TalentedProfessionals />
-        </RevealOnScroll>
-      )}
-
-      {/* Newsletter Signup - fades in when scrolling */}
-      <RevealOnScroll>
-        <NewsletterSection />
-      </RevealOnScroll>
-
-      {/* Footer - fades in when scrolling */}
-      <RevealOnScroll>
-        <Footer />
-      </RevealOnScroll>
-
-      {/* Floating Ads on Left and Right sides */}
+    <>
+      {/* Floating Ads on Left and Right sides - outside PageFadeIn for proper positioning */}
       <FloatingAd position="left" size="medium" />
       <FloatingAd position="right" size="medium" />
+
+      <PageFadeIn className="bg-white">
+        {/* Header Navigation */}
+        <Header />
+
+        {/* Hero Section with Search */}
+        <HeroSection 
+          userRole={user?.role} 
+          isCandidate={isCandidate} 
+          isRecruiter={isRecruiter} 
+        />
+
+        {/* Statistics Section - fades in when scrolling */}
+        <RevealOnScroll>
+          <StatsSection />
+        </RevealOnScroll>
+
+        {/* Pricing Section - fades in when scrolling */}
+        <RevealOnScroll>
+          <PricingSection />
+        </RevealOnScroll>
+
+        {/* Talented Professionals - Role-based visibility */}
+        {/* Show for recruiters and admins only */}
+        {(isRecruiter || isAdmin) && (
+          <RevealOnScroll>
+            <TalentedProfessionals />
+          </RevealOnScroll>
+        )}
+
+        {/* Newsletter Signup - fades in when scrolling */}
+        <RevealOnScroll>
+          <NewsletterSection />
+        </RevealOnScroll>
+
+        {/* Footer - fades in when scrolling */}
+        <RevealOnScroll>
+          <Footer />
+        </RevealOnScroll>
+      </PageFadeIn>
 
       {/* Global styles and fonts */}
       <style jsx global>{`
@@ -90,6 +92,6 @@ export default function HomePage() {
           overflow: hidden;
         }
       `}</style>
-    </PageFadeIn>
+    </>
   );
 }
