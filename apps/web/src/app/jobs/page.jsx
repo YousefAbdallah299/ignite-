@@ -466,7 +466,7 @@ export default function JobsPage() {
                     </h3>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
-                      onClick={() => fetchJobs()}
+                      onClick={fetchJobsData}
                       className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
                     >
                       Try Again

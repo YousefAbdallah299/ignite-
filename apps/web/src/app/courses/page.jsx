@@ -497,10 +497,6 @@ export default function CoursesPage() {
 
   return (
     <>
-      {/* Ad Popups */}
-      <AdPopup />
-      <AdPopupLeft />
-
       <PageFadeIn className="bg-gray-50">
         <Header />
       
