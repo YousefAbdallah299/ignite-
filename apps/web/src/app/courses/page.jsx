@@ -497,6 +497,10 @@ export default function CoursesPage() {
 
   return (
     <>
+      {/* Ad Popups */}
+      <AdPopup slot="courses" />
+      <AdPopupLeft slot="courses-slot2" />
+
       <PageFadeIn className="bg-gray-50">
         <Header />
       
@@ -854,16 +858,6 @@ export default function CoursesPage() {
       <RevealOnScroll>
         <Footer />
       </RevealOnScroll>
-
-      {/* Advertising Popup - Slot 1 */}
-      <AdPopup
-        slot="courses"
-      />
-      
-      {/* Advertising Popup - Slot 2 */}
-      <AdPopupLeft
-        slot="courses-slot2"
-      />
 
       {/* Course Request Modal */}
       {showRequestModal && (
