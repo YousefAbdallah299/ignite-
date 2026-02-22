@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TokenValidationWrapper from '@/components/TokenValidationWrapper';
 import AdPopup from '@/components/AdPopup';
+import AdPopupLeft from '@/components/AdPopupLeft';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,7 @@ export default function RootLayout({children}) {
     <QueryClientProvider client={queryClient}>
       <TokenValidationWrapper requireAuth={false}>
         {children}
+        <AdPopupLeft />
         <AdPopup />
       </TokenValidationWrapper>
     </QueryClientProvider>
