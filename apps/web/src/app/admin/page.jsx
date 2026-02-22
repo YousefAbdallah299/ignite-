@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import PasswordInput from '@/components/PasswordInput';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI, adminAPI, adsAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI, adminAPI, adsAPI, recruitersAPI, offersAPI } from '@/utils/apiClient';
 import { toast } from 'sonner';
 
 // Get API base URL from environment or use default
@@ -88,6 +88,10 @@ export default function AdminPage() {
   // Ads management state
   const [ads, setAds] = useState([]);
   const [loadingAds, setLoadingAds] = useState(false);
+  const [offersAdminList, setOffersAdminList] = useState([]);
+  const [loadingOffersAdmin, setLoadingOffersAdmin] = useState(false);
+  const [offersAdminPage, setOffersAdminPage] = useState(1);
+  const OFFERS_ADMIN_PAGE_SIZE = 10;
   const [showAdForm, setShowAdForm] = useState(false);
   const [newAd, setNewAd] = useState({
     title: '',
@@ -103,7 +107,8 @@ export default function AdminPage() {
     { name: 'MANAGE_USERS', label: 'Manage Users' },
     { name: 'MANAGE_WORKSHOPS', label: 'Manage Workshops' },
     { name: 'RATE_SKILLS', label: 'Rate Skills' },
-    { name: 'MANAGE_ADS', label: 'Manage Ads' }
+    { name: 'MANAGE_ADS', label: 'Manage Ads' },
+    { name: 'MANAGE_OFFERS', label: 'Manage Offers' }
   ];
 
   // Available user roles
@@ -309,6 +314,7 @@ export default function AdminPage() {
       loadAvailableSkills();
       loadMyPrivileges();
       loadAds();
+      loadAdminOffers();
     }
   }, [isAdmin]);
   
@@ -323,6 +329,21 @@ export default function AdminPage() {
       setAds([]);
     } finally {
       setLoadingAds(false);
+    }
+  };
+
+  const loadAdminOffers = async () => {
+    setLoadingOffersAdmin(true);
+    try {
+      const allOffers = await offersAPI.getAllOffers();
+      const sorted = [...(allOffers || [])].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setOffersAdminList(sorted);
+      setOffersAdminPage(1);
+    } catch (error) {
+      console.error('Error loading offers:', error);
+      setOffersAdminList([]);
+    } finally {
+      setLoadingOffersAdmin(false);
     }
   };
   
@@ -408,6 +429,12 @@ export default function AdminPage() {
       muted: false,
     };
   };
+
+  const totalOffersAdminPages = Math.max(1, Math.ceil(offersAdminList.length / OFFERS_ADMIN_PAGE_SIZE));
+  const paginatedAdminOffers = offersAdminList.slice(
+    (offersAdminPage - 1) * OFFERS_ADMIN_PAGE_SIZE,
+    offersAdminPage * OFFERS_ADMIN_PAGE_SIZE
+  );
 
   const loadMyPrivileges = async () => {
     try {
@@ -534,12 +561,12 @@ export default function AdminPage() {
     e.preventDefault();
     
     if (passwordChangeForm.newPassword !== passwordChangeForm.confirmPassword) {
-      toast.error('New passwords do not match');
+      alert('New passwords do not match');
       return;
     }
     
     if (passwordChangeForm.newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+      alert('New password must be at least 8 characters');
       return;
     }
 
@@ -1559,8 +1586,13 @@ export default function AdminPage() {
                             toast.error('Failed to load candidate profile');
                           }
                         } else if (u.role === 'RECRUITER') {
-                          // For recruiters, navigate to job seekers page (they can see candidates)
-                          navigate(`/job-seekers`);
+                          try {
+                            const recruiterProfile = await recruitersAPI.getRecruiterByUserId(u.id);
+                            navigate(`/recruiters/${recruiterProfile.id}`);
+                          } catch (error) {
+                            console.error('Error fetching recruiter profile:', error);
+                            toast.error(error.message || 'Failed to load recruiter profile');
+                          }
                         }
                       };
                       return (
@@ -1766,6 +1798,90 @@ export default function AdminPage() {
                       'Rate Skill'
                     )}
                   </button>
+                </div>
+              </section>
+              )}
+
+              {/* Offers Management Section */}
+              {hasPrivilege('MANAGE_OFFERS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4 gap-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Offers Management</h2>
+                  <button
+                    onClick={loadAdminOffers}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {loadingOffersAdmin ? (
+                    <div className="text-center py-6 text-gray-500">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-2"></div>
+                      <p className="text-sm">Loading offers...</p>
+                    </div>
+                  ) : offersAdminList.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">No offers found</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-xs text-gray-500">
+                        Showing {paginatedAdminOffers.length} of {offersAdminList.length} offers
+                      </div>
+                      {paginatedAdminOffers.map((offer) => (
+                        <div key={offer.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <h3 className="font-semibold text-gray-900">{offer.title || `Offer #${offer.id}`}</h3>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                                  offer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700 border-green-200' :
+                                  offer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                  offer.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                                }`}>
+                                  {offer.status}
+                                </span>
+                              </div>
+                              <div className="space-y-1 text-xs text-gray-600">
+                                <p><strong>Offer ID:</strong> {offer.id}</p>
+                                <p><strong>Recruiter Profile ID:</strong> {offer.recruiterId ?? 'N/A'}</p>
+                                <p><strong>Recruiter Company:</strong> {offer.recruiterCompanyName || 'N/A'}</p>
+                                <p><strong>Candidate Profile ID:</strong> {offer.candidateId ?? 'N/A'}</p>
+                                <p><strong>Candidate:</strong> {offer.candidateName || 'N/A'}</p>
+                                <p><strong>Salary:</strong> {offer.salary != null ? `${offer.currency || ''} ${offer.salary}` : 'N/A'}</p>
+                                <p><strong>Created:</strong> {offer.createdAt ? new Date(offer.createdAt).toLocaleString() : 'N/A'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {totalOffersAdminPages > 1 && (
+                        <div className="flex items-center justify-between pt-2">
+                          <button
+                            onClick={() => setOffersAdminPage((p) => Math.max(1, p - 1))}
+                            disabled={offersAdminPage === 1}
+                            className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-sm text-gray-600">
+                            Page {offersAdminPage} of {totalOffersAdminPages}
+                          </span>
+                          <button
+                            onClick={() => setOffersAdminPage((p) => Math.min(totalOffersAdminPages, p + 1))}
+                            disabled={offersAdminPage === totalOffersAdminPages}
+                            className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </section>
               )}

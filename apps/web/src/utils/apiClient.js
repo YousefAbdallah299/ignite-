@@ -776,6 +776,20 @@ export const recruitersAPI = {
     });
   },
 
+  // Get recruiter profile by recruiter profile ID (admin)
+  getRecruiterById: async (id) => {
+    return apiCall(`/recruiters/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  // Get recruiter profile by user ID (admin)
+  getRecruiterByUserId: async (userId) => {
+    return apiCall(`/recruiters/user/${userId}`, {
+      method: 'GET',
+    });
+  },
+
   // Update my profile (Recruiter)
   updateMyProfile: async (profileData) => {
     return apiCall('/recruiters/me', {

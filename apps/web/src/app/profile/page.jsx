@@ -368,12 +368,12 @@ export default function ProfilePage() {
     e.preventDefault();
     
     if (passwordChangeForm.newPassword !== passwordChangeForm.confirmPassword) {
-      toast.error('New passwords do not match');
+      alert('New passwords do not match');
       return;
     }
     
     if (passwordChangeForm.newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+      alert('New password must be at least 8 characters');
       return;
     }
 
@@ -413,7 +413,7 @@ export default function ProfilePage() {
           errorMessage = `HTTP ${response.status}: ${response.statusText || 'Unknown error'}`;
         }
         
-        toast.error(`Error: ${errorMessage}`);
+        alert(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       }
       
@@ -427,10 +427,10 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error changing password:', error);
       if (error.message && !error.message.includes('Failed to change password')) {
-        // Error was already shown in toast
+        // Error was already shown via alert above
         return;
       }
-      toast.error(error.message || 'Failed to change password. Please check your connection and try again.');
+      alert(`Error: ${error.message || 'Failed to change password. Please check your connection and try again.'}`);
     } finally {
       setChangingPassword(false);
     }
@@ -1439,5 +1439,4 @@ export default function ProfilePage() {
     </div>
   );
 }
-
 

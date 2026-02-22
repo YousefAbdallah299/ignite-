@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import AdPopup from "@/components/AdPopup";
 import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from '@/components/RevealOnScroll';
+import PasswordInput from '@/components/PasswordInput';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { useOffersAPI } from '@/hooks/useOffersAPI';
 import { usePageTokenValidation } from '@/components/TokenValidationWrapper';
@@ -129,6 +130,13 @@ export default function MyOffersPage() {
     rejected: 0,
     withdrawn: 0
   });
+  const [showPasswordChangeForm, setShowPasswordChangeForm] = useState(false);
+  const [passwordChangeForm, setPasswordChangeForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     // Redirect if not a recruiter
@@ -335,6 +343,64 @@ export default function MyOffersPage() {
     }
   };
 
+  const changeRecruiterPassword = async (e) => {
+    e.preventDefault();
+
+    if (passwordChangeForm.newPassword !== passwordChangeForm.confirmPassword) {
+      alert('New passwords do not match');
+      return;
+    }
+
+    if (passwordChangeForm.newPassword.length < 8) {
+      alert('New password must be at least 8 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.onrender.com/api/v1'}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(passwordChangeForm)
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to change password';
+        const contentType = response.headers.get('content-type');
+        try {
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+          } else {
+            const text = await response.text();
+            if (text?.trim()) errorMessage = text;
+          }
+        } catch (_) {}
+        alert(`Error: ${errorMessage}`);
+        throw new Error(errorMessage);
+      }
+
+      toast.success('Password changed successfully!');
+      setPasswordChangeForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPasswordChangeForm(false);
+    } catch (error) {
+      console.error('Error changing recruiter password:', error);
+      if (error?.message?.toLowerCase().includes('current password') || error?.message?.toLowerCase().includes('incorrect')) {
+        alert(`Error: ${error.message}`);
+        return;
+      }
+      if (!error?.message || error.message === 'Failed to change password') {
+        alert(`Error: ${error?.message || 'Failed to change password'}`);
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   // Show access denied for non-recruiters
   if (isAuthenticated && !isRecruiter) {
     return (
@@ -524,6 +590,59 @@ export default function MyOffersPage() {
               </div>
             )}
           </div>
+          </div>
+        </RevealOnScroll>
+
+        <RevealOnScroll>
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
+              <button
+                onClick={() => setShowPasswordChangeForm(!showPasswordChangeForm)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700"
+              >
+                {showPasswordChangeForm ? 'Cancel' : 'Change Password'}
+              </button>
+            </div>
+
+            {showPasswordChangeForm && (
+              <form onSubmit={changeRecruiterPassword} className="space-y-4 border-t border-gray-200 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <PasswordInput
+                    value={passwordChangeForm.currentPassword}
+                    onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, currentPassword: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <PasswordInput
+                    value={passwordChangeForm.newPassword}
+                    onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, newPassword: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <PasswordInput
+                    value={passwordChangeForm.confirmPassword}
+                    onChange={(e) => setPasswordChangeForm({ ...passwordChangeForm, confirmPassword: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                >
+                  {changingPassword ? 'Changing...' : 'Change Password'}
+                </button>
+              </form>
+            )}
           </div>
         </RevealOnScroll>
 
