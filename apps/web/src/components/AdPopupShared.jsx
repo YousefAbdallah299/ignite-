@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
 import { adsAPI } from '@/utils/apiClient';
 
 const SHOW_DELAY_MS = 2000;
@@ -149,6 +148,11 @@ function resetForRoute(routeKey) {
   emit();
 }
 
+function getCurrentRouteKey() {
+  if (typeof window === 'undefined') return '/';
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
 function subscribe(listener) {
   store.listeners.add(listener);
   return () => {
@@ -233,7 +237,6 @@ export function useAdPopupSlot(side) {
 }
 
 export function AdPopupSlot({ side = 'right' }) {
-  const pathname = usePathname();
   const { ad, show, adCount, currentIndex, close } = useAdPopupSlot(side);
   const [displayedAd, setDisplayedAd] = useState(ad);
   const [displayedIndex, setDisplayedIndex] = useState(currentIndex);
@@ -242,8 +245,21 @@ export function AdPopupSlot({ side = 'right' }) {
   const slideTimerRef = useRef(null);
 
   useEffect(() => {
-    resetForRoute(pathname || '/');
-  }, [pathname]);
+    let lastRoute = getCurrentRouteKey();
+    resetForRoute(lastRoute);
+
+    const intervalId = window.setInterval(() => {
+      const nextRoute = getCurrentRouteKey();
+      if (nextRoute !== lastRoute) {
+        lastRoute = nextRoute;
+        resetForRoute(nextRoute);
+      }
+    }, 250);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!show || !ad) {
