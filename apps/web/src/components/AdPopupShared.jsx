@@ -17,6 +17,7 @@ const createStore = () => ({
   listeners: new Set(),
   leaders: { left: null, right: null },
   mounted: { left: new Set(), right: new Set() },
+  closed: { left: false, right: false },
   showTimer: null,
   rotationTimer: null,
 });
@@ -123,13 +124,8 @@ async function ensureAdsLoaded() {
   }
 }
 
-function skipSlot(side) {
-  if (store.ads.length <= 1) {
-    return;
-  }
-
-  // Advance rotation so both slots stay synchronized and continue cycling in-place.
-  store.rotationStep += 1;
+function closeSlot(side) {
+  store.closed[side] = true;
   emit();
 }
 
@@ -145,6 +141,16 @@ function getSnapshot(side, instanceId) {
   const adCount = store.ads.length;
 
   if (!isLeader || !store.hasShown || adCount === 0) {
+    return {
+      isLeader,
+      ad: null,
+      show: false,
+      adCount,
+      currentIndex: -1,
+    };
+  }
+
+  if (store.closed[side]) {
     return {
       isLeader,
       ad: null,
@@ -202,16 +208,12 @@ export function useAdPopupSlot(side) {
 
   return {
     ...snapshot,
-    skip: () => skipSlot(side),
+    close: () => closeSlot(side),
   };
 }
 
-function getAdKey(ad) {
-  return ad?.id || ad?.adId || `${ad?.title || ''}-${ad?.image || ''}-${ad?.redirectUrl || ''}`;
-}
-
 export function AdPopupSlot({ side = 'right' }) {
-  const { ad, show, adCount, currentIndex, skip } = useAdPopupSlot(side);
+  const { ad, show, adCount, currentIndex, close } = useAdPopupSlot(side);
 
   if (!show || !ad) return null;
 
@@ -226,9 +228,7 @@ export function AdPopupSlot({ side = 'right' }) {
   return (
     <div className={`fixed bottom-3 sm:bottom-6 ${positionClass} z-[9999] w-[calc(100vw-1.5rem)] sm:w-full max-w-[340px]`}>
       <div
-        key={`${side}-${getAdKey(ad)}-${currentIndex}`}
         className={`group relative overflow-hidden rounded-2xl border border-white/50 bg-white/95 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-18px_rgba(15,23,42,0.55)] ${slideClass}`}
-        style={{ animation: 'fadeInUp 260ms ease-out' }}
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-50/60 via-transparent to-orange-50/50" />
 
@@ -236,11 +236,11 @@ export function AdPopupSlot({ side = 'right' }) {
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            skip();
+            close();
           }}
           className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/90 text-gray-600 shadow-sm transition hover:bg-white hover:text-red-600"
-          aria-label="Next ad"
-          title="Next ad"
+          aria-label="Close ad popup"
+          title="Close"
         >
           <X className="h-4 w-4" />
         </button>
@@ -313,18 +313,6 @@ export function AdPopupSlot({ side = 'right' }) {
         </button>
       </div>
 
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(14px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }
