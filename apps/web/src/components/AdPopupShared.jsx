@@ -23,9 +23,28 @@ const createStore = () => ({
 });
 
 const store = createStore();
+const CLOSED_KEY_PREFIX = 'ignite_ad_popup_closed_';
 
 function emit() {
   store.listeners.forEach((listener) => listener());
+}
+
+function readClosed(side) {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.sessionStorage.getItem(`${CLOSED_KEY_PREFIX}${side}`) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeClosed(side, value) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(`${CLOSED_KEY_PREFIX}${side}`, value ? 'true' : 'false');
+  } catch {
+    // ignore storage errors
+  }
 }
 
 function normalizeAd(rawAd = {}) {
@@ -66,6 +85,7 @@ function assignLeader(side) {
 }
 
 function register(side, instanceId) {
+  store.closed[side] = readClosed(side);
   store.mounted[side].add(instanceId);
   assignLeader(side);
   emit();
@@ -126,6 +146,7 @@ async function ensureAdsLoaded() {
 
 function closeSlot(side) {
   store.closed[side] = true;
+  writeClosed(side, true);
   emit();
 }
 
@@ -214,29 +235,84 @@ export function useAdPopupSlot(side) {
 
 export function AdPopupSlot({ side = 'right' }) {
   const { ad, show, adCount, currentIndex, close } = useAdPopupSlot(side);
+  const [displayedAd, setDisplayedAd] = useState(ad);
+  const [displayedIndex, setDisplayedIndex] = useState(currentIndex);
+  const [incomingAd, setIncomingAd] = useState(null);
+  const [isSliding, setIsSliding] = useState(false);
+  const slideTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!show || !ad) {
+      setIncomingAd(null);
+      setIsSliding(false);
+      return;
+    }
+
+    if (!displayedAd) {
+      setDisplayedAd(ad);
+      setDisplayedIndex(currentIndex);
+      return;
+    }
+
+    if (displayedIndex === currentIndex) {
+      if (displayedAd !== ad) {
+        setDisplayedAd(ad);
+      }
+      return;
+    }
+
+    if (slideTimerRef.current) {
+      clearTimeout(slideTimerRef.current);
+    }
+
+    setIncomingAd(ad);
+    setIsSliding(true);
+
+    slideTimerRef.current = setTimeout(() => {
+      setDisplayedAd(ad);
+      setDisplayedIndex(currentIndex);
+      setIncomingAd(null);
+      setIsSliding(false);
+      slideTimerRef.current = null;
+    }, 320);
+  }, [show, ad, currentIndex, displayedAd, displayedIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (slideTimerRef.current) {
+        clearTimeout(slideTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!show || !ad) return null;
 
-  const positionClass = side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6';
-  const slideClass = side === 'left' ? 'translate-y-0' : 'translate-y-0';
+  const baseAd = displayedAd || ad;
 
-  const handleOpen = () => {
-    if (!ad.redirectUrl) return;
-    window.open(ad.redirectUrl, '_blank', 'noopener,noreferrer');
+  const positionClass = side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6';
+
+  const handleOpen = (targetAd) => {
+    if (!targetAd?.redirectUrl) return;
+    window.open(targetAd.redirectUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div className={`fixed bottom-3 sm:bottom-6 ${positionClass} z-[9999] w-[calc(100vw-1.5rem)] sm:w-full max-w-[340px]`}>
       <div
-        className={`group relative overflow-hidden rounded-2xl border border-white/50 bg-white/95 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-18px_rgba(15,23,42,0.55)] ${slideClass}`}
+        className="group relative overflow-hidden rounded-2xl border border-white/50 bg-white/95 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-18px_rgba(15,23,42,0.55)]"
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-50/60 via-transparent to-orange-50/50" />
 
         <button
           type="button"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             close();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
           }}
           className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/90 text-gray-600 shadow-sm transition hover:bg-white hover:text-red-600"
           aria-label="Close ad popup"
@@ -245,74 +321,94 @@ export function AdPopupSlot({ side = 'right' }) {
           <X className="h-4 w-4" />
         </button>
 
-        <button type="button" onClick={handleOpen} className="block w-full text-left">
-          <div className="relative h-40 w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-            {ad.image ? (
-              <img
-                src={ad.image}
-                alt={ad.title || 'Advertisement'}
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center px-6 text-center">
-                <span className="text-sm font-medium text-gray-500">Advertisement</span>
-              </div>
-            )}
-
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent px-4 pb-3 pt-8">
-              <div className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-red-700 shadow-sm">
-                Sponsored
-              </div>
-            </div>
+        <div className="relative overflow-hidden">
+          <div
+            className={`transition-transform duration-300 ease-out ${isSliding ? '-translate-x-full' : 'translate-x-0'}`}
+          >
+            <AdPopupCardContent ad={baseAd} onOpen={handleOpen} adCount={adCount} currentIndex={displayedIndex} side={side} />
           </div>
 
-          <div className="relative p-4">
-            <div className="mb-2 pr-9">
-              <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
-                {ad.title || 'Featured Advertisement'}
-              </h3>
+          {incomingAd ? (
+            <div
+              className={`absolute inset-0 transition-transform duration-300 ease-out ${isSliding ? 'translate-x-0' : 'translate-x-full'}`}
+            >
+              <AdPopupCardContent ad={incomingAd} onOpen={handleOpen} adCount={adCount} currentIndex={currentIndex} side={side} />
             </div>
-
-            {ad.description ? (
-              <p className="mb-3 line-clamp-2 text-xs leading-5 text-gray-600">{ad.description}</p>
-            ) : null}
-
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                {ad.advertiser ? (
-                  <p className="truncate text-[11px] font-medium text-gray-500">By {ad.advertiser}</p>
-                ) : (
-                  <p className="text-[11px] text-gray-400">Promoted content</p>
-                )}
-              </div>
-
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-3 py-2 text-xs font-semibold text-white shadow-sm transition group-hover:from-red-700 group-hover:to-orange-600">
-                {ad.ctaText || 'Open'}
-                <ExternalLink className="h-3.5 w-3.5" />
-              </span>
-            </div>
-
-            {adCount > 1 ? (
-              <div className="mt-3 flex items-center gap-1.5">
-                {Array.from({ length: Math.min(adCount, 6) }).map((_, i) => {
-                  const normalizedIndex = currentIndex % Math.min(adCount, 6);
-                  const active = i === normalizedIndex;
-                  return (
-                    <span
-                      key={`dot-${side}-${i}`}
-                      className={`h-1.5 rounded-full transition-all ${active ? 'w-5 bg-red-500' : 'w-1.5 bg-gray-300'}`}
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-        </button>
+          ) : null}
+        </div>
       </div>
 
     </div>
+  );
+}
+
+function AdPopupCardContent({ ad, onOpen, adCount, currentIndex, side }) {
+  return (
+    <button type="button" onClick={() => onOpen(ad)} className="block w-full text-left">
+      <div className="relative h-40 w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+        {ad?.image ? (
+          <img
+            src={ad.image}
+            alt={ad.title || 'Advertisement'}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <span className="text-sm font-medium text-gray-500">Advertisement</span>
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent px-4 pb-3 pt-8">
+          <div className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-red-700 shadow-sm">
+            Sponsored
+          </div>
+        </div>
+      </div>
+
+      <div className="relative p-4">
+        <div className="mb-2 pr-9">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
+            {ad?.title || 'Featured Advertisement'}
+          </h3>
+        </div>
+
+        {ad?.description ? (
+          <p className="mb-3 line-clamp-2 text-xs leading-5 text-gray-600">{ad.description}</p>
+        ) : null}
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            {ad?.advertiser ? (
+              <p className="truncate text-[11px] font-medium text-gray-500">By {ad.advertiser}</p>
+            ) : (
+              <p className="text-[11px] text-gray-400">Promoted content</p>
+            )}
+          </div>
+
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-3 py-2 text-xs font-semibold text-white shadow-sm transition group-hover:from-red-700 group-hover:to-orange-600">
+            {ad?.ctaText || 'Open'}
+            <ExternalLink className="h-3.5 w-3.5" />
+          </span>
+        </div>
+
+        {adCount > 1 ? (
+          <div className="mt-3 flex items-center gap-1.5">
+            {Array.from({ length: Math.min(adCount, 6) }).map((_, i) => {
+              const normalizedIndex = ((currentIndex % Math.min(adCount, 6)) + Math.min(adCount, 6)) % Math.min(adCount, 6);
+              const active = i === normalizedIndex;
+              return (
+                <span
+                  key={`dot-${side}-${i}`}
+                  className={`h-1.5 rounded-full transition-all ${active ? 'w-5 bg-red-500' : 'w-1.5 bg-gray-300'}`}
+                />
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+    </button>
   );
 }
