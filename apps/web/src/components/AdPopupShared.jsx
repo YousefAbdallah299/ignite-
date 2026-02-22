@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { adsAPI } from '@/utils/apiClient';
 
 const SHOW_DELAY_MS = 2000;
@@ -18,33 +19,15 @@ const createStore = () => ({
   leaders: { left: null, right: null },
   mounted: { left: new Set(), right: new Set() },
   closed: { left: false, right: false },
+  routeKey: null,
   showTimer: null,
   rotationTimer: null,
 });
 
 const store = createStore();
-const CLOSED_KEY_PREFIX = 'ignite_ad_popup_closed_';
 
 function emit() {
   store.listeners.forEach((listener) => listener());
-}
-
-function readClosed(side) {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.localStorage.getItem(`${CLOSED_KEY_PREFIX}${side}`) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function writeClosed(side, value) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(`${CLOSED_KEY_PREFIX}${side}`, value ? 'true' : 'false');
-  } catch {
-    // ignore storage errors
-  }
 }
 
 function normalizeAd(rawAd = {}) {
@@ -85,7 +68,6 @@ function assignLeader(side) {
 }
 
 function register(side, instanceId) {
-  store.closed[side] = readClosed(side);
   store.mounted[side].add(instanceId);
   assignLeader(side);
   emit();
@@ -146,7 +128,24 @@ async function ensureAdsLoaded() {
 
 function closeSlot(side) {
   store.closed[side] = true;
-  writeClosed(side, true);
+  emit();
+}
+
+function resetForRoute(routeKey) {
+  if (store.routeKey === routeKey) return;
+
+  store.routeKey = routeKey;
+  store.closed.left = false;
+  store.closed.right = false;
+  store.hasShown = false;
+  store.rotationStep = 0;
+
+  if (store.showTimer) {
+    clearTimeout(store.showTimer);
+    store.showTimer = null;
+  }
+
+  ensureShowTimer();
   emit();
 }
 
@@ -234,12 +233,17 @@ export function useAdPopupSlot(side) {
 }
 
 export function AdPopupSlot({ side = 'right' }) {
+  const pathname = usePathname();
   const { ad, show, adCount, currentIndex, close } = useAdPopupSlot(side);
   const [displayedAd, setDisplayedAd] = useState(ad);
   const [displayedIndex, setDisplayedIndex] = useState(currentIndex);
   const [incomingAd, setIncomingAd] = useState(null);
   const [isSliding, setIsSliding] = useState(false);
   const slideTimerRef = useRef(null);
+
+  useEffect(() => {
+    resetForRoute(pathname || '/');
+  }, [pathname]);
 
   useEffect(() => {
     if (!show || !ad) {
