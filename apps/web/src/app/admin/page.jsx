@@ -88,6 +88,7 @@ export default function AdminPage() {
   // Ads management state
   const [ads, setAds] = useState([]);
   const [loadingAds, setLoadingAds] = useState(false);
+  const [updatingAdId, setUpdatingAdId] = useState(null);
   const [showAdForm, setShowAdForm] = useState(false);
   const [newAd, setNewAd] = useState({
     title: '',
@@ -317,10 +318,8 @@ export default function AdminPage() {
   const loadAds = async () => {
     setLoadingAds(true);
     try {
-      const activeAds = await adsAPI.getActiveAds();
-      // Note: getActiveAds only returns active ads, but for admin we might want all ads
-      // For now, we'll use this endpoint. You can add a GET /admin/ads endpoint later if needed
-      setAds(activeAds || []);
+      const allAds = await adsAPI.getAllAds();
+      setAds(allAds || []);
     } catch (error) {
       console.error('Error loading ads:', error);
       setAds([]);
@@ -372,6 +371,67 @@ export default function AdminPage() {
       console.error('Error deleting ad:', error);
       toast.error(`Error deleting ad: ${error.message}`);
     }
+  };
+
+  const toggleAdEnabled = async (ad) => {
+    try {
+      setUpdatingAdId(ad.id);
+      await adsAPI.setAdEnabled(ad.id, !ad.enabled);
+      toast.success(`Ad ${!ad.enabled ? 'enabled' : 'disabled'} successfully!`);
+      loadAds();
+    } catch (error) {
+      console.error('Error updating ad:', error);
+      toast.error(`Error updating ad: ${error.message}`);
+    } finally {
+      setUpdatingAdId(null);
+    }
+  };
+
+  const getAdScheduleState = (ad) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(ad.startDate);
+    const end = new Date(ad.endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    if (end < today) return 'expired';
+    if (start > today) return 'scheduled';
+    return 'current';
+  };
+
+  const getAdStatusMeta = (ad) => {
+    const scheduleState = getAdScheduleState(ad);
+
+    if (!ad.enabled) {
+      return {
+        label: 'Disabled',
+        toneClass: 'bg-gray-100 text-gray-700 border-gray-200',
+        muted: true,
+      };
+    }
+
+    if (scheduleState === 'scheduled') {
+      return {
+        label: 'Scheduled',
+        toneClass: 'bg-blue-100 text-blue-700 border-blue-200',
+        muted: true,
+      };
+    }
+
+    if (scheduleState === 'expired') {
+      return {
+        label: 'Expired',
+        toneClass: 'bg-amber-100 text-amber-700 border-amber-200',
+        muted: true,
+      };
+    }
+
+    return {
+      label: 'Active',
+      toneClass: 'bg-green-100 text-green-700 border-green-200',
+      muted: false,
+    };
   };
 
   const loadMyPrivileges = async () => {
@@ -1841,14 +1901,21 @@ export default function AdminPage() {
                   ) : ads.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <div className="text-4xl mb-2">📢</div>
-                      <p className="text-sm">No active ads found</p>
+                      <p className="text-sm">No ads found</p>
                     </div>
                   ) : (
-                    ads.map((ad) => (
-                      <div key={ad.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    ads.map((ad) => {
+                      const status = getAdStatusMeta(ad);
+                      return (
+                      <div key={ad.id} className={`border rounded-lg p-4 transition-colors ${status.muted ? 'border-gray-200 bg-gray-50/80 opacity-80' : 'border-gray-200 hover:bg-gray-50'}`}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 mb-1">{ad.title}</h3>
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <h3 className="font-semibold text-gray-900">{ad.title}</h3>
+                              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${status.toneClass}`}>
+                                {status.label}
+                              </span>
+                            </div>
                             <div className="space-y-1 text-xs text-gray-600">
                               <p className="break-words">
                                 <strong>Image:</strong>{' '}
@@ -1875,23 +1942,33 @@ export default function AdminPage() {
                                 </a>
                               </p>
                               <p><strong>Period:</strong> {new Date(ad.startDate).toLocaleDateString()} - {new Date(ad.endDate).toLocaleDateString()}</p>
-                              <p><strong>Status:</strong> <span className={ad.enabled ? 'text-green-600' : 'text-gray-500'}>{ad.enabled ? 'Enabled' : 'Disabled'}</span></p>
+                              <p><strong>Enabled:</strong> <span className={ad.enabled ? 'text-green-600' : 'text-gray-500'}>{ad.enabled ? 'Yes' : 'No'}</span></p>
                             </div>
                           </div>
-                          <button
-                            onClick={() => deleteAd(ad.id)}
-                            className="text-red-600 hover:text-red-800 font-medium text-sm flex-shrink-0"
-                            title="Delete ad"
-                          >
-                            Delete
-                          </button>
+                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => toggleAdEnabled(ad)}
+                              disabled={updatingAdId === ad.id}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border disabled:opacity-50 disabled:cursor-not-allowed ${ad.enabled ? 'border-gray-300 text-gray-700 hover:bg-white' : 'border-green-300 text-green-700 hover:bg-green-50'}`}
+                              title={ad.enabled ? 'Disable ad' : 'Enable ad'}
+                            >
+                              {updatingAdId === ad.id ? 'Updating...' : ad.enabled ? 'Disable' : 'Enable'}
+                            </button>
+                            <button
+                              onClick={() => deleteAd(ad.id)}
+                              className="text-red-600 hover:text-red-800 font-medium text-sm"
+                              title="Delete ad"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                         {ad.imageUrl && (
                           <div className="mt-3">
                             <img
                               src={ad.imageUrl}
                               alt={ad.title}
-                              className="w-full h-32 object-cover rounded border border-gray-200"
+                              className={`w-full h-32 object-cover rounded border border-gray-200 ${status.muted ? 'grayscale-[35%]' : ''}`}
                               onError={(e) => {
                                 e.target.style.display = 'none';
                               }}
@@ -1899,7 +1976,7 @@ export default function AdminPage() {
                           </div>
                         )}
                       </div>
-                    ))
+                    )})
                   )}
                 </div>
               </section>
@@ -2031,4 +2108,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

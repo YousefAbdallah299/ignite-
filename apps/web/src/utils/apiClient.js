@@ -917,11 +917,25 @@ export const adsAPI = {
     });
   },
 
+  // Get all ads (admin only)
+  getAllAds: async () => {
+    return apiCall('/admin/ads', {
+      method: 'GET',
+    });
+  },
+
   // Create ad (admin only)
   createAd: async (adData) => {
     return apiCall('/admin/ads', {
       method: 'POST',
       body: JSON.stringify(adData),
+    });
+  },
+
+  // Enable/disable ad (admin only)
+  setAdEnabled: async (id, enabled) => {
+    return apiCall(`/admin/ads/${id}/enabled?enabled=${enabled}`, {
+      method: 'PATCH',
     });
   },
 
