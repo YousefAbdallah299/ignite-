@@ -932,13 +932,6 @@ export const adsAPI = {
     });
   },
 
-  // Enable/disable ad (admin only)
-  setAdEnabled: async (id, enabled) => {
-    return apiCall(`/admin/ads/${id}/enabled?enabled=${enabled}`, {
-      method: 'PATCH',
-    });
-  },
-
   // Delete ad (admin only)
   deleteAd: async (id) => {
     return apiCall(`/admin/ads/${id}`, {

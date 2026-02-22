@@ -88,15 +88,13 @@ export default function AdminPage() {
   // Ads management state
   const [ads, setAds] = useState([]);
   const [loadingAds, setLoadingAds] = useState(false);
-  const [updatingAdId, setUpdatingAdId] = useState(null);
   const [showAdForm, setShowAdForm] = useState(false);
   const [newAd, setNewAd] = useState({
     title: '',
     imageUrl: '',
     redirectUrl: '',
     startDate: '',
-    endDate: '',
-    enabled: true
+    endDate: ''
   });
   const [creatingAd, setCreatingAd] = useState(false);
   
@@ -345,8 +343,7 @@ export default function AdminPage() {
         imageUrl: '',
         redirectUrl: '',
         startDate: '',
-        endDate: '',
-        enabled: true
+        endDate: ''
       });
       setShowAdForm(false);
       loadAds();
@@ -373,20 +370,6 @@ export default function AdminPage() {
     }
   };
 
-  const toggleAdEnabled = async (ad) => {
-    try {
-      setUpdatingAdId(ad.id);
-      await adsAPI.setAdEnabled(ad.id, !ad.enabled);
-      toast.success(`Ad ${!ad.enabled ? 'enabled' : 'disabled'} successfully!`);
-      loadAds();
-    } catch (error) {
-      console.error('Error updating ad:', error);
-      toast.error(`Error updating ad: ${error.message}`);
-    } finally {
-      setUpdatingAdId(null);
-    }
-  };
-
   const getAdScheduleState = (ad) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -402,14 +385,6 @@ export default function AdminPage() {
 
   const getAdStatusMeta = (ad) => {
     const scheduleState = getAdScheduleState(ad);
-
-    if (!ad.enabled) {
-      return {
-        label: 'Disabled',
-        toneClass: 'bg-gray-100 text-gray-700 border-gray-200',
-        muted: true,
-      };
-    }
 
     if (scheduleState === 'scheduled') {
       return {
@@ -1868,19 +1843,6 @@ export default function AdminPage() {
                         />
                       </div>
                     </div>
-                    
-                    <div>
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={newAd.enabled}
-                          onChange={(e) => setNewAd({ ...newAd, enabled: e.target.checked })}
-                          className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                        />
-                        <span className="text-sm text-gray-700">Enabled</span>
-                      </label>
-                    </div>
-                    
                     <button
                       type="submit"
                       disabled={creatingAd}
@@ -1942,26 +1904,15 @@ export default function AdminPage() {
                                 </a>
                               </p>
                               <p><strong>Period:</strong> {new Date(ad.startDate).toLocaleDateString()} - {new Date(ad.endDate).toLocaleDateString()}</p>
-                              <p><strong>Enabled:</strong> <span className={ad.enabled ? 'text-green-600' : 'text-gray-500'}>{ad.enabled ? 'Yes' : 'No'}</span></p>
                             </div>
                           </div>
-                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                            <button
-                              onClick={() => toggleAdEnabled(ad)}
-                              disabled={updatingAdId === ad.id}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border disabled:opacity-50 disabled:cursor-not-allowed ${ad.enabled ? 'border-gray-300 text-gray-700 hover:bg-white' : 'border-green-300 text-green-700 hover:bg-green-50'}`}
-                              title={ad.enabled ? 'Disable ad' : 'Enable ad'}
-                            >
-                              {updatingAdId === ad.id ? 'Updating...' : ad.enabled ? 'Disable' : 'Enable'}
-                            </button>
-                            <button
-                              onClick={() => deleteAd(ad.id)}
-                              className="text-red-600 hover:text-red-800 font-medium text-sm"
-                              title="Delete ad"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => deleteAd(ad.id)}
+                            className="text-red-600 hover:text-red-800 font-medium text-sm flex-shrink-0"
+                            title="Delete ad"
+                          >
+                            Delete
+                          </button>
                         </div>
                         {ad.imageUrl && (
                           <div className="mt-3">
