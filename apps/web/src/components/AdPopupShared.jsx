@@ -32,7 +32,7 @@ function emit() {
 function readClosed(side) {
   if (typeof window === 'undefined') return false;
   try {
-    return window.sessionStorage.getItem(`${CLOSED_KEY_PREFIX}${side}`) === 'true';
+    return window.localStorage.getItem(`${CLOSED_KEY_PREFIX}${side}`) === 'true';
   } catch {
     return false;
   }
@@ -41,7 +41,7 @@ function readClosed(side) {
 function writeClosed(side, value) {
   if (typeof window === 'undefined') return;
   try {
-    window.sessionStorage.setItem(`${CLOSED_KEY_PREFIX}${side}`, value ? 'true' : 'false');
+    window.localStorage.setItem(`${CLOSED_KEY_PREFIX}${side}`, value ? 'true' : 'false');
   } catch {
     // ignore storage errors
   }
