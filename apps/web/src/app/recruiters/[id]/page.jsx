@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Building2, Calendar, CreditCard, Shield, User } from 'lucide-react';
+import { Building2, Calendar, CreditCard, Shield, User, Mail, Phone } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PageFadeIn from '@/components/PageFadeIn';
@@ -75,6 +75,10 @@ export default function RecruiterProfilePage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <InfoRow icon={User} label="User ID" value={profile.userId} />
+                <InfoRow icon={User} label="First Name" value={profile.firstName} />
+                <InfoRow icon={User} label="Last Name" value={profile.lastName} />
+                <InfoRow icon={Mail} label="Email" value={profile.email} />
+                <InfoRow icon={Mail} label="Company Email" value={profile.businessEmail} />
                 <InfoRow icon={Shield} label="Status" value={profile.status || 'Unknown'} />
                 <InfoRow icon={Calendar} label="Subscription Start" value={formatDate(profile.subscriptionStartDate)} />
                 <InfoRow icon={CreditCard} label="Subscription End" value={formatDate(profile.subscriptionEndDate)} />

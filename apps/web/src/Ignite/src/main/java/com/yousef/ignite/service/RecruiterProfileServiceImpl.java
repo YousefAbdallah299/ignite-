@@ -37,8 +37,12 @@ public class RecruiterProfileServiceImpl implements RecruiterProfileService {
         return RecruiterProfileResponseDTO.builder()
                 .id(recruiter.getId())
                 .userId(recruiter.getUser().getId())
+                .firstName(recruiter.getUser().getFirstName())
+                .lastName(recruiter.getUser().getLastName())
+                .email(recruiter.getUser().getEmail())
                 .status(recruiter.getStatus())
                 .companyName(recruiter.getCompanyName())
+                .businessEmail(recruiter.getBusinessEmail())
                 .subscriptionStartDate(recruiter.getSubscriptionStartDate())
                 .subscriptionEndDate(recruiter.getSubscriptionEndDate())
                 .build();

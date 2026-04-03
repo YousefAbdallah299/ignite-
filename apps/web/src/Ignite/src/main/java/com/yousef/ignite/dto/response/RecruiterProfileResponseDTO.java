@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
 public class RecruiterProfileResponseDTO {
     private Long id;
     private Long userId;
+    private String firstName;
+    private String lastName;
+    private String email;
     private String companyName;
+    private String businessEmail;
     private RecruiterStatus status;
     private LocalDateTime subscriptionStartDate;
     private LocalDateTime subscriptionEndDate;
