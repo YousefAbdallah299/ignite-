@@ -49,7 +49,8 @@ export default function CandidatePage() {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [canViewComments, setCanViewComments] = useState(false);
-  const id = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
+  // Route param may be either `candidateProfileId` or `userId` (admin navigates using user id).
+  const routeId = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '';
 
   // Resume visibility:
   // - Visible to: the candidate themselves and admins
@@ -62,8 +63,34 @@ export default function CandidatePage() {
     const load = async () => {
       try {
         setLoading(true);
-        const response = await candidatesAPI.getCandidateById(id);
+        let response;
+        try {
+          // Primary: treat routeId as candidate profile id
+          response = await candidatesAPI.getCandidateById(routeId);
+        } catch (primaryError) {
+          // Fallback: treat routeId as user id
+          const token = localStorage.getItem('authToken');
+          const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          };
+
+          const candidateRes = await fetch(`${API_BASE_URL}/candidates/user/${routeId}`, {
+            headers,
+          });
+          if (!candidateRes.ok) {
+            const errText = await candidateRes.text();
+            throw new Error(errText || 'Failed to fetch candidate by user id');
+          }
+          response = await candidateRes.json();
+        }
+
         setData(response);
+
+        // Only try to load comments if user is authenticated and is admin or recruiter
+        if (isAuthenticated && (isAdmin || isRecruiter) && response?.id) {
+          loadComments(response.id);
+        }
       } catch (error) {
         console.error('Error fetching candidate:', error);
         toast.error('Failed to load candidate profile');
@@ -72,24 +99,21 @@ export default function CandidatePage() {
         setLoading(false);
       }
     };
-    if (id) {
+    if (routeId) {
       load();
-      // Only try to load comments if user is authenticated and is admin or recruiter
-      if (isAuthenticated && (isAdmin || isRecruiter)) {
-        loadComments();
-      }
     }
-  }, [id, isAuthenticated, isAdmin, isRecruiter]);
+  }, [routeId, isAuthenticated, isAdmin, isRecruiter]);
 
-  const loadComments = async () => {
+  const loadComments = async (candidateProfileId) => {
     if (!isAdmin && !isRecruiter) {
       setCanViewComments(false);
       return;
     }
+    if (!candidateProfileId) return;
 
     try {
       setLoadingComments(true);
-      const commentsData = await candidatesAPI.getComments(id);
+      const commentsData = await candidatesAPI.getComments(candidateProfileId);
       setComments(commentsData || []);
       setCanViewComments(true);
     } catch (error) {
@@ -117,10 +141,14 @@ export default function CandidatePage() {
 
     setSubmittingComment(true);
     try {
-      await candidatesAPI.addComment(id, newComment.trim());
+      if (!data?.id) {
+        toast.error('Candidate profile not loaded');
+        return;
+      }
+      await candidatesAPI.addComment(data.id, newComment.trim());
       toast.success('Comment added successfully');
       setNewComment('');
-      loadComments();
+      loadComments(data.id);
     } catch (error) {
       console.error('Error adding comment:', error);
       toast.error(`Failed to add comment: ${error.message}`);

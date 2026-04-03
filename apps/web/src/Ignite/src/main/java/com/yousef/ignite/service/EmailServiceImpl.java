@@ -198,30 +198,31 @@
          sendEmail(adminEmail, subject, html);
      }
 
-     @Override
-     @Transactional
-     public void sendCourseRequestEmailToCandidate(User user) {
-         String subject = "Course Request Received";
-         String message = "Dear " + user.getFirstName() + ",\n\n"
-                 + "We have received your course request. Our team will review it and get back to you shortly.\n\n"
-                 + "Best regards,\n"
-                 + "Ignite Team";
-         sendEmail(user.getEmail(), subject, message);
-     }
+    @Override
+    @Transactional
+    public void sendCourseRequestEmailToCandidate(User user, String courseTitle) {
+        String subject = "Course Request Received";
+        String message = "Dear " + user.getFirstName() + ",\n\n"
+                + "We have received your course request for: " + courseTitle + "\n\n"
+                + "Our team will review it and get back to you shortly.\n\n"
+                + "Best regards,\n"
+                + "Ignite Team";
+        sendEmail(user.getEmail(), subject, message);
+    }
 
-     @Override
-     @Transactional
-     public void sendCourseRequestEmailToIgnite(User user, String title, String description, LocalDateTime endDate) {
-         String subject = "New Course Request Submitted";
-         String message = "A new course request has been submitted by " + user.getFirstName() + " (" + user.getEmail() + ").\n\n"
-                 + "Course Title: " + title + "\n"
-                 + "Description: " + description + "\n"
-                 + "Please review the request at your earliest convenience.\n\n"
-                 + "Best regards,\n"
-                 + "Ignite System";
-         String adminEmail = "yousefabdallah031@gmail.com";
-         sendEmail(adminEmail, subject, message);
+    @Override
+    @Transactional
+    public void sendCourseRequestEmailToIgnite(User user, String courseTitle, String courseDescription, LocalDateTime endDate) {
+        String subject = "New Course Request Submitted";
+        String message = "A new course request has been submitted by " + user.getFirstName() + " (" + user.getEmail() + ").\n\n"
+                + "Course Title: " + courseTitle + "\n\n"
+                + "Description: " + courseDescription + "\n\n"
+                + "Please review the request at your earliest convenience.\n\n"
+                + "Best regards,\n"
+                + "Ignite System";
+        String adminEmail = "yousefabdallah031@gmail.com";
+        sendEmail(adminEmail, subject, message);
 
 
-     }
+    }
  }

@@ -1,7 +1,10 @@
 package com.yousef.ignite.controller;
 import com.yousef.ignite.dto.request.ChangePasswordDTO;
+import com.yousef.ignite.dto.request.ChangePasswordRequestDTO;
 import com.yousef.ignite.dto.request.LoginRequestDTO;
 import com.yousef.ignite.dto.request.RegisterRequestDTO;
+import com.yousef.ignite.dto.request.SendOTPRequestDTO;
+import com.yousef.ignite.dto.request.VerifyOTPRequestDTO;
 import com.yousef.ignite.dto.response.LoginResponseDTO;
 import com.yousef.ignite.dto.response.RegisterResponseDTO;
 import com.yousef.ignite.exception.custom.EmailAlreadyExistsException;
@@ -25,7 +28,6 @@ public class AuthController {
 
     private final AuthService authService;
 
-    //THIS IS ONLY FOR KEEPING THE SESSION ALIVE IN THE DEPLOYED PLATFORM USING A CRON JOB, PLEASE IGNORE IT
     @GetMapping("/refresh")
     public ResponseEntity<Void> refresh() {
         return ResponseEntity.ok().build();
@@ -76,6 +78,29 @@ public class AuthController {
             @RequestParam("token") String token,
             @RequestBody ChangePasswordDTO request) {
         String message = authService.resetPassword(token, request);
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/send-phone-otp")
+    @Operation(summary = "Send OTP to phone number", description = "Sends a 6-digit OTP to the provided phone number for verification")
+    public ResponseEntity<String> sendPhoneOTP(@RequestBody @Valid SendOTPRequestDTO request) {
+        String message = authService.sendPhoneOTP(request.getPhoneNumber());
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/verify-phone-otp")
+    @Operation(summary = "Verify phone number OTP", description = "Verifies the OTP code sent to the phone number")
+    public ResponseEntity<String> verifyPhoneOTP(@RequestBody @Valid VerifyOTPRequestDTO request) {
+        String message = authService.verifyPhoneOTP(request.getPhoneNumber(), request.getOtp());
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password (authenticated users)", description = "Allows authenticated users to change their password")
+    public ResponseEntity<String> changePassword(
+            @RequestHeader("Authorization") String token,
+            @RequestBody @Valid ChangePasswordRequestDTO request) {
+        String message = authService.changePassword(token, request);
         return ResponseEntity.ok(message);
     }
 

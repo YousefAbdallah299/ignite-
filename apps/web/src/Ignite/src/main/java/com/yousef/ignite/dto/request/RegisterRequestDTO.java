@@ -42,6 +42,14 @@ public class RegisterRequestDTO {
     @Column(name = "user_role", nullable = false)
     private UserRole role;
 
+    // Fields for job seekers (CANDIDATE role)
+    private String expectedPosition;
+    private Double expectedSalary;
+    private String expectedSalaryCurrency;
+    private String currentPosition; // Optional current position for job seekers
 
+    // Fields for recruiters (RECRUITER role)
+    @Email
+    private String businessEmail; // Business email for recruiters
 
 }

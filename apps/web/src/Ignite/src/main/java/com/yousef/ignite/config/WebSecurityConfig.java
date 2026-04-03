@@ -53,7 +53,8 @@ public class WebSecurityConfig {
                                 "/images/**",
                                 "/api/v1/payments/webhook",
                                 "/api/v1/payments/callback",
-                                "/webfonts/**")
+                                "/webfonts/**",
+                                "/api/v1/ads/active")
                         .permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())

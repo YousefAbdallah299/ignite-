@@ -9,6 +9,8 @@ public interface RecruiterProfileService {
 
     RecruiterProfileResponseDTO getRecruiterById(String token, Long id);
 
+    RecruiterProfileResponseDTO getRecruiterByUserId(String token, Long userId);
+
     RecruiterProfileResponseDTO getMyProfile(String bearerToken);
 
 

@@ -19,6 +19,23 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+
+@ToString(exclude = {
+        "user",
+        "offers",
+        "enrolledCourses",
+        "applications",
+        "skillRatings",
+        "careerHistory"
+})
+@EqualsAndHashCode(exclude = {
+        "user",
+        "offers",
+        "enrolledCourses",
+        "applications",
+        "skillRatings",
+        "careerHistory"
+})
 public class CandidateProfile {
 
     @Id
@@ -33,15 +50,17 @@ public class CandidateProfile {
     @Column(nullable = false)
     private String title;
 
-    private Double expectedSalary;
-
-    private String expectedPosition;
+    @Column(name = "current_position")
+    private String currentPosition;
 
 
     private String summary;
     private String location;
     private LocalDateTime createdAt;
     private String resumeUrl;
+    private Double expectedSalary;
+    private String expectedSalaryCurrency;
+    private String expectedPosition;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
@@ -63,4 +82,8 @@ public class CandidateProfile {
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private List<CandidateSkillRating> skillRatings;
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private List<CareerHistory> careerHistory;
 }

@@ -11,6 +11,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class OfferResponseDTO {
     private Long id;
+    private Long candidateId;
+    private Long recruiterId;
+    private String candidateName;
+    private String candidateFirstName;
+    private String candidateLastName;
+    private String candidateEmail;
+    private String recruiterCompanyName;
+    private String recruiterFirstName;
+    private String recruiterLastName;
+    private String recruiterEmail;
     private OfferStatus status;
     private String title;
     private Double salary;

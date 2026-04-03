@@ -1,6 +1,5 @@
 package com.yousef.ignite.controller;
 
-import com.yousef.ignite.dto.request.CourseRequestCreateDTO;
 import com.yousef.ignite.dto.request.CourseRequestDTO;
 import com.yousef.ignite.dto.response.CourseLessonResponseDTO;
 import com.yousef.ignite.dto.response.CourseProgressResponseDTO;
@@ -10,11 +9,15 @@ import com.yousef.ignite.dto.response.PagedResponse;
 import com.yousef.ignite.service.CourseService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -36,9 +39,12 @@ public class CourseController {
         return courseService.getAllCourses(page, size, query, categories);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CourseResponseDTO> getCourseById(@PathVariable Long id) {
-        return ResponseEntity.ok(courseService.getCourseById(id));
+    @PostMapping("/request")
+    public ResponseEntity<Void> requestCourse(
+            @RequestHeader("Authorization") String token,
+            @RequestBody @Valid com.yousef.ignite.dto.request.CourseRequestCreateDTO dto) {
+        courseService.requestCourse(token, dto);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
@@ -48,6 +54,11 @@ public class CourseController {
             @RequestHeader("Authorization") String token)
     {
         return courseService.getEnrolledCourses(page, size, token);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CourseResponseDTO> getCourseById(@PathVariable Long id) {
+        return ResponseEntity.ok(courseService.getCourseById(id));
     }
 
 
@@ -71,14 +82,6 @@ public class CourseController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long id) {
         courseService.enrollCourse(token, id);
-        return ResponseEntity.ok().build();
-    }
-
-
-    @PostMapping("/request")
-    public ResponseEntity<Void> requestCourse(
-            @RequestHeader("Authorization") String token, CourseRequestCreateDTO dto) {
-        courseService.requestCourse(token,dto);
         return ResponseEntity.ok().build();
     }
 
@@ -119,6 +122,17 @@ public class CourseController {
             @RequestParam(defaultValue = "true") boolean completed
     ) {
         return ResponseEntity.ok(courseService.markLessonComplete(token, courseId, lessonId, completed));
+    }
+
+    @PostMapping(value = "/upload-image", consumes = {"multipart/form-data"})
+    public ResponseEntity<Map<String, String>> uploadCourseImage(
+            @RequestHeader("Authorization") String token,
+            @RequestPart("file") MultipartFile file
+    ) {
+        String imageUrl = courseService.uploadCourseImage(token, file);
+        Map<String, String> response = new HashMap<>();
+        response.put("imageUrl", imageUrl);
+        return ResponseEntity.ok(response);
     }
 
 }

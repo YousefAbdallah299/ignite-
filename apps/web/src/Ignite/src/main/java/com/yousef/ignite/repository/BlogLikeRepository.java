@@ -20,4 +20,9 @@ public interface BlogLikeRepository extends JpaRepository<BlogLike, Long> {
     @Transactional
     @Query("DELETE FROM BlogLike bl WHERE bl.blog.id = :blogId")
     void deleteByBlogId(@Param("blogId") Long blogId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM BlogLike bl WHERE bl.user.id = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
 }

@@ -48,18 +48,15 @@ function JobCard({ job, onApply, onCancel, isApplied }) {
     });
   };
 
-  const formatSalary = (min, max) => {
-    const formatNumber = (num) =>
-      new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(num);
-    return `${formatNumber(min)} - ${formatNumber(max)}`;
+  const formatSalary = (salary, currency) => {
+    if (salary === null || salary === undefined || salary === "") return "N/A";
+    const salaryStr = String(salary);
+    if (currency) return `${currency} ${salaryStr}`;
+    return salaryStr;
   };
 
-  const getJobTypeColor = (type) => {
-    switch (type) {
+  const getEmploymentTypeColor = (type) => {
+    switch (type) { // backend returns employmentType like FULL_TIME / PART_TIME / ...
       case "FULL_TIME":
         return "bg-green-100 text-green-700";
       case "PART_TIME":
@@ -73,17 +70,21 @@ function JobCard({ job, onApply, onCancel, isApplied }) {
     }
   };
 
+  const primaryCategory = Array.isArray(job.categories)
+    ? job.categories[0]
+    : "";
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 group">
       <div className="flex items-start gap-4 mb-4">
         <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center text-red-600 font-bold text-lg">
-          {job.company?.charAt(0) || "C"}
+          {job.title?.charAt(0) || "J"}
         </div>
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-red-600 transition-colors">
             {job.title}
           </h3>
-          <p className="text-gray-600 text-sm">{job.company}</p>
+          <p className="text-gray-600 text-sm">{job.location}</p>
         </div>
         <button
           className={`p-2 rounded-lg transition-all ${
@@ -107,30 +108,30 @@ function JobCard({ job, onApply, onCancel, isApplied }) {
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <Clock className="w-4 h-4" />
-          <span>{formatDate(job.postedAt)}</span>
+          <span>{formatDate(job.createdAt)}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <DollarSign className="w-4 h-4" />
-          <span>{formatSalary(job.minSalary, job.maxSalary)}</span>
+          <span>{formatSalary(job.salary, job.currency)}</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2 mb-4">
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${getJobTypeColor(
-            job.jobType
+          className={`px-3 py-1 rounded-full text-xs font-medium ${getEmploymentTypeColor(
+            job.employmentType
           )}`}
         >
-          {job.jobType?.replace("_", " ")}
+          {job.employmentType?.replace("_", " ")}
         </span>
         <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-          {job.category}
+          {primaryCategory || "General"}
         </span>
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <span className="text-gray-500 text-sm">
-          {job.applicationsCount || 0} applications
+          {job.applicationCount || 0} applications
         </span>
         <a
           href={`/jobs/${job.id}`}
@@ -161,7 +162,7 @@ export default function JobsPage() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const { fetchJobs, applyToJob, cancelApplication } = useJobsAPI();
+  const { getAllJobs, applyForJob, cancelJobApplication, getMyAppliedJobs } = useJobsAPI();
   const { user } = useAuthAPI();
   const { validateToken } = usePageTokenValidation();
 
@@ -172,24 +173,10 @@ export default function JobsPage() {
   }, [filters]);
 
   const fetchAppliedJobs = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/candidates/my/applications`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const appliedJobIds = new Set(data.map((app) => app.jobId));
-        setAppliedJobs(appliedJobIds);
-      }
+      const response = await getMyAppliedJobs(0, 1000);
+      const appliedJobIds = new Set((response?.content || []).map((j) => j.id));
+      setAppliedJobs(appliedJobIds);
     } catch (error) {
       console.error("Error fetching applied jobs:", error);
     }
@@ -199,15 +186,19 @@ export default function JobsPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchJobs(filters);
+      const size = pagination.limit || 10;
+      const query = filters.search?.trim() || null;
+      const categories = filters.category?.trim() ? [filters.category] : null;
 
-      if (response && response.data) {
-        setJobs(response.data);
+      const response = await getAllJobs(filters.page, size, query, categories);
+
+      if (response && Array.isArray(response.content)) {
+        setJobs(response.content);
         setPagination({
-          total: response.total || 0,
+          total: response.totalElements || 0,
           page: response.page || 0,
-          limit: response.limit || 10,
-          pages: response.totalPages || 0,
+          limit: response.size || size,
+          pages: response.totalPages || 0
         });
       } else {
         setJobs([]);
@@ -246,7 +237,7 @@ export default function JobsPage() {
     }
 
     try {
-      await applyToJob(jobId);
+      await applyForJob(jobId);
       setAppliedJobs((prev) => new Set([...prev, jobId]));
       toast.success("Application submitted successfully!");
     } catch (error) {
@@ -256,7 +247,7 @@ export default function JobsPage() {
 
   const handleCancel = async (jobId) => {
     try {
-      await cancelApplication(jobId);
+      await cancelJobApplication(jobId);
       setAppliedJobs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(jobId);

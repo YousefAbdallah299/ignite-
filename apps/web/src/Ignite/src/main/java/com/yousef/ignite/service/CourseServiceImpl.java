@@ -1,7 +1,6 @@
 package com.yousef.ignite.service;
 
 import com.yousef.ignite.dto.enums.UserRole;
-import com.yousef.ignite.dto.request.CourseRequestCreateDTO;
 import com.yousef.ignite.dto.request.CourseRequestDTO;
 import com.yousef.ignite.dto.response.*;
 import com.yousef.ignite.entity.*;
@@ -10,12 +9,20 @@ import com.yousef.ignite.exception.custom.ResourceNotFoundException;
 import com.yousef.ignite.exception.custom.UnauthorizedAccessException;
 import com.yousef.ignite.repository.*;
 import com.yousef.ignite.service.security.JwtUtils;
+import com.yousef.ignite.util.FileUploadUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -298,6 +305,7 @@ public class CourseServiceImpl implements CourseService {
                 .title(course.getTitle())
                 .skillLevel(course.getSkillLevel())
                 .description(course.getDescription())
+                .imageUrl(course.getImageUrl())
                 .sections(
                         course.getSections().stream().map(section ->
                                 CourseSectionResponseDTO.builder()
@@ -392,13 +400,47 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public void requestCourse(String token, CourseRequestCreateDTO dto) {
+    public void requestCourse(String token, com.yousef.ignite.dto.request.CourseRequestCreateDTO dto) {
         User user = getUserFromToken(token);
         if (!user.getRole().equals(UserRole.CANDIDATE)) {
             throw new UnauthorizedAccessException("Only candidates can request courses");
         }
-//        emailService.sendCourseRequestEmailToIgnite(user,dto.getTitle(),dto.getDescription() ,LocalDateTime.now());
-//        emailService.sendCourseRequestEmailToCandidate(user);
+//        emailService.sendCourseRequestEmailToIgnite(user, dto.getTitle(), dto.getDescription(), LocalDateTime.now());
+//        emailService.sendCourseRequestEmailToCandidate(user, dto.getTitle());
+    }
+
+
+    @Override
+    @Transactional
+    public String uploadCourseImage(String token, MultipartFile file) {
+        User user = getUserFromToken(token);
+        if (user.getRole() != UserRole.ADMIN) {
+            throw new UnauthorizedAccessException("Only admins can upload course images");
+        }
+
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is required");
+        }
+
+        FileUploadUtil.validateImageFile(file);
+
+        String fileUrl = null;
+        try {
+            String uploadDir = "uploads/courses/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String fileName = FileUploadUtil.sanitizeFilename(file.getOriginalFilename());
+            Path filePath = Path.of(uploadDir + fileName);
+
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            fileUrl = "/uploads/courses/" + fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload course image", e);
+        }
+
+        return fileUrl;
     }
 
 }

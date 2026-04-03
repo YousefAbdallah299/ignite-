@@ -45,8 +45,38 @@ public class OfferServiceImpl implements OfferService {
     }
 
     private OfferResponseDTO toResponse(Offer o) {
+        String candidateName = null;
+        String candidateFirstName = null;
+        String candidateLastName = null;
+        String candidateEmail = null;
+        if (o.getCandidate() != null && o.getCandidate().getUser() != null) {
+            candidateFirstName = o.getCandidate().getUser().getFirstName();
+            candidateLastName = o.getCandidate().getUser().getLastName();
+            candidateEmail = o.getCandidate().getUser().getEmail();
+            candidateName = (candidateFirstName + " " + candidateLastName).trim();
+        }
+
+        String recruiterFirstName = null;
+        String recruiterLastName = null;
+        String recruiterEmail = null;
+        if (o.getRecruiter() != null && o.getRecruiter().getUser() != null) {
+            recruiterFirstName = o.getRecruiter().getUser().getFirstName();
+            recruiterLastName = o.getRecruiter().getUser().getLastName();
+            recruiterEmail = o.getRecruiter().getUser().getEmail();
+        }
+
         return OfferResponseDTO.builder()
                 .id(o.getId())
+                .candidateId(o.getCandidate() != null ? o.getCandidate().getId() : null)
+                .recruiterId(o.getRecruiter() != null ? o.getRecruiter().getId() : null)
+                .candidateName(candidateName)
+                .candidateFirstName(candidateFirstName)
+                .candidateLastName(candidateLastName)
+                .candidateEmail(candidateEmail)
+                .recruiterCompanyName(o.getRecruiter() != null ? o.getRecruiter().getCompanyName() : null)
+                .recruiterFirstName(recruiterFirstName)
+                .recruiterLastName(recruiterLastName)
+                .recruiterEmail(recruiterEmail)
                 .status(o.getStatus())
                 .title(o.getTitle())
                 .salary(o.getSalary())

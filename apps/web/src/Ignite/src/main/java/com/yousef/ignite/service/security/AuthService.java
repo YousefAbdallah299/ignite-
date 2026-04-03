@@ -1,6 +1,7 @@
 package com.yousef.ignite.service.security;
 
 import com.yousef.ignite.dto.request.ChangePasswordDTO;
+import com.yousef.ignite.dto.request.ChangePasswordRequestDTO;
 import com.yousef.ignite.dto.request.LoginRequestDTO;
 import com.yousef.ignite.dto.request.RegisterRequestDTO;
 import com.yousef.ignite.dto.response.LoginResponseDTO;
@@ -68,6 +69,12 @@ public interface AuthService {
     void forgotPassword(String email);
 
     String resetPassword(String token, ChangePasswordDTO request);
+
+    String sendPhoneOTP(String phoneNumber);
+
+    String verifyPhoneOTP(String phoneNumber, String otp);
+
+    String changePassword(String bearerToken, ChangePasswordRequestDTO request);
 
 
 }

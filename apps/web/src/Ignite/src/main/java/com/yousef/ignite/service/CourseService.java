@@ -1,6 +1,5 @@
 package com.yousef.ignite.service;
 
-import com.yousef.ignite.dto.request.CourseRequestCreateDTO;
 import com.yousef.ignite.dto.request.CourseRequestDTO;
 import com.yousef.ignite.dto.response.CourseLessonResponseDTO;
 import com.yousef.ignite.dto.response.CourseProgressResponseDTO;
@@ -19,7 +18,7 @@ public interface CourseService {
     void cancelEnrollment(String token, Long courseId);
     PagedResponse<CourseSummaryResponseDTO> getEnrolledCourses(int page, int size, String token);
 
-    void requestCourse(String token, CourseRequestCreateDTO dto);
+    void requestCourse(String token, com.yousef.ignite.dto.request.CourseRequestCreateDTO dto);
     List<CourseLessonResponseDTO> getLessonsBySection(Long sectionId);
     CourseResponseDTO getCourseById(Long id);
 
@@ -28,4 +27,7 @@ public interface CourseService {
     // Progress tracking
     CourseProgressResponseDTO getProgress(String token, Long courseId);
     CourseProgressResponseDTO markLessonComplete(String token, Long courseId, Long lessonId, boolean completed);
+
+    // Course image upload
+    String uploadCourseImage(String token, org.springframework.web.multipart.MultipartFile file);
 }

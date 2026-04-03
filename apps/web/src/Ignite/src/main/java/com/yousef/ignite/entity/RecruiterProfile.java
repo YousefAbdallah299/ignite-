@@ -29,6 +29,8 @@ public class RecruiterProfile {
     @Column(nullable = false)
     private String companyName;
 
+    @Column(name = "business_email")
+    private String businessEmail;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

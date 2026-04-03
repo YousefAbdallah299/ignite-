@@ -24,12 +24,12 @@ public class Course {
     @Column(nullable = false)
     private String title;
 
-
-    @Column(columnDefinition = "TEXT",name = "image_url")
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
 
-    @Column(columnDefinition = "TEXT")
+
+    @Column(length = 2000)
     private String description;
 
     @Enumerated(EnumType.STRING)

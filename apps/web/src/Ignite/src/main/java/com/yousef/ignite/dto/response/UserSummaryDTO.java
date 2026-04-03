@@ -14,6 +14,7 @@ public class UserSummaryDTO {
     private String email;
     private String phoneNumber;
     private UserRole role;
+    private Boolean suspended;
 }
 
 

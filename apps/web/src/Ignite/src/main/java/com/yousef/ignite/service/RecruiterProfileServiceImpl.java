@@ -73,6 +73,19 @@ public class RecruiterProfileServiceImpl implements RecruiterProfileService {
     }
 
     @Override
+    public RecruiterProfileResponseDTO getRecruiterByUserId(String token, Long userId) {
+        User me = getUser(token);
+
+        if (me.getRole() != UserRole.ADMIN) {
+            throw new UnauthorizedAccessException("You are not authorized to perform this operation");
+        }
+
+        RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recruiter profile not found"));
+        return mapToDTO(profile);
+    }
+
+    @Override
     public RecruiterProfileResponseDTO getMyProfile(String bearerToken) {
         User me = getUserFromToken(bearerToken);
         RecruiterProfile profile = recruiterProfileRepository.findByUser(me).orElseThrow(() -> new ResourceNotFoundException("Profile not found"));

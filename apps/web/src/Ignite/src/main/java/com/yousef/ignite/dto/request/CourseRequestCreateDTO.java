@@ -11,9 +11,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseRequestCreateDTO {
-    @NotBlank
+    @NotBlank(message = "Course title is required")
     private String title;
-
-    @NotBlank
+    
+    @NotBlank(message = "Course description is required")
     private String description;
 }
+
+
+
+

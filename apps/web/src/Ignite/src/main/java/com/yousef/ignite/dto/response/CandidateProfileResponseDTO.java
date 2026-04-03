@@ -19,7 +19,9 @@ public class CandidateProfileResponseDTO {
     private String location;
     private LocalDateTime createdAt;
     private Double expectedSalary;
+    private String expectedSalaryCurrency;
     private String expectedPosition;
+    private String currentPosition;
     // skill name -> rating
     private Map<String, Integer> skills;
 }

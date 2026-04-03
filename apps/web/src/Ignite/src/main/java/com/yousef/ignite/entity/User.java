@@ -55,13 +55,20 @@ public class User {
 
     private LocalDateTime resetTokenExpiry;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private RecruiterProfile recruiterProfile;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private CandidateProfile candidateProfile;
+
+    @Column(name = "is_custom_admin")
+    private Boolean isCustomAdmin = false;
+
+    @Column(name = "suspended")
+    private Boolean suspended = false;
+
 
     public RegisterResponseDTO toRegisterResponseDTO() {
         return RegisterResponseDTO.builder()

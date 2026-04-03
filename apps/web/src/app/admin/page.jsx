@@ -1563,36 +1563,14 @@ export default function AdminPage() {
                     users.map((u) => {
                       console.log('Rendering user:', u);
                       const isAdmin = u.role === 'ADMIN';
-                      const handleUserClick = async () => {
+                      const handleUserClick = () => {
                         if (isAdmin) return; // Admins are not clickable
                         if (u.role === 'CANDIDATE') {
-                          // For candidates, get the candidate profile ID from user ID
-                          try {
-                            const token = localStorage.getItem('authToken');
-                            const response = await fetch(`${API_BASE_URL}/candidates/user/${u.id}`, {
-                              headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                              }
-                            });
-                            if (response.ok) {
-                              const candidateData = await response.json();
-                              navigate(`/candidates/${candidateData.id}`);
-                            } else {
-                              toast.error('Failed to load candidate profile');
-                            }
-                          } catch (error) {
-                            console.error('Error fetching candidate profile:', error);
-                            toast.error('Failed to load candidate profile');
-                          }
+                          // Navigate using the clicked user's id
+                          navigate(`/candidates/${u.id}`);
                         } else if (u.role === 'RECRUITER') {
-                          try {
-                            const recruiterProfile = await recruitersAPI.getRecruiterByUserId(u.id);
-                            navigate(`/recruiters/${recruiterProfile.id}`);
-                          } catch (error) {
-                            console.error('Error fetching recruiter profile:', error);
-                            toast.error(error.message || 'Failed to load recruiter profile');
-                          }
+                          // Navigate using the clicked user's id
+                          navigate(`/recruiters/${u.id}`);
                         }
                       };
                       return (
@@ -1834,25 +1812,25 @@ export default function AdminPage() {
                         <div key={offer.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <h3 className="font-semibold text-gray-900">{offer.title || `Offer #${offer.id}`}</h3>
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
-                                  offer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700 border-green-200' :
-                                  offer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                  offer.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' :
-                                  'bg-gray-100 text-gray-700 border-gray-200'
-                                }`}>
-                                  {offer.status}
-                                </span>
-                              </div>
                               <div className="space-y-1 text-xs text-gray-600">
-                                <p><strong>Offer ID:</strong> {offer.id}</p>
-                                <p><strong>Recruiter Profile ID:</strong> {offer.recruiterId ?? 'N/A'}</p>
-                                <p><strong>Recruiter Company:</strong> {offer.recruiterCompanyName || 'N/A'}</p>
-                                <p><strong>Candidate Profile ID:</strong> {offer.candidateId ?? 'N/A'}</p>
-                                <p><strong>Candidate:</strong> {offer.candidateName || 'N/A'}</p>
-                                <p><strong>Salary:</strong> {offer.salary != null ? `${offer.currency || ''} ${offer.salary}` : 'N/A'}</p>
-                                <p><strong>Created:</strong> {offer.createdAt ? new Date(offer.createdAt).toLocaleString() : 'N/A'}</p>
+                                <p>
+                                  <strong>Recruiter:</strong>{" "}
+                                  {`${offer.recruiterFirstName ?? ""} ${offer.recruiterLastName ?? ""}`.trim() || "N/A"}{" "}
+                                  ({offer.recruiterEmail || "N/A"})
+                                </p>
+                                <p>
+                                  <strong>Candidate:</strong>{" "}
+                                  {`${offer.candidateFirstName ?? ""} ${offer.candidateLastName ?? ""}`.trim() || "N/A"}{" "}
+                                  ({offer.candidateEmail || "N/A"})
+                                </p>
+                                <p>
+                                  <strong>Salary:</strong>{" "}
+                                  {offer.salary != null ? `${offer.currency || ""} ${offer.salary}` : "N/A"}
+                                </p>
+                                <p>
+                                  <strong>Date:</strong>{" "}
+                                  {offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : "N/A"}
+                                </p>
                               </div>
                             </div>
                           </div>

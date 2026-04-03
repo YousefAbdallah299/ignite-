@@ -20,7 +20,14 @@ export default function RecruiterProfilePage() {
       if (!id) return;
       try {
         setLoading(true);
-        const data = await recruitersAPI.getRecruiterById(id);
+        let data;
+        try {
+          // Primary: treat route param as recruiter profile id
+          data = await recruitersAPI.getRecruiterById(id);
+        } catch (primaryError) {
+          // Fallback: treat route param as user id
+          data = await recruitersAPI.getRecruiterByUserId(id);
+        }
         setProfile(data);
       } catch (error) {
         console.error('Failed to load recruiter profile:', error);

@@ -29,7 +29,14 @@ public class UpdateCandidateProfileDTO {
     private Double expectedSalary;
 
     @Nullable
+    private String expectedSalaryCurrency;
+
+    @Nullable
     private String expectedPosition;
+
+    @Nullable
+    private String currentPosition;
+
 }
 
 
