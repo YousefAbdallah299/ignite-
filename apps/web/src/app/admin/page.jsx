@@ -1814,6 +1814,9 @@ export default function AdminPage() {
                             <div className="flex-1 min-w-0">
                               <div className="space-y-1 text-xs text-gray-600">
                                 <p>
+                                  <strong>Status:</strong> {offer.status || 'N/A'}
+                                </p>
+                                <p>
                                   <strong>Recruiter:</strong>{" "}
                                   {`${offer.recruiterFirstName ?? ""} ${offer.recruiterLastName ?? ""}`.trim() || "N/A"}{" "}
                                   ({offer.recruiterEmail || "N/A"})

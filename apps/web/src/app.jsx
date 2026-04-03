@@ -34,6 +34,7 @@ import CandidateDetails from './app/candidates/[id]/page.jsx';
 import CourseDetails from './app/courses/[id]/page.jsx';
 import CourseLearn from './app/courses/[id]/learn/page.jsx';
 import JobDetails from './app/jobs/[id]/page.jsx';
+import RecruiterDetails from './app/recruiters/[id]/page.jsx';
 
 
 export default function App() {
@@ -68,6 +69,7 @@ export default function App() {
 
             {/* ✅ Dynamic routes */}
             <Route path="/candidates/:id" element={<CandidateDetails />} />
+            <Route path="/recruiters/:id" element={<RecruiterDetails />} />
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/courses/:id/learn" element={<CourseLearn />} />
             <Route path="/jobs/:id" element={<JobDetails />} />

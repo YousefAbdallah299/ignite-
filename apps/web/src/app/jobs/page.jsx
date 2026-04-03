@@ -164,10 +164,10 @@ export default function JobsPage() {
 
   const { getAllJobs, applyForJob, cancelJobApplication, getMyAppliedJobs } = useJobsAPI();
   const { user } = useAuthAPI();
-  const { validateToken } = usePageTokenValidation();
+  // Jobs page is public; don't require auth validation.
+  usePageTokenValidation(false);
 
   useEffect(() => {
-    validateToken();
     fetchJobsData();
     fetchAppliedJobs();
   }, [filters]);
