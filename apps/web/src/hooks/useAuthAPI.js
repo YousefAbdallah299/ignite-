@@ -70,7 +70,9 @@ export const useAuthAPI = () => {
       
       // Store user data with profile information
       const userData = {
-        id: userProfile?.id || null,
+        // `BlogResponseDTO.userId` refers to the underlying `User.id`, not the profile id.
+        // Candidate/Recruiter profile DTOs include `userId`, so use it when available.
+        id: userProfile?.userId || userProfile?.id || null,
         role: response.role,
         email: credentials.email,
         name: userProfile?.name || null,
@@ -231,7 +233,7 @@ export const useAuthAPI = () => {
       
       const updatedUserData = {
         ...user,
-        id: userProfile?.id || user?.id,
+        id: userProfile?.userId || userProfile?.id || user?.id,
         name: userProfile?.name || user?.name,
         firstName: userProfile?.firstName || (userProfile?.name?.split(' ')[0]) || user?.firstName,
       };

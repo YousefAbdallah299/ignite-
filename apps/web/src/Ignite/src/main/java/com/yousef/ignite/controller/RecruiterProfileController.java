@@ -38,6 +38,15 @@ public class RecruiterProfileController {
         return new ResponseEntity<>(recruiterProfileService.getRecruiterById(token, id), HttpStatus.OK);
     }
 
+    // Admin: get recruiter profile by the underlying user id
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<RecruiterProfileResponseDTO> getRecruiterByUserId(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long userId
+    ) {
+        return new ResponseEntity<>(recruiterProfileService.getRecruiterByUserId(token, userId), HttpStatus.OK);
+    }
+
 
 
 }
