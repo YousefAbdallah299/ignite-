@@ -71,8 +71,9 @@ public class WebSecurityConfig {
                         .permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(rateLimitFilter(), AuthTokenFilter.class)
-                .addFilterBefore(requestSizeFilter(), AuthTokenFilter.class)
+                // Add protections before authentication filters (anchor on a built-in filter order)
+                .addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestSizeFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
