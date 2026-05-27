@@ -66,6 +66,9 @@ public class CandidateServiceImpl implements CandidateService {
         }
         String name = profile.getUser().getFirstName() + " " + profile.getUser().getLastName();
 
+        // Only admins (including custom admins) can see email/phone.
+        boolean isAdminViewer = viewer != null && viewer.getRole() == UserRole.ADMIN;
+
         // Hide resume URL if viewer is a recruiter (not admin and not the candidate themselves)
         String resumeUrl = profile.getResumeUrl();
         if (hideResume || (viewer != null && viewer.getRole() == UserRole.RECRUITER &&
@@ -81,6 +84,8 @@ public class CandidateServiceImpl implements CandidateService {
                 .title(profile.getTitle())
                 .summary(profile.getSummary())
                 .resumeUrl(resumeUrl)
+                .email(isAdminViewer ? profile.getUser().getEmail() : null)
+                .phoneNumber(isAdminViewer ? profile.getUser().getPhoneNumber() : null)
                 .location(profile.getLocation())
                 .createdAt(profile.getCreatedAt())
                 .expectedSalary(profile.getExpectedSalary())

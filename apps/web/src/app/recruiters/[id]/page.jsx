@@ -78,6 +78,7 @@ export default function RecruiterProfilePage() {
                 <InfoRow icon={User} label="First Name" value={profile.firstName} />
                 <InfoRow icon={User} label="Last Name" value={profile.lastName} />
                 <InfoRow icon={Mail} label="Email" value={profile.email} />
+                <InfoRow icon={Phone} label="Mobile Number" value={profile.phoneNumber} />
                 <InfoRow icon={Mail} label="Company Email" value={profile.businessEmail} />
                 <InfoRow icon={Shield} label="Status" value={profile.status || 'Unknown'} />
                 <InfoRow icon={Calendar} label="Subscription Start" value={formatDate(profile.subscriptionStartDate)} />

@@ -541,13 +541,28 @@ export default function CandidatePage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact</h3>
               <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                  <span>Contact via platform</span>
-                </div>
-                <div className="text-xs text-gray-500">
-                  Contact information is protected for privacy. {isRecruiter && 'Use the "Send Offer" button to reach out.'}
-                </div>
+                {isAdmin ? (
+                  <>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="break-words">{data.email || 'Not available'}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="break-words">{data.phoneNumber || 'Not available'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>Contact via platform</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Contact information is protected for privacy. {isRecruiter && 'Use the "Send Offer" button to reach out.'}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

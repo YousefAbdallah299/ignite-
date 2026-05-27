@@ -7,6 +7,7 @@ import com.yousef.ignite.dto.request.ChangePasswordRequestDTO;
 import com.yousef.ignite.dto.request.LoginRequestDTO;
 import com.yousef.ignite.dto.request.RegisterRequestDTO;
 import com.yousef.ignite.service.OTPService;
+import com.yousef.ignite.service.SmsService;
 import com.yousef.ignite.dto.response.RegisterResponseDTO;
 import com.yousef.ignite.dto.response.LoginResponseDTO;
 import com.yousef.ignite.entity.CandidateProfile;
@@ -85,6 +86,8 @@ public class AuthServiceImpl implements AuthService {
     private final CourseProgressRepository courseProgressRepository;
 
     private final OTPService otpService;
+
+    private final SmsService smsService;
 
     private final Set<String> invalidatedTokens = new HashSet<>();
 
@@ -375,12 +378,8 @@ public class AuthServiceImpl implements AuthService {
         // Generate OTP
         String otp = otpService.generateOTP(cleanPhone);
 
-        // In production, send OTP via SMS service (Twilio, AWS SNS, etc.)
-        // For now, we'll just log it (in development, you might want to return it)
-        System.out.println("OTP for " + cleanPhone + ": " + otp);
-
-        // TODO: Integrate with SMS service
-        // smsService.sendOTP(cleanPhone, otp);
+        // Send OTP to phone number via configured SMS provider (Twilio).
+        smsService.sendOtp(cleanPhone, otp);
 
         return "OTP sent successfully to " + cleanPhone;
     }

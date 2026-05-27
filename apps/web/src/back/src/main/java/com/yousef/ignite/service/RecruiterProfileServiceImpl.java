@@ -40,6 +40,7 @@ public class RecruiterProfileServiceImpl implements RecruiterProfileService {
                 .firstName(recruiter.getUser().getFirstName())
                 .lastName(recruiter.getUser().getLastName())
                 .email(recruiter.getUser().getEmail())
+                .phoneNumber(recruiter.getUser().getPhoneNumber())
                 .status(recruiter.getStatus())
                 .companyName(recruiter.getCompanyName())
                 .businessEmail(recruiter.getBusinessEmail())

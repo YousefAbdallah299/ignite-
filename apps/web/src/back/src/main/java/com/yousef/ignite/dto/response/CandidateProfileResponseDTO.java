@@ -16,6 +16,8 @@ public class CandidateProfileResponseDTO {
     private String title;
     private String summary;
     private String resumeUrl;
+    private String email;
+    private String phoneNumber;
     private String location;
     private LocalDateTime createdAt;
     private Double expectedSalary;
