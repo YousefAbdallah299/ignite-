@@ -11,7 +11,7 @@ export const testAPI = {
       // Test login
       const loginResponse = await authAPI.login({
         email: 'test@example.com',
-        password: 'password123'
+        password: (import.meta.env.VITE_TEST_PASSWORD || '')
       });
       console.log('Login response:', loginResponse);
       

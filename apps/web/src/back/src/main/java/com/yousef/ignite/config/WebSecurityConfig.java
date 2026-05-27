@@ -28,6 +28,17 @@ public class WebSecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
+
+    @Bean
+    public RequestSizeFilter requestSizeFilter() {
+        return new RequestSizeFilter();
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter() {
+        return new RateLimitFilter();
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -48,7 +59,7 @@ public class WebSecurityConfig {
                                 "/api/v1/jobs/**",
                                 "/api/v1/courses",
                                 "/api/v1/courses/*",
-                                "api/v1/candidates/**",
+                                "/api/v1/candidates/**",
                                 "/uploads/**",
                                 "/images/**",
                                 "/api/v1/payments/webhook",
@@ -60,6 +71,8 @@ public class WebSecurityConfig {
                         .permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitFilter(), AuthTokenFilter.class)
+                .addFilterBefore(requestSizeFilter(), AuthTokenFilter.class)
                 .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

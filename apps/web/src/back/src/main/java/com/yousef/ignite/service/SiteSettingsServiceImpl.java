@@ -20,8 +20,7 @@ public class SiteSettingsServiceImpl implements SiteSettingsService {
     private final AdminService adminService;
 
     private SiteSettings getOrCreateSettings() {
-        return siteSettingsRepository.findAll().stream()
-                .findFirst()
+        return siteSettingsRepository.findTopByOrderByIdAsc()
                 .orElseGet(() -> siteSettingsRepository.save(SiteSettings.builder().build()));
     }
 

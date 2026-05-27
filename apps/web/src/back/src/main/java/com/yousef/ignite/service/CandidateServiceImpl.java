@@ -363,9 +363,7 @@ public class CandidateServiceImpl implements CandidateService {
 
     @Override
     public List<SkillResponseDTO> getAllSkills() {
-        return skillRepository.findAll().stream()
-                .map(skill -> new SkillResponseDTO(skill.getId(), skill.getName()))
-                .toList();
+        return skillRepository.findAllSkillResponses();
     }
 
     @Override

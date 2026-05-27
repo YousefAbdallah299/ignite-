@@ -9,7 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.yousef.ignite.dto.response.UserSummaryDTO;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -21,6 +23,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findUserByVerificationToken(String token);
 
     Optional<User> findUserByResetPasswordToken(String token);
+
+    @Query("""
+        SELECT new com.yousef.ignite.dto.response.UserSummaryDTO(
+            u.id,
+            u.firstName,
+            u.lastName,
+            u.email,
+            u.phoneNumber,
+            u.role,
+            CASE WHEN u.suspended IS NULL THEN false ELSE u.suspended END
+        )
+        FROM User u
+    """)
+    List<UserSummaryDTO> findAllUserSummaries();
 
     @Query("""
         SELECT u FROM User u 

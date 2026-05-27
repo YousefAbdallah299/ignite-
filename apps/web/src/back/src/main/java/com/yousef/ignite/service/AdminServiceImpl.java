@@ -109,15 +109,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public ResponseEntity<List<UserSummaryDTO>> listUsers(String token) {
         ensureAdmin(token);
-        List<UserSummaryDTO> users = userRepository.findAll().stream().map(u -> UserSummaryDTO.builder()
-                .id(u.getId())
-                .first_name(u.getFirstName())
-                .last_name(u.getLastName())
-                .email(u.getEmail())
-                .phoneNumber(u.getPhoneNumber())
-                .role(u.getRole())
-                .suspended(u.getSuspended() != null ? u.getSuspended() : false)
-                .build()).toList();
+        List<UserSummaryDTO> users = userRepository.findAllUserSummaries();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 

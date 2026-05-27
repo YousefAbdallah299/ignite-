@@ -55,11 +55,12 @@ export const testAuthEndpoint = async () => {
   console.log('Testing auth endpoint...');
   
   try {
+    const testPassword = import.meta.env.VITE_TEST_PASSWORD || '';
     const testData = {
       first_name: 'Test',
       last_name: 'User',
       email: 'test@example.com',
-      password: 'password123',
+      password: testPassword,
       role: 'CANDIDATE'
     };
     

@@ -20,22 +20,26 @@ import lombok.*;
 public class RegisterRequestDTO {
 
     @NotBlank
+    @Size(max = 50)
     private String first_name;
 
     @NotBlank
+    @Size(max = 50)
     private String last_name;
 
     @NotBlank
     @Email
+    @Size(max = 254)
     private String email;
 
-    @Size(min = 8)
+    @Size(min = 8, max = 72)
     private String password;
 
-    @Size(min = 8)
+    @Size(min = 8, max = 72)
     private String confirmPassword;
 
     @NotBlank
+    @Size(max = 20)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)

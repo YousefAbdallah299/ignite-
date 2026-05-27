@@ -1,6 +1,8 @@
 package com.yousef.ignite.dto.request;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,9 +15,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class LoginRequestDTO {
     @Email
-    @NotNull
+    @NotBlank
+    @Size(max = 254)
     private String email;
 
-    @NotNull
+    @NotBlank
+    @Size(min = 8, max = 72)
     private String password;
 }
