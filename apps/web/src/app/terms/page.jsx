@@ -2,8 +2,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export default function TermsOfServicePage() {
+  const { settings } = useSiteSettings();
+
   return (
     <PageFadeIn className="bg-gray-50">
       <Header />
@@ -32,7 +35,7 @@ export default function TermsOfServicePage() {
           </section>
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Contact</h2>
-            <p>Questions? Email <a href="mailto:support@ignite.com" className="text-red-600">support@ignite.com</a>.</p>
+            <p>Questions? Email <a href={`mailto:${settings.supportEmail}`} className="text-red-600">{settings.supportEmail}</a>.</p>
           </section>
         </div>
       </div>

@@ -18,7 +18,7 @@ export default function PaymentPage() {
   
   const [recruiterProfile, setRecruiterProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [amount, setAmount] = useState(2900); // Default amount in cents (29.00 EGP)
+  const [amount, setAmount] = useState(2900);
   const [planName, setPlanName] = useState('Professional'); // Default plan name
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card'); // card payment (visa/mastercard)
   const [formData, setFormData] = useState({

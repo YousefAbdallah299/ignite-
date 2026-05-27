@@ -7,7 +7,8 @@ import Footer from '@/components/Footer';
 import PasswordInput from '@/components/PasswordInput';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
 import { TokenValidationService } from '@/utils/tokenValidation';
-import { coursesAPI, candidatesAPI, skillsAPI, adminAPI, adsAPI, recruitersAPI, offersAPI } from '@/utils/apiClient';
+import { coursesAPI, candidatesAPI, skillsAPI, adminAPI, adsAPI, recruitersAPI, offersAPI, siteSettingsAPI } from '@/utils/apiClient';
+import { DEFAULT_SITE_SETTINGS, useSiteSettings } from '@/hooks/useSiteSettings';
 import { toast } from 'sonner';
 
 // Get API base URL from environment or use default
@@ -15,6 +16,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ignite-qjis.o
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuthAPI();
+  const { refreshSettings } = useSiteSettings();
   const navigate = useNavigate();
   const [accessDenied, setAccessDenied] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -101,6 +103,11 @@ export default function AdminPage() {
     endDate: ''
   });
   const [creatingAd, setCreatingAd] = useState(false);
+
+  // Site settings state
+  const [siteSettingsForm, setSiteSettingsForm] = useState({ ...DEFAULT_SITE_SETTINGS });
+  const [loadingSiteSettings, setLoadingSiteSettings] = useState(false);
+  const [savingSiteSettings, setSavingSiteSettings] = useState(false);
   
   const availablePrivileges = [
     { name: 'MANAGE_COURSES', label: 'Manage Courses' },
@@ -108,7 +115,8 @@ export default function AdminPage() {
     { name: 'MANAGE_WORKSHOPS', label: 'Manage Workshops' },
     { name: 'RATE_SKILLS', label: 'Rate Skills' },
     { name: 'MANAGE_ADS', label: 'Manage Ads' },
-    { name: 'MANAGE_OFFERS', label: 'Manage Offers' }
+    { name: 'MANAGE_OFFERS', label: 'Manage Offers' },
+    { name: 'MANAGE_SITE_SETTINGS', label: 'Manage Site Settings' }
   ];
 
   // Available user roles
@@ -317,6 +325,13 @@ export default function AdminPage() {
       loadAdminOffers();
     }
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin || myPrivileges.length === 0) return;
+    if (hasPrivilege('MANAGE_SITE_SETTINGS')) {
+      loadSiteSettings();
+    }
+  }, [isAdmin, myPrivileges]);
   
   // Load ads
   const loadAds = async () => {
@@ -452,6 +467,39 @@ export default function AdminPage() {
       return true;
     }
     return false;
+  };
+
+  const loadSiteSettings = async () => {
+    setLoadingSiteSettings(true);
+    try {
+      const data = await siteSettingsAPI.getAdminSettings();
+      if (data) {
+        setSiteSettingsForm({ ...DEFAULT_SITE_SETTINGS, ...data });
+      }
+    } catch (error) {
+      console.error('Error loading site settings:', error);
+      toast.error('Failed to load site settings');
+    } finally {
+      setLoadingSiteSettings(false);
+    }
+  };
+
+  const saveSiteSettings = async (e) => {
+    e.preventDefault();
+    setSavingSiteSettings(true);
+    try {
+      const updated = await siteSettingsAPI.updateSettings(siteSettingsForm);
+      if (updated) {
+        setSiteSettingsForm({ ...DEFAULT_SITE_SETTINGS, ...updated });
+        await refreshSettings();
+        toast.success('Site settings saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving site settings:', error);
+      toast.error(error.message || 'Failed to save site settings');
+    } finally {
+      setSavingSiteSettings(false);
+    }
   };
 
   const createCustomAdmin = async (e) => {
@@ -1158,6 +1206,82 @@ export default function AdminPage() {
                       className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold"
                     >
                       {creatingAdmin ? 'Creating...' : 'Create Custom Admin'}
+                    </button>
+                  </form>
+                )}
+              </section>
+            )}
+
+            {hasPrivilege('MANAGE_SITE_SETTINGS') && (
+              <section className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Site Settings</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Manage recruiter pricing and contact emails/phone shown across the app.
+                </p>
+                {loadingSiteSettings ? (
+                  <p className="text-sm text-gray-500">Loading settings...</p>
+                ) : (
+                  <form onSubmit={saveSiteSettings} className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Recruiter Price Display</label>
+                      <input
+                        type="text"
+                        value={siteSettingsForm.recruiterPriceDisplay}
+                        onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, recruiterPriceDisplay: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                        <input
+                          type="email"
+                          value={siteSettingsForm.contactEmail}
+                          onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, contactEmail: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
+                        <input
+                          type="email"
+                          value={siteSettingsForm.supportEmail}
+                          onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, supportEmail: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Privacy Email</label>
+                        <input
+                          type="email"
+                          value={siteSettingsForm.privacyEmail}
+                          onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, privacyEmail: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input
+                          type="text"
+                          value={siteSettingsForm.contactPhone}
+                          onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, contactPhone: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={savingSiteSettings}
+                      className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-semibold"
+                    >
+                      {savingSiteSettings ? 'Saving...' : 'Save Site Settings'}
                     </button>
                   </form>
                 )}

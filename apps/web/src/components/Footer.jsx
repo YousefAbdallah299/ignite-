@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const footerLinks = {
   "For Job Seekers": [
@@ -30,6 +31,8 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const { settings } = useSiteSettings();
+
   return (
     <footer className="bg-gray-900 text-white">
       {/* Main Footer Content */}
@@ -61,11 +64,13 @@ export default function Footer() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-gray-400">
                 <Mail className="w-5 h-5 text-red-500" />
-                <span>contact@ignite.com</span>
+                <a href={`mailto:${settings.contactEmail}`} className="hover:text-red-500 transition-colors">
+                  {settings.contactEmail}
+                </a>
               </div>
               <div className="flex items-center gap-3 text-gray-400">
                 <Phone className="w-5 h-5 text-red-500" />
-                <span>+1 (555) 123-4567</span>
+                <span>{settings.contactPhone}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-400">
                 <MapPin className="w-5 h-5 text-red-500" />

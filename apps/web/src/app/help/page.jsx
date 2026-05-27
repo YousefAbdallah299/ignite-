@@ -3,8 +3,10 @@ import Footer from "@/components/Footer";
 import AdPopup from "@/components/AdPopup";
 import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export default function HelpCenterPage() {
+  const { settings } = useSiteSettings();
   return (
     <>
       {/* Ad Popups - Fixed position */}
@@ -54,7 +56,7 @@ export default function HelpCenterPage() {
         <RevealOnScroll>
           <section className="mt-8 bg-white border border-gray-200 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-3">Contact Support</h2>
-          <p className="text-gray-700">Can't find what you need? Email us at <a href="mailto:support@ignite.com" className="text-red-600">support@ignite.com</a>.</p>
+          <p className="text-gray-700">Can't find what you need? Email us at <a href={`mailto:${settings.supportEmail}`} className="text-red-600">{settings.supportEmail}</a>.</p>
           </section>
         </RevealOnScroll>
       </div>

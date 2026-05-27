@@ -2,8 +2,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import PageFadeIn from "@/components/PageFadeIn";
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export default function PrivacyPolicyPage() {
+  const { settings } = useSiteSettings();
+
   return (
     <PageFadeIn className="bg-gray-50">
       <Header />
@@ -33,7 +36,7 @@ export default function PrivacyPolicyPage() {
           </section>
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Contact</h2>
-            <p>Questions? Email <a href="mailto:privacy@ignite.com" className="text-red-600">privacy@ignite.com</a>.</p>
+            <p>Questions? Email <a href={`mailto:${settings.privacyEmail}`} className="text-red-600">{settings.privacyEmail}</a>.</p>
           </section>
         </div>
       </div>

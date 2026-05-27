@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Check, Star, Users, Building2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
-const pricingPlans = [
+const getPricingPlans = (settings) => [
   {
     id: 1,
     name: "Job Seeker",
@@ -20,14 +21,14 @@ const pricingPlans = [
       "Email support"
     ],
     cta: "Get Started Free",
-    ctaLink: "/account/signup?role=candidate",
+    ctaLink: "/account/register",
     popular: false,
     color: "blue"
   },
   {
     id: 2,
     name: "Recruiter",
-    price: "29 EGP",
+    price: settings.recruiterPriceDisplay,
     period: "per month",
     description: "Ideal for companies and recruiters seeking top talent",
     icon: Building2,
@@ -41,7 +42,7 @@ const pricingPlans = [
       "Priority support"
     ],
     cta: "Subscribe Now",
-    ctaLink: "/account/signup?role=recruiter",
+    ctaLink: "/account/register",
     popular: true,
     color: "red"
   }
@@ -49,7 +50,9 @@ const pricingPlans = [
 
 export default function PricingSection() {
   const { isAuthenticated, user, isRecruiter, isCandidate } = useAuthAPI();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
+  const pricingPlans = useMemo(() => getPricingPlans(settings), [settings]);
   
   const handleCTAClick = (plan) => {
     // If user is already signed in

@@ -9,9 +9,11 @@ import AdPopupLeft from "@/components/AdPopupLeft";
 import RevealOnScroll from '@/components/RevealOnScroll';
 import PageFadeIn from '@/components/PageFadeIn';
 import { useAuthAPI } from '@/hooks/useAuthAPI';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export default function PricingPage() {
   const { isAuthenticated, user, isRecruiter, isCandidate } = useAuthAPI();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   
   const handleCTAClick = (plan) => {
@@ -55,14 +57,14 @@ export default function PricingPage() {
         "Email support"
       ],
       cta: "Get Started Free",
-      ctaLink: "/account/signup?role=candidate",
+      ctaLink: "/account/register",
       popular: false,
       color: "blue"
     },
     {
       id: 2,
       name: "Recruiter",
-      price: "29 EGP",
+      price: settings.recruiterPriceDisplay,
       period: "per month",
       description: "Ideal for companies and recruiters seeking top talent",
       icon: Building2,
@@ -76,7 +78,7 @@ export default function PricingPage() {
         "Priority support"
       ],
       cta: "Subscribe Now",
-      ctaLink: "/account/signup?role=recruiter",
+      ctaLink: "/account/register",
       popular: true,
       color: "red"
     }

@@ -903,6 +903,29 @@ export const paymentsAPI = {
   },
 };
 
+// Site settings API
+export const siteSettingsAPI = {
+  getPublicSettings: async () => {
+    return apiCall('/settings', {
+      method: 'GET',
+      includeAuth: false,
+    });
+  },
+
+  getAdminSettings: async () => {
+    return apiCall('/admin/site-settings', {
+      method: 'GET',
+    });
+  },
+
+  updateSettings: async (settingsData) => {
+    return apiCall('/admin/site-settings', {
+      method: 'PUT',
+      body: JSON.stringify(settingsData),
+    });
+  },
+};
+
 // Admin API
 export const adminAPI = {
   // Create custom admin
@@ -968,4 +991,5 @@ export default {
   workshops: workshopsAPI,
   payments: paymentsAPI,
   ads: adsAPI,
+  siteSettings: siteSettingsAPI,
 };
