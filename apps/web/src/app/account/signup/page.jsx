@@ -39,6 +39,12 @@ export default function SignupPage() {
     e.preventDefault();
     clearError();
 
+    if (role === 'CANDIDATE') {
+      toast.info('Job seeker signup now requires OTP and mandatory resume upload. Redirecting...');
+      navigate('/account/register');
+      return;
+    }
+
     if (!email.trim()) {
       toast.error('Email is required.');
       return;

@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [expectedSalary, setExpectedSalary] = useState('');
   const [expectedSalaryCurrency, setExpectedSalaryCurrency] = useState('EGP');
   const [currentPosition, setCurrentPosition] = useState(''); // Optional current position for job seekers
+  const [resumeFile, setResumeFile] = useState(null);
   const [businessEmail, setBusinessEmail] = useState(''); // Business email for recruiters
   const [showAgreementModal, setShowAgreementModal] = useState(true);
   const [agreementChecked, setAgreementChecked] = useState(false);
@@ -135,6 +136,27 @@ export default function RegisterPage() {
         setValidationError('Please enter a valid expected salary.');
         return;
       }
+
+      if (!resumeFile) {
+        setValidationError('Resume is required for job seeker signup.');
+        return;
+      }
+
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      if (!allowedTypes.includes(resumeFile.type)) {
+        setValidationError('Invalid resume file type. Only PDF, DOC, DOCX are allowed.');
+        return;
+      }
+
+      const maxSize = 5 * 1024 * 1024;
+      if (resumeFile.size > maxSize) {
+        setValidationError('Resume file is too large. Maximum size is 5MB.');
+        return;
+      }
     }
 
     // Additional validation for recruiters
@@ -177,10 +199,12 @@ export default function RegisterPage() {
       
       console.log('Register data being sent:', { ...registerData, password: '***', confirmPassword: '***' });
       
-      const result = await register(registerData);
+      const result = await register(registerData, false, {
+        resumeFile: role === 'CANDIDATE' ? resumeFile : null
+      });
       console.log('Registration successful:', result);
       
-      // Redirect to profile page for candidates to complete their profile
+      // Redirect to profile page for candidates to complete remaining profile details
       if (role === 'CANDIDATE') {
         toast.success('Account created successfully! Please complete your profile.');
         navigate('/profile', { state: { completeProfile: true } });
@@ -470,6 +494,23 @@ export default function RegisterPage() {
                         </select>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">Enter your expected annual salary</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Resume / CV <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setResumeFile(file);
+                        }}
+                        required={role === 'CANDIDATE'}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent file:mr-3 file:px-3 file:py-1.5 file:border-0 file:rounded-md file:bg-gray-100 file:text-gray-700"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Required. PDF, DOC, or DOCX only (max 5MB).</p>
                     </div>
                   </>
                 )}

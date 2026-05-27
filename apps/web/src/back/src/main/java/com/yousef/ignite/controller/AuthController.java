@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -38,6 +39,15 @@ public class AuthController {
     @Operation(summary = "Register a new customer", description = "Creates a new customer account with the provided details. An email address must be unique.")
     public ResponseEntity<RegisterResponseDTO> register(@RequestBody @Valid RegisterRequestDTO customer) throws EmailAlreadyExistsException {
         return new ResponseEntity<>(this.authService.register(customer), HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/register-candidate-with-resume", consumes = {"multipart/form-data"})
+    @Operation(summary = "Register candidate with mandatory resume", description = "Creates a candidate account and uploads a required resume in one request.")
+    public ResponseEntity<RegisterResponseDTO> registerCandidateWithResume(
+            @RequestPart("data") @Valid RegisterRequestDTO customer,
+            @RequestPart("resume") MultipartFile resume
+    ) throws EmailAlreadyExistsException {
+        return new ResponseEntity<>(this.authService.registerCandidateWithResume(customer, resume), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")

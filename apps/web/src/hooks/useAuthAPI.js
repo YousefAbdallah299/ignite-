@@ -109,12 +109,14 @@ export const useAuthAPI = () => {
   }, []);
 
   // Register function
-  const register = useCallback(async (userData, autoLogin = false) => {
+  const register = useCallback(async (userData, autoLogin = false, options = {}) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await authAPI.register(userData);
+
+      const response = options.resumeFile
+        ? await authAPI.registerCandidateWithResume(userData, options.resumeFile)
+        : await authAPI.register(userData);
       
       // Only store token and user data if autoLogin is true
       if (autoLogin) {

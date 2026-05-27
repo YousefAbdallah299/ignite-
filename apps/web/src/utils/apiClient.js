@@ -143,6 +143,21 @@ export const authAPI = {
     });
   },
 
+  // Register candidate with mandatory resume upload
+  registerCandidateWithResume: async (userData, resumeFile) => {
+    const formData = new FormData();
+    formData.append(
+      'data',
+      new Blob([JSON.stringify(userData)], { type: 'application/json' })
+    );
+    formData.append('resume', resumeFile);
+
+    return apiCall('/auth/register-candidate-with-resume', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
   // Login user
   login: async (credentials) => {
     return apiCall('/auth/login', {

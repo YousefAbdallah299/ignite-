@@ -11,6 +11,7 @@ import com.yousef.ignite.exception.custom.EmailAlreadyExistsException;
 import com.yousef.ignite.exception.custom.InvalidTokenException;
 import com.yousef.ignite.exception.custom.ResourceNotFoundException;
 import com.yousef.ignite.exception.custom.UnverifiedEmailException;
+import org.springframework.web.multipart.MultipartFile;
 
 
 public interface AuthService {
@@ -24,6 +25,7 @@ public interface AuthService {
      */
 
     RegisterResponseDTO register(RegisterRequestDTO customer) throws EmailAlreadyExistsException;
+    RegisterResponseDTO registerCandidateWithResume(RegisterRequestDTO customer, MultipartFile resumeFile) throws EmailAlreadyExistsException;
 
 
     /**

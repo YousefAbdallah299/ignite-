@@ -40,8 +40,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 
+import com.yousef.ignite.util.FileUploadUtil;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -94,7 +101,23 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public RegisterResponseDTO register(RegisterRequestDTO customerRequest) throws EmailAlreadyExistsException{
+        if ((customerRequest.getRole() != null ? customerRequest.getRole() : UserRole.CANDIDATE) == UserRole.CANDIDATE) {
+            throw new IllegalArgumentException("Resume file is required for candidate registration.");
+        }
+        return registerInternal(customerRequest, null);
+    }
 
+    @Transactional
+    @Override
+    public RegisterResponseDTO registerCandidateWithResume(RegisterRequestDTO customerRequest, MultipartFile resumeFile) throws EmailAlreadyExistsException {
+        customerRequest.setRole(UserRole.CANDIDATE);
+        if (resumeFile == null || resumeFile.isEmpty()) {
+            throw new IllegalArgumentException("Resume file is required for candidate registration.");
+        }
+        return registerInternal(customerRequest, resumeFile);
+    }
+
+    private RegisterResponseDTO registerInternal(RegisterRequestDTO customerRequest, MultipartFile resumeFile) throws EmailAlreadyExistsException {
         if(!StringUtils.hasText(customerRequest.getEmail()))
         {
             throw new EmailAlreadyExistsException("Email is required");
@@ -153,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
                             : "EGP") // Default to EGP if not provided
                     .currentPosition(customerRequest.getCurrentPosition()) // Optional current position
                     .summary("")
-                    .resumeUrl("")
+                    .resumeUrl(saveResumeFile(resumeFile))
                     .createdAt(LocalDateTime.now())
                     .build();
             candidateProfileRepository.save(profile);
@@ -178,6 +201,28 @@ public class AuthServiceImpl implements AuthService {
 
 
         return savedUser.toRegisterResponseDTO();
+    }
+
+    private String saveResumeFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Resume file is required for candidate registration.");
+        }
+
+        FileUploadUtil.validateResumeFile(file);
+
+        try {
+            String uploadDir = "uploads/resumes/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String fileName = FileUploadUtil.sanitizeFilename(file.getOriginalFilename());
+            Path filePath = Path.of(uploadDir + fileName);
+
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            return "/uploads/resumes/" + fileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload resume", e);
+        }
     }
 
 
